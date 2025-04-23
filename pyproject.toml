@@ -1,0 +1,42 @@
+[project]
+name = "asparagus"
+version = "0.0.1"
+authors = [
+  { name="Sebastian Llambias", email="llambias@live.com" },
+]
+description = "Yucca-spinoff for foundation model training"
+readme = "README.md"
+requires-python = ">=3.12"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache License 2.0",
+    "Operating System :: OS Independent",
+]
+keywords = ['deep learning', 'medical image analysis','foundation models']
+
+dependencies = [
+    "batchgenerators>=0.25",
+    "numpy>=2.2.5",
+    "torch>=2.6.0",
+    "yucca>=2.2.6",
+]
+
+
+[project.optional-dependencies]
+test = [
+    'pytest>=8.3.5',
+    'flake8>=7.2.0',
+    'black>=25.1.0',
+]
+
+[project.urls]
+"Homepage" = "https://github.com/sllambias/asparagus"
+"Bug Tracker" = "https://github.com/sllambias/yucca/issues"
+
+[build-system]
+requires = ["setuptools>=75.8", "wheel>=0.45"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 127
+
