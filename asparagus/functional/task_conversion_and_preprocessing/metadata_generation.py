@@ -1,5 +1,5 @@
 import os
-from batchgenerators.utilities.file_and_folder_operations import save_json
+from yucca.functional.utils.saving import enhanced_save_json
 from yucca.pipeline.task_conversion.utils import get_identifiers_from_splitted_files, files_in_dir
 from asparagus.modules.dataclasses.preprocessing import PreprocessingConfig
 
@@ -40,4 +40,4 @@ def generate_dataset_json(
     json_dict["test"] = test_identifiers
     json_dict["preprocessing_module"] = preprocessing_module
 
-    save_json(json_dict, os.path.join(output_file))
+    enhanced_save_json(json_dict, os.path.join(output_file))

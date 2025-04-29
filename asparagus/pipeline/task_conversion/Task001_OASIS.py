@@ -16,22 +16,6 @@ from dataclasses import asdict
 
 Task001_preprocessing = PreprocessingConfig(normalization_operation=["volume_wise_znorm"], target_spacing=[1.0, 1.0, 1.0])
 
-import json
-
-import dataclasses
-
-
-class EnhancedJSONEncoder(json.JSONEncoder):
-    def default(self, o):
-        if dataclasses.is_dataclass(o):
-            return dataclasses.asdict(o)
-        return super().default(o)
-
-
-f = json.dump(dataclasses.asdict(Task001_preprocessing), "here.json" cls=EnhancedJSONEncoder)
-f2 = PreprocessingConfig(**dict(f))
-# %%
-
 
 def process_case(id, input_dir, output_dir):
     image = nib.load(join(input_dir, id))
