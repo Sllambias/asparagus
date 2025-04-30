@@ -18,7 +18,7 @@ dependencies = [
     "batchgenerators>=0.25",
     "numpy>=2.2.5",
     "torch>=2.6.0",
-    "yucca>=2.2.6",
+    "yucca>=2.2.7",
 ]
 
 
