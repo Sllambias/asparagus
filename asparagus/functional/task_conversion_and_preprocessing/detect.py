@@ -2,9 +2,12 @@ import os
 from multiprocessing import Pool, Manager
 from itertools import repeat
 from time import time
+from asparagus.paths import get_data_path
+from batchgenerators.utilities.file_and_folder_operations import subdirs
 
 
 def detect_cases(path, extension, DWI_patterns, PET_patterns, exclusion_patterns=[], processes=2):
+    # CASE SENSITIVE
     all_cases = []
     # 1. Build list of all files in the directory recursively.
     for dirpath, _, filenames in os.walk(path):
@@ -38,3 +41,31 @@ def filter_files(file, L, DWI_patterns, PET_patterns, exclusion_patterns):
         L[2].append(file)
     else:
         L[0].append(file)
+
+
+def detect_final_cases(path, extension):
+    all_cases = []
+    # 1. Build list of all files in the directory recursively.
+    for dirpath, _, filenames in os.walk(path):
+        for filename in filenames:
+            if filename.endswith(extension):
+                all_cases.append(os.path.join(dirpath, filename))
+    return all_cases
+
+
+def detect_task_name_from_task_id(task_id):
+    task_id = str(task_id)
+
+    tasks = subdirs(get_data_path(), join=False)
+
+    # Check if name is already complete
+    if task_id in tasks:
+        return task_id
+
+    # If not, we try to recreate the name
+    # We use the raw_data folder as reference
+    for task in tasks:
+        if task_id.lower() in task.lower():
+            return task
+
+    raise LookupError(f"Task {task_id} not found in {stage_path}.")

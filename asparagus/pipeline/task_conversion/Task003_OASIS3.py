@@ -7,9 +7,13 @@ from asparagus.functional.task_conversion_and_preprocessing import (
     generate_dataset_json,
     generate_path_json,
     process_mri_case,
+    process_dwi_case,
+    process_pet_case,
     detect_cases,
     detect_final_cases,
     get_image_and_metadata_output_paths,
+    get_bvals_and_bvecs_v1,
+    multiprocess_mri_dwi_pet_cases,
 )
 from asparagus.paths import get_data_path, get_source_path
 from asparagus.modules.dataclasses.presets.preprocessing_presets import GBrainPreprocessingConfig
@@ -17,12 +21,12 @@ from itertools import repeat
 from multiprocessing.pool import Pool
 
 
-def convert(path: str = get_source_path(), subdir: str = "ABIDE", processes=12):
-    task_name = "Task001_ABIDE1"
-    file_suffix = ".nii"
-    exclusion_patterns = ["fmri"]
-    DWI_patterns = []
-    PET_patterns = []
+def convert(path: str = get_source_path(), subdir: str = "OASIS3", processes=12):
+    task_name = "Task003_OASIS3"
+    file_suffix = ".nii.gz"
+    exclusion_patterns = ["func", "_CT_"]
+    DWI_patterns = ["DWI", "dwi"]
+    PET_patterns = ["pet", "PET"]
 
     source_dir = join(path, subdir)
     target_dir = join(get_data_path(), task_name)
@@ -40,20 +44,26 @@ def convert(path: str = get_source_path(), subdir: str = "ABIDE", processes=12):
     files_standard_out, pkls_standard_out = get_image_and_metadata_output_paths(
         files_standard, source_dir, target_dir, file_suffix
     )
+    files_DWI_out, pkls_DWI_out = get_image_and_metadata_output_paths(files_DWI, source_dir, target_dir, file_suffix)
+    files_PET_out, pkls_PET_out = get_image_and_metadata_output_paths(files_PET, source_dir, target_dir, file_suffix)
+    bvals_DWI, bvecs_DWI = get_bvals_and_bvecs_v1(files_DWI, file_suffix)
 
-    p = Pool(processes)
-    p.starmap_async(
-        process_mri_case,
-        zip(
-            files_standard[:10],
-            files_standard_out[:10],
-            pkls_standard_out[:10],
-            repeat(GBrainPreprocessingConfig),
-        ),
+    multiprocess_mri_dwi_pet_cases(
+        files_standard=files_standard,
+        files_standard_out=files_standard_out,
+        pkls_standard_out=pkls_standard_out,
+        files_DWI=files_DWI,
+        bvals_DWI=bvals_DWI,
+        bvecs_DWI=bvecs_DWI,
+        files_DWI_out=files_DWI_out,
+        pkls_DWI_out=pkls_DWI_out,
+        files_PET=files_PET,
+        files_PET_out=files_PET_out,
+        pkls_PET_out=pkls_PET_out,
+        preprocessing_config=GBrainPreprocessingConfig,
+        processes=processes,
         chunksize=10,
     )
-    p.close()
-    p.join()
 
     all_files_out = detect_final_cases(target_dir, extension=".pt")
     skipped_files = len(files_standard_out) + len(files_PET) + len(files_DWI) - len(all_files_out)

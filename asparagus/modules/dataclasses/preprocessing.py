@@ -19,9 +19,7 @@ class PreprocessingConfig:
 
     normalization_operation: List
     target_spacing: Optional[List]
-    allow_missing_modalities: bool = False
     background_pixel_value: int = 0
-    missing_modality_idxs: list = field(default_factory=list)
     crop_to_nonzero: bool = True
     keep_aspect_ratio_when_using_target_size: bool = False
     image_properties: Optional[dict] = field(default_factory=dict)

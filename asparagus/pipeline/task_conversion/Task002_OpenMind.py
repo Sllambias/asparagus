@@ -8,63 +8,73 @@ from asparagus.functional.task_conversion_and_preprocessing import (
     generate_path_json,
     process_mri_case,
     detect_cases,
+    detect_final_cases,
+    get_image_and_metadata_output_paths,
 )
 from asparagus.paths import get_data_path, get_source_path
-from asparagus.modules.dataclasses.preprocessing import PreprocessingConfig
-from tqdm.contrib.concurrent import process_map
-from dataclasses import asdict
+from asparagus.modules.dataclasses.presets.preprocessing_presets import GBrainPreprocessingConfig
 from itertools import repeat
+from multiprocessing.pool import Pool
 
 
 def convert(path: str = get_source_path(), subdir: str = "OpenMind", processes=12):
     task_name = "Task002_OpenMind"
     file_suffix = ".nii.gz"
     exclusion_patterns = ["fmri", "mask"]
+    DWI_patterns = []
+    PET_patterns = []
 
     source_dir = join(path, subdir)
     target_dir = join(get_data_path(), task_name)
     ensure_dir_exists(target_dir)
 
-    regular_files, DWI_files, PET_files, excluded_files = detect_cases(
+    files_standard, files_DWI, files_PET, files_excluded = detect_cases(
         source_dir,
         extension=file_suffix,
-        DWI_patterns=[],
-        PET_patterns=[],
+        DWI_patterns=DWI_patterns,
+        PET_patterns=PET_patterns,
         exclusion_patterns=exclusion_patterns,
         processes=processes,
     )
 
-    preprocessing_config = PreprocessingConfig(
-        normalization_operation=["volume_wise_znorm"], target_spacing=None, target_orientation="RAS"
+    files_standard_out, pkls_standard_out = get_image_and_metadata_output_paths(
+        files_standard, source_dir, target_dir, file_suffix
     )
 
-    regular_files_out = [f.replace(source_dir, target_dir).replace(file_suffix, ".pt") for f in regular_files]
-    regular_pkls_out = [f.replace(".pt", ".pkl") for f in regular_files_out]
-
-    process_map(
+    p = Pool(processes)
+    p.starmap_async(
         process_mri_case,
-        regular_files,
-        regular_files_out,
-        regular_pkls_out,
-        repeat(preprocessing_config),
-        max_workers=processes,
-        chunksize=1,
+        zip(
+            files_standard,
+            files_standard_out,
+            pkls_standard_out,
+            repeat(GBrainPreprocessingConfig),
+        ),
+        chunksize=25,
     )
+    p.close()
+    p.join()
 
+    all_files_out = detect_final_cases(target_dir, extension=".pt")
+    skipped_files = len(files_standard_out) + len(files_PET) + len(files_DWI) - len(all_files_out)
     generate_dataset_json(
         join(target_dir, "dataset.json"),
         dataset_name=task_name,
         metadata={
             "file_suffix": file_suffix,
-            "exclusion_patterns": exclusion_patterns,
-            "number_of_regular_files": len(regular_files),
-            "number_of_DWI_files": len(DWI_files),
-            "number_of_PET_files": len(PET_files),
-            "number_of_excluded_files": len(excluded_files),
+            "patterns_exclusion": exclusion_patterns,
+            "patterns_DWI": DWI_patterns,
+            "patterns_PET": PET_patterns,
+            "files_total_in_source_directory": len(files_standard) + len(files_DWI) + len(files_PET) + len(files_excluded),
+            "files_standard_in_source_directory": len(files_standard),
+            "files_DWI_in_source_directory": len(files_DWI),
+            "files_PET_in_source_directory": len(files_PET),
+            "files_excluded_in_source_directory": len(files_excluded),
+            "files_skipped_during_processing": skipped_files,
+            "final_files": len(all_files_out),
         },
-        preprocessing_module=preprocessing_config,
+        preprocessing_module=GBrainPreprocessingConfig,
     )
-    all_files_out = regular_files_out
     generate_path_json(all_files_out, join(target_dir, "paths.json"))
 
 
