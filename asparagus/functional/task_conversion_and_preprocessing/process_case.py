@@ -206,7 +206,6 @@ def extract_3ddwi_from_4ddwi(image, bvals, bvecs, bval_tolerance=50):
             dwi = nib.Nifti1Image(dwi, image.affine, header=new_header)
             dwis.append(dwi)
             group_bvals.append(str(int(round(group_bval))))
-            logging.info(f"Extracted b-value group: {group_bval} (includes {bvals[indices]})")
         else:
             logging.error(f"Skipped b-value group: {group_bval} (only {len(indices)} volumes)")
     return dwis, group_bvals

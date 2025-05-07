@@ -22,11 +22,11 @@ from multiprocessing.pool import Pool
 
 
 def convert(path: str = get_source_path(), subdir: str = "", processes=12):
-    task_name = "Task000_TEMPLATE"
+    task_name = "Task007_HABS_HD"
     file_suffix = ""  # e.g. ".nii.gz" or ".nii"
-    exclusion_patterns = []  # e.g. "func" or "fmri"
+    exclusion_patterns = ["fMRI"]  # e.g. "func" or "fmri"
     DWI_patterns = []  # e.g. "DWI" or "dwi"
-    PET_patterns = []  # e.g. "PET" or "pet"
+    PET_patterns = ["PET"]  # e.g. "PET" or "pet"
 
     source_dir = join(path, subdir)
     target_dir = join(get_data_path(), task_name)
@@ -68,27 +68,20 @@ def convert(path: str = get_source_path(), subdir: str = "", processes=12):
         chunksize=10,
     )
 
-    all_files_out = detect_final_cases(target_dir, extension=".pt")
-    skipped_files = len(files_standard_out) + len(files_PET) + len(files_DWI) - len(all_files_out)
-    generate_dataset_json(
-        join(target_dir, "dataset.json"),
-        dataset_name=task_name,
-        metadata={
-            "file_suffix": file_suffix,
-            "patterns_exclusion": exclusion_patterns,
-            "patterns_DWI": DWI_patterns,
-            "patterns_PET": PET_patterns,
-            "files_total_in_source_directory": len(files_standard) + len(files_DWI) + len(files_PET) + len(files_excluded),
-            "files_standard_in_source_directory": len(files_standard),
-            "files_DWI_in_source_directory": len(files_DWI),
-            "files_PET_in_source_directory": len(files_PET),
-            "files_excluded_in_source_directory": len(files_excluded),
-            "files_skipped_during_processing": skipped_files,
-            "final_files": len(all_files_out),
-        },
-        preprocessing_module=GBrainPreprocessingConfig,
+    postprocess_standard_dataset(
+        target_dir=target_dir,
+        file_suffix=file_suffix,
+        task_name=task_name,
+        DWI_patterns=DWI_patterns,
+        PET_patterns=PET_patterns,
+        exclusion_patterns=exclusion_patterns,
+        source_files_standard=files_standard,
+        source_files_DWI=files_DWI,
+        source_files_PET=files_PET,
+        source_files_excluded=files_excluded,
+        preprocessing_config=GBrainPreprocessingConfig,
+        processes=processes,
     )
-    generate_path_json(all_files_out, join(target_dir, "paths.json"))
 
 
 if __name__ == "__main__":
