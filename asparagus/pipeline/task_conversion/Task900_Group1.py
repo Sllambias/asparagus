@@ -16,9 +16,17 @@ from multiprocessing.pool import Pool
 import pandas as pd
 
 
-def convert(path: str = get_source_path(), subdir: str = "NIFD", dry_run=True):
-    task_name = "Task900_1-3"
-    sub_tasks = ["001", "002", "003"]
+def convert(path: str = get_source_path(), subdir: str = ""):
+    task_name = "Task900_Group1"
+    sub_tasks = [
+        "001",
+        "002",
+        "003",
+        "004",
+        "005",
+        "006",
+        "008",
+    ]
 
     target_dir = join(get_data_path(), task_name)
     ensure_dir_exists(target_dir)
