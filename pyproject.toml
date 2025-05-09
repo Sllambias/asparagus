@@ -21,6 +21,9 @@ dependencies = [
     "yucca>=2.2.7",
 ]
 
+[project.scripts]
+asparagus_tc = 'asparagus.pipeline.run.task_conversion:main'
+
 
 [project.optional-dependencies]
 test = [

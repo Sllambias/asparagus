@@ -14,6 +14,7 @@ from asparagus.functional.task_conversion_and_preprocessing import (
     get_image_and_metadata_output_paths,
     get_bvals_and_bvecs_v1,
     multiprocess_mri_dwi_pet_cases,
+    postprocess_standard_dataset,
 )
 from asparagus.paths import get_data_path, get_source_path
 from asparagus.modules.dataclasses.presets.preprocessing_presets import GBrainPreprocessingConfig
@@ -37,6 +38,8 @@ def convert(path: str = get_source_path(), subdir: str = "ADNI_NIFTI/ADNI_2025",
         "PASL",
         "ASL_",
         "Phantom",
+        "Scout",
+        "SCOUT",
     ]  # e.g. "func" or "fmri"
     DWI_patterns = ["DTI", "dMRI"]  # e.g. "DWI" or "dwi"
     PET_patterns = [
@@ -51,6 +54,7 @@ def convert(path: str = get_source_path(), subdir: str = "ADNI_NIFTI/ADNI_2025",
         "AV-45",
         "_AC",
         "FDG",
+        "Tau",
     ]  # e.g. "PET" or "pet"
 
     source_dir = join(path, subdir)
@@ -90,27 +94,20 @@ def convert(path: str = get_source_path(), subdir: str = "ADNI_NIFTI/ADNI_2025",
         chunksize=10,
     )
 
-    all_files_out = detect_final_cases(target_dir, extension=".pt")
-    skipped_files = len(files_standard_out) + len(files_PET) + len(files_DWI) - len(all_files_out)
-    generate_dataset_json(
-        join(target_dir, "dataset.json"),
-        dataset_name=task_name,
-        metadata={
-            "file_suffix": file_suffix,
-            "patterns_exclusion": exclusion_patterns,
-            "patterns_DWI": DWI_patterns,
-            "patterns_PET": PET_patterns,
-            "files_total_in_source_directory": len(files_standard) + len(files_DWI) + len(files_PET) + len(files_excluded),
-            "files_standard_in_source_directory": len(files_standard),
-            "files_DWI_in_source_directory": len(files_DWI),
-            "files_PET_in_source_directory": len(files_PET),
-            "files_excluded_in_source_directory": len(files_excluded),
-            "files_skipped_during_processing": skipped_files,
-            "final_files": len(all_files_out),
-        },
-        preprocessing_module=GBrainPreprocessingConfig,
+    postprocess_standard_dataset(
+        target_dir=target_dir,
+        file_suffix=file_suffix,
+        task_name=task_name,
+        DWI_patterns=DWI_patterns,
+        PET_patterns=PET_patterns,
+        exclusion_patterns=exclusion_patterns,
+        source_files_standard=files_standard,
+        source_files_DWI=files_DWI,
+        source_files_PET=files_PET,
+        source_files_excluded=files_excluded,
+        preprocessing_config=GBrainPreprocessingConfig,
+        processes=processes,
     )
-    generate_path_json(all_files_out, join(target_dir, "paths.json"))
 
 
 if __name__ == "__main__":

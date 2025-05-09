@@ -12,7 +12,7 @@ from asparagus.functional.task_conversion_and_preprocessing import (
     detect_cases,
     detect_final_cases,
     get_image_and_metadata_output_paths,
-    get_bvals_and_bvecs_v1,
+    get_bvals_and_bvecs_v2,
     multiprocess_mri_dwi_pet_cases,
     postprocess_standard_dataset,
 )
@@ -22,11 +22,11 @@ from itertools import repeat
 from multiprocessing.pool import Pool
 
 
-def convert(path: str = get_source_path(), subdir: str = "", processes=12):
-    task_name = "Task000_TEMPLATE"
-    file_suffix = ""  # e.g. ".nii.gz" or ".nii"
-    exclusion_patterns = []  # e.g. "func" or "fmri"
-    DWI_patterns = []  # e.g. "DWI" or "dwi"
+def convert(path: str = get_source_path(), subdir: str = "UCSF_PDGM", processes=12):
+    task_name = "Task029_UCSF_PDGM"
+    file_suffix = ".nii.gz"  # e.g. ".nii.gz" or ".nii"
+    exclusion_patterns = ["_ASL", "segmentation"]  # e.g. "func" or "fmri"
+    DWI_patterns = ["DTI", "DWI"]  # e.g. "DWI" or "dwi"
     PET_patterns = []  # e.g. "PET" or "pet"
 
     source_dir = join(path, subdir)
@@ -47,10 +47,7 @@ def convert(path: str = get_source_path(), subdir: str = "", processes=12):
     )
     files_DWI_out, pkls_DWI_out = get_image_and_metadata_output_paths(files_DWI, source_dir, target_dir, file_suffix)
     files_PET_out, pkls_PET_out = get_image_and_metadata_output_paths(files_PET, source_dir, target_dir, file_suffix)
-    bvals_DWI, bvecs_DWI = (
-        [],
-        [],
-    )  # use e.g. get_bvals_and_bvecs_v1(files_DWI, file_suffix) to get bvals and bvecs in the same directory as the images
+    bvals_DWI, bvecs_DWI = get_bvals_and_bvecs_v2(files_DWI, join(source_dir, "bvals"), join(source_dir, "bvec"))
 
     multiprocess_mri_dwi_pet_cases(
         files_standard=files_standard,

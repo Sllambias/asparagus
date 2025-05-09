@@ -47,18 +47,21 @@ def process_mri_case(path, image_save_path, pkl_save_path, preprocessing_config,
         logging.error(f"ValueError {e}: {path}")
 
 
-def process_dwi_case(path, bvals_path, bvecs_path, image_save_path, pkl_save_path, preprocessing_config, dtype=torch.float32):
+def process_dwi_case(
+    path, bvals_path, bvecs_path, image_save_path, pkl_save_path, preprocessing_config, dtype=torch.float32, strict=True
+):
     if os.path.isfile(image_save_path) and os.path.isfile(pkl_save_path):
         return
     try:
         image = nib.load(path)
+
         if len(image.shape) == 4:
             bvals = np.loadtxt(bvals_path)
             bvecs = np.loadtxt(bvecs_path)
             if not os.path.exists(bvals_path) or not os.path.exists(bvecs_path):
                 logging.error(f"SKIPPED: Missing bval or bvec for: {path}")
                 return
-            images, bvals = extract_3ddwi_from_4ddwi(image, bvals, bvecs)
+            images, bvals = extract_3ddwi_from_4ddwi(image, bvals, bvecs, strict=strict)
         else:
             images = [image]
             bvals = [""]
@@ -71,19 +74,21 @@ def process_dwi_case(path, bvals_path, bvecs_path, image_save_path, pkl_save_pat
             torch.save(torch.tensor(np.array(case), dtype=dtype), image_save_path.replace(".pt", f"_bval{bvals[idx]}.pt"))
             save_pickle(image_props, pkl_save_path.replace(".pkl", f"_bval{bvals[idx]}.pkl"))
             del case, image_props
+    except AssertionError as e:
+        logging.error(f"AssertionError {e}: {path}")
     except EOFError:
         logging.error(f"EOFError: {path} is corrupted.")
     except ValueError as e:
         logging.error(f"ValueError {e}: {path}")
 
 
-def process_pet_case(path, image_save_path, pkl_save_path, preprocessing_config, dtype=torch.float32):
+def process_pet_case(path, image_save_path, pkl_save_path, preprocessing_config, dtype=torch.float32, strict=True):
     if os.path.isfile(image_save_path) and os.path.isfile(pkl_save_path):
         return
     try:
         image = nib.load(path)
         if len(image.shape) == 4:
-            image = extract_3dpet_from_4dpet(image)
+            image = extract_3dpet_from_4dpet(image, strict=strict)
         case, image_props = preprocess_case_for_training_without_label(
             images=[image], **asdict(preprocessing_config), strict=False
         )
@@ -182,7 +187,10 @@ def verify_3D_image_is_valid(images: list, supposed_to_be_3D: bool = True):
 
 
 def extract_3dpet_from_4dpet(image):
-    assert np.min(image.shape) == image.shape[-1]  # Assert that time dimension is indeed last
+    if strict:
+        assert (
+            np.min(image.shape) == image.shape[-1]
+        ), f"Min shape not last dimension for PET. Set strict to False to allow this. Found shape {image.shape}"
     image_arr = np.mean(image.get_fdata(), axis=-1)
     header = image.header.copy()
     header.set_data_shape(image_arr.shape)
@@ -190,8 +198,11 @@ def extract_3dpet_from_4dpet(image):
     return image
 
 
-def extract_3ddwi_from_4ddwi(image, bvals, bvecs, bval_tolerance=50):
-    assert np.min(image.shape) == image.shape[-1]  # Assert that time dimension is indeed last
+def extract_3ddwi_from_4ddwi(image, bvals, bvecs, bval_tolerance=50, strict=True):
+    if strict:
+        assert (
+            np.min(image.shape) == image.shape[-1]
+        ), f"Min shape not last dimension for DWI. Set strict to False to allow this. Found shape {image.shape}"
     old_header = image.header.copy()
     # Group similar b-values
     bval_groups = group_bvalues(bvals, tolerance=bval_tolerance)

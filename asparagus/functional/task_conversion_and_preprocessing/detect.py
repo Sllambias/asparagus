@@ -68,4 +68,4 @@ def detect_task_name_from_task_id(task_id):
         if task_id.lower() in task.lower():
             return task
 
-    raise LookupError(f"Task {task_id} not found in {stage_path}.")
+    raise LookupError(f"Task {task_id} not found in {get_data_path()}.")

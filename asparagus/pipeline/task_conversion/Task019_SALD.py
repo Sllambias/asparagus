@@ -22,10 +22,10 @@ from itertools import repeat
 from multiprocessing.pool import Pool
 
 
-def convert(path: str = get_source_path(), subdir: str = "", processes=12):
-    task_name = "Task000_TEMPLATE"
-    file_suffix = ""  # e.g. ".nii.gz" or ".nii"
-    exclusion_patterns = []  # e.g. "func" or "fmri"
+def convert(path: str = get_source_path(), subdir: str = "SALD", processes=12):
+    task_name = "Task019_SALD"
+    file_suffix = ".nii.gz"  # e.g. ".nii.gz" or ".nii"
+    exclusion_patterns = ["func"]  # e.g. "func" or "fmri"
     DWI_patterns = []  # e.g. "DWI" or "dwi"
     PET_patterns = []  # e.g. "PET" or "pet"
 
@@ -47,10 +47,7 @@ def convert(path: str = get_source_path(), subdir: str = "", processes=12):
     )
     files_DWI_out, pkls_DWI_out = get_image_and_metadata_output_paths(files_DWI, source_dir, target_dir, file_suffix)
     files_PET_out, pkls_PET_out = get_image_and_metadata_output_paths(files_PET, source_dir, target_dir, file_suffix)
-    bvals_DWI, bvecs_DWI = (
-        [],
-        [],
-    )  # use e.g. get_bvals_and_bvecs_v1(files_DWI, file_suffix) to get bvals and bvecs in the same directory as the images
+    bvals_DWI, bvecs_DWI = get_bvals_and_bvecs_v1(files_DWI, file_suffix)
 
     multiprocess_mri_dwi_pet_cases(
         files_standard=files_standard,

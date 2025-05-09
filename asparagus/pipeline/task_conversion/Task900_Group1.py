@@ -25,7 +25,20 @@ def convert(path: str = get_source_path(), subdir: str = ""):
         "004",
         "005",
         "006",
+        "007",
         "008",
+        "009",
+        "010",
+        "011",
+        "012",
+        "013",
+        "014",
+        "015",
+        "016",
+        "017",
+        "018",
+        "019",
+        "020",
     ]
 
     target_dir = join(get_data_path(), task_name)

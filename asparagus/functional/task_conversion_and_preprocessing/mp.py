@@ -1,6 +1,8 @@
 from multiprocessing.pool import Pool
 from asparagus.functional.task_conversion_and_preprocessing import process_mri_case, process_dwi_case, process_pet_case
 from itertools import repeat
+import logging
+import torch
 
 
 def multiprocess_mri_dwi_pet_cases(
@@ -16,10 +18,11 @@ def multiprocess_mri_dwi_pet_cases(
     files_PET_out,
     pkls_PET_out,
     preprocessing_config,
+    strict=True,
     processes=12,
     chunksize=10,
 ):
-
+    logging.info(f"Starting multiprocessing for MRI/standard. Number of files: {len(files_standard)}")
     p = Pool(processes)
     p.starmap_async(
         process_mri_case,
@@ -34,6 +37,7 @@ def multiprocess_mri_dwi_pet_cases(
     p.close()
     p.join()
 
+    logging.info(f"Starting multiprocessing for DWI. Number of files: {len(files_DWI)}")
     p = Pool(processes)
     p.starmap_async(
         process_dwi_case,
@@ -44,12 +48,15 @@ def multiprocess_mri_dwi_pet_cases(
             files_DWI_out,
             pkls_DWI_out,
             repeat(preprocessing_config),
+            repeat(torch.float32),
+            repeat(strict),
         ),
         chunksize=chunksize,
     )
     p.close()
     p.join()
 
+    logging.info(f"Starting multiprocessing for PET. Number of files: {len(files_PET)}")
     p = Pool(processes)
     p.starmap_async(
         process_pet_case,
@@ -58,6 +65,8 @@ def multiprocess_mri_dwi_pet_cases(
             files_PET_out,
             pkls_PET_out,
             repeat(preprocessing_config),
+            repeat(torch.float32),
+            repeat(strict),
         ),
         chunksize=chunksize,
     )

@@ -16,8 +16,7 @@ def get_bvals_and_bvecs_v1(files, file_suffix):
     return bvals_out, bvecs_out
 
 
-def get_bvals_and_bvecs_v2():
-    """
-    V1 assumes bvals and bvecs are in another directory as the DWI files
-    """
-    raise NotImplementedError("This function is not implemented yet.")
+def get_bvals_and_bvecs_v2(files, bval_file, bvec_file):
+    bvals_out = [bval_file for f in files]
+    bvecs_out = [bvec_file for f in files]
+    return bvals_out, bvecs_out

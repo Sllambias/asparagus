@@ -22,12 +22,40 @@ from itertools import repeat
 from multiprocessing.pool import Pool
 
 
-def convert(path: str = get_source_path(), subdir: str = "", processes=12):
-    task_name = "Task000_TEMPLATE"
-    file_suffix = ""  # e.g. ".nii.gz" or ".nii"
-    exclusion_patterns = []  # e.g. "func" or "fmri"
-    DWI_patterns = []  # e.g. "DWI" or "dwi"
-    PET_patterns = []  # e.g. "PET" or "pet"
+def convert(path: str = get_source_path(), subdir: str = "ADNIDOD", processes=12):
+    task_name = "Task028_ADNIDOD"
+    file_suffix = ".nii.gz"  # e.g. ".nii.gz" or ".nii"
+    exclusion_patterns = [
+        "Calibration",
+        "SURVEY",
+        "fMRI",
+        "fmri",
+        "mask",
+        "localizer",
+        "Localizer",
+        "LOCALIZER",
+        "_2D_",
+        "PASL",
+        "ASL_",
+        "Phantom",
+        "Scout",
+        "SCOUT",
+    ]  # e.g. "func" or "fmri"
+    DWI_patterns = ["DTI", "dMRI"]  # e.g. "DWI" or "dwi"
+    PET_patterns = [
+        "PET",
+        "FLORTAUCIPIR",
+        "Flortaucipir",
+        "florbetapir",
+        "florbetaben",
+        "AV1451",
+        "AV-1451",
+        "AV45",
+        "AV-45",
+        "_AC",
+        "FDG",
+        "Tau",
+    ]  # e.g. "PET" or "pet"
 
     source_dir = join(path, subdir)
     target_dir = join(get_data_path(), task_name)
@@ -47,10 +75,7 @@ def convert(path: str = get_source_path(), subdir: str = "", processes=12):
     )
     files_DWI_out, pkls_DWI_out = get_image_and_metadata_output_paths(files_DWI, source_dir, target_dir, file_suffix)
     files_PET_out, pkls_PET_out = get_image_and_metadata_output_paths(files_PET, source_dir, target_dir, file_suffix)
-    bvals_DWI, bvecs_DWI = (
-        [],
-        [],
-    )  # use e.g. get_bvals_and_bvecs_v1(files_DWI, file_suffix) to get bvals and bvecs in the same directory as the images
+    bvals_DWI, bvecs_DWI = get_bvals_and_bvecs_v1(files_DWI, file_suffix)
 
     multiprocess_mri_dwi_pet_cases(
         files_standard=files_standard,
