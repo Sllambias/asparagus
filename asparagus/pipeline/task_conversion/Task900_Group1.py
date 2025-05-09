@@ -39,6 +39,19 @@ def convert(path: str = get_source_path(), subdir: str = ""):
         "018",
         "019",
         "020",
+        "021",
+        "022",
+        "023",
+        "024",
+        "025",
+        "026",
+        "027",
+        "028",
+        "029",
+        "030",
+        "031",
+        "032",
+        "033",
     ]
 
     target_dir = join(get_data_path(), task_name)

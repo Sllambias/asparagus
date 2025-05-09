@@ -22,40 +22,12 @@ from itertools import repeat
 from multiprocessing.pool import Pool
 
 
-def convert(path: str = get_source_path(), subdir: str = "ADNI_NIFTI/ADNI_2025", processes=12):
-    task_name = "Task009_ADNI"
+def convert(path: str = get_source_path(), subdir: str = "PPMI/DATA_NIFTI", processes=12):
+    task_name = "Task033_PPMI"
     file_suffix = ".nii.gz"  # e.g. ".nii.gz" or ".nii"
-    exclusion_patterns = [
-        "Calibration",
-        "SURVEY",
-        "fMRI",
-        "fmri",
-        "mask",
-        "localizer",
-        "Localizer",
-        "LOCALIZER",
-        "PASL",
-        "ASL_",
-        "Phantom",
-        "Scout",
-        "SCOUT",
-    ]  # e.g. "func" or "fmri"
-    DWI_patterns = ["DTI", "dMRI"]  # e.g. "DWI" or "dwi"
-    PET_patterns = [
-        "PET",
-        "FLORTAUCIPIR",
-        "Flortaucipir",
-        "florbetapir",
-        "florbetaben",
-        "Florbetaben",
-        "AV1451",
-        "AV-1451",
-        "AV45",
-        "AV-45",
-        "_AC",
-        "FDG",
-        "Tau",
-    ]  # e.g. "PET" or "pet"
+    exclusion_patterns = ["Phantom", "fMRI"]  # e.g. "func" or "fmri"
+    DWI_patterns = ["DTI"]  # e.g. "DWI" or "dwi"
+    PET_patterns = []  # e.g. "PET" or "pet"
 
     source_dir = join(path, subdir)
     target_dir = join(get_data_path(), task_name)
@@ -90,7 +62,6 @@ def convert(path: str = get_source_path(), subdir: str = "ADNI_NIFTI/ADNI_2025",
         files_PET_out=files_PET_out,
         pkls_PET_out=pkls_PET_out,
         preprocessing_config=GBrainPreprocessingConfig,
-        strict=False,
         processes=processes,
         chunksize=10,
     )

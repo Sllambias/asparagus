@@ -34,7 +34,6 @@ def convert(path: str = get_source_path(), subdir: str = "ADNIDOD", processes=12
         "localizer",
         "Localizer",
         "LOCALIZER",
-        "_2D_",
         "PASL",
         "ASL_",
         "Phantom",
@@ -90,6 +89,7 @@ def convert(path: str = get_source_path(), subdir: str = "ADNIDOD", processes=12
         files_PET_out=files_PET_out,
         pkls_PET_out=pkls_PET_out,
         preprocessing_config=GBrainPreprocessingConfig,
+        strict=False,
         processes=processes,
         chunksize=10,
     )

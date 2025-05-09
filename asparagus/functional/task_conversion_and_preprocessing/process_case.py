@@ -96,6 +96,8 @@ def process_pet_case(path, image_save_path, pkl_save_path, preprocessing_config,
         torch.save(torch.tensor(np.array(case), dtype=dtype), image_save_path)
         save_pickle(image_props, pkl_save_path)
         del case, image_props
+    except AssertionError as e:
+        logging.error(f"AssertionError {e}: {path}")
     except EOFError:
         logging.error(f"EOFError: {path} is corrupted.")
     except ValueError as e:
@@ -178,7 +180,7 @@ def verify_3D_image_is_valid(images: list, supposed_to_be_3D: bool = True):
     for image in images:
         if supposed_to_be_3D and len(image.shape) != 3:
             raise ValueError(f"image is not 3D. Shape: {image.shape}.  ")
-        if np.min(image.shape) < 20:
+        if np.min(image.shape) < 15:
             raise ValueError(f"image is too small. Shape: {image.shape}. ")
         if np.count_nonzero(image) < 1:
             raise ValueError(f"image is all zeros. ")
@@ -186,7 +188,7 @@ def verify_3D_image_is_valid(images: list, supposed_to_be_3D: bool = True):
             raise ValueError(f"image contains NaN values. ")
 
 
-def extract_3dpet_from_4dpet(image):
+def extract_3dpet_from_4dpet(image, strict=True):
     if strict:
         assert (
             np.min(image.shape) == image.shape[-1]

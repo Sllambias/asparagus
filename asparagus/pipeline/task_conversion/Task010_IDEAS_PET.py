@@ -22,7 +22,7 @@ from itertools import repeat
 from multiprocessing.pool import Pool
 
 
-def convert(path: str = get_source_path(), subdir: str = "IDEAS_PET/NIFTI", processes=12):
+def convert(path: str = get_source_path(), subdir: str = "IDEAS_PET/IDEAS_NIFTI", processes=12):
     task_name = "Task010_IDEAS_PET"
     file_suffix = ".nii.gz"  # e.g. ".nii.gz" or ".nii"
     exclusion_patterns = []  # e.g. "func" or "fmri"

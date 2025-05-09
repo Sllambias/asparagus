@@ -62,6 +62,7 @@ def convert(path: str = get_source_path(), subdir: str = "MCSA/MCSA_NIfTI", proc
         files_PET_out=files_PET_out,
         pkls_PET_out=pkls_PET_out,
         preprocessing_config=GBrainPreprocessingConfig,
+        strict=False,
         processes=processes,
         chunksize=10,
     )

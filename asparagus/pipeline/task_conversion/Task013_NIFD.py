@@ -25,7 +25,7 @@ from multiprocessing.pool import Pool
 def convert(path: str = get_source_path(), subdir: str = "NIFD/NIFD_NIfTI", processes=12):
     task_name = "Task013_NIFD"
     file_suffix = ".nii.gz"  # e.g. ".nii.gz" or ".nii"
-    exclusion_patterns = ["localizer", "2D_", "Resting", "Scout", "fMRI"]  # e.g. "func" or "fmri"
+    exclusion_patterns = ["localizer", "Resting", "Scout", "fMRI"]  # e.g. "func" or "fmri"
     DWI_patterns = ["DTI", "dti", "DIFFUSION", "diff"]  # e.g. "DWI" or "dwi"
     PET_patterns = ["FDG", "PIB"]  # e.g. "PET" or "pet"
 
