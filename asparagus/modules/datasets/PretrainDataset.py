@@ -7,15 +7,9 @@ from yucca.modules.data.augmentation.transforms.cropping_and_padding import (
     CropPad,
     Torch_CropPad,
 )
-from batchgenerators.utilities.file_and_folder_operations import join
 
 
-class GBrainDataset(Dataset):
-    """
-    Dataset class for FOMO downstream tasks. Supports classification and regression tasks.
-    For segmentation tasks, use YuccaTrainDataset from the Yucca library instead.
-    """
-
+class PretrainDataset(Dataset):
     def __init__(
         self,
         files: list,
@@ -33,7 +27,6 @@ class GBrainDataset(Dataset):
         return len(self.files)
 
     def __getitem__(self, idx):
-        # print(self.files, idx)
         file = self.files[idx]
         data = torch.load(file)
         data_dict = {
@@ -49,13 +42,3 @@ class GBrainDataset(Dataset):
         if self.composed_transforms is not None:
             data_dict = self.composed_transforms(data_dict)
         return data_dict
-
-
-if __name__ == "__main__":
-    dataset = GBrainDataset(
-        load_json("/home/zcr545/data/data/projects/GBrains/Task900_Group1/paths.json"),
-        patch_size=(32, 32, 32),
-    )
-    im = next(iter(dataset))
-    print(im["image"].shape)
-    print(type(im["image"]))

@@ -18,8 +18,6 @@ class SelfSupervisedModel(L.LightningModule):
         steps_per_epoch: int,
         epochs: int,
         learning_rate: float,
-        config: dict,
-        optimizer: str = "AdamW",
         warmup_epochs: int = 10,
         cosine_period_ratio: float = 1,
         input_channels: int = 1,
@@ -28,9 +26,7 @@ class SelfSupervisedModel(L.LightningModule):
         mask_patch_size: int = 4,
         mask_ratio: float = 0.6,
         compile_mode: str = None,
-        debug_losses: bool = False,
         rec_loss_masked_only: bool = False,
-        norm_type: str = None,  # only for mednext
     ):
         super().__init__()
         # Model parameters
@@ -42,9 +38,8 @@ class SelfSupervisedModel(L.LightningModule):
         self.learning_rate = learning_rate
 
         # losses
-        self._rec_loss_fn = nn.MSELoss(reduction=mse_reduction)  # reconstruction
+        self._rec_loss_fn = nn.MSELoss(reduction="mean")
         self.rec_loss_masked_only = rec_loss_masked_only
-        self.optimizer = optimizer
 
         self.steps_per_epoch = steps_per_epoch
         self.epochs = epochs
@@ -63,9 +58,6 @@ class SelfSupervisedModel(L.LightningModule):
 
     def training_step(self, batch, batch_idx):
         x, y = batch["image"], batch["label"]
-
-        assert x.shape[1] == self.input_channels, f"Expected {self.input_channels} input channels but got {x.shape[1]}"
-        assert 0 <= x.min() and x.max() <= 1, "Intensities should be normalized to (0, 1)"
 
         y_hat, mask = self._augment_and_forward(x)
 
@@ -111,9 +103,9 @@ class SelfSupervisedModel(L.LightningModule):
         return y_hat, mask
 
     def configure_optimizers(self):
-        self.optimizer = AdamW(self.parameters(), lr=self.learning_rate)
+        optimizer = AdamW(self.parameters(), lr=self.learning_rate)
 
-        print(f"Using optimizer {self.optimizer.class__.__name__} with learning rate {self.learning_rate}")
+        print(f"Using optimizer {optimizer.class__.__name__} with learning rate {self.learning_rate}")
 
         # cosine_half_period is from max to min
         cosine_half_period = int(self.cosine_period_ratio * self.epochs) - self.warmup_epochs
