@@ -16,7 +16,7 @@ from multiprocessing.pool import Pool
 import pandas as pd
 
 
-def convert(path: str = get_source_path(), subdir: str = ""):
+def convert(path: str = get_source_path(), subdir: str = "", processes=None):
     task_name = "Task900_Group1"
     sub_tasks = [
         "001",
@@ -52,6 +52,7 @@ def convert(path: str = get_source_path(), subdir: str = ""):
         "031",
         "032",
         "033",
+        "034",
     ]
 
     target_dir = join(get_data_path(), task_name)

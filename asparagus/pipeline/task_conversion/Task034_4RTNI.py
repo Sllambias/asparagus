@@ -26,7 +26,7 @@ def convert(path: str = get_source_path(), subdir: str = "4RTNI/4RTNI_NIFTI", pr
     task_name = "Task034_4RTNI"
     file_suffix = ".nii.gz"  # e.g. ".nii.gz" or ".nii"
     exclusion_patterns = ["fMRI", "Localizer"]  # e.g. "func" or "fmri"
-    DWI_patterns = ["DTI"]  # e.g. "DWI" or "dwi"
+    DWI_patterns = ["DTI", "diff", "dti"]  # e.g. "DWI" or "dwi"
     PET_patterns = []  # e.g. "PET" or "pet"
 
     source_dir = join(path, subdir)
@@ -64,6 +64,7 @@ def convert(path: str = get_source_path(), subdir: str = "4RTNI/4RTNI_NIFTI", pr
         preprocessing_config=GBrainPreprocessingConfig,
         processes=processes,
         chunksize=10,
+        strict=False,
     )
 
     postprocess_standard_dataset(
