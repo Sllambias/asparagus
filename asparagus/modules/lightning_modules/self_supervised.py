@@ -1,17 +1,15 @@
 import copy
-from typing import List
 import lightning as L
 import torch
 import torch.nn as nn
-from torch.optim import Adam, AdamW
+from torch.optim import AdamW
 from torch.optim.lr_scheduler import LinearLR, CosineAnnealingLR, SequentialLR
 from yucca.functional.utils.kwargs import filter_kwargs
-from augmentations.mask import random_mask
-from models import networks
+
+# from augmentations.mask import random_mask
 
 
 class SelfSupervisedModel(L.LightningModule):
-
     def __init__(
         self,
         model: nn.Module,
@@ -54,13 +52,14 @@ class SelfSupervisedModel(L.LightningModule):
 
         # Save params and start training
         self.save_hyperparameters()
-        self.model = load_model(model)
+        self.model = self.load_model(
+            model, input_channels=self.input_channels, output_channels=self.output_channels, compile_mode=self.compile_mode
+        )
 
     def training_step(self, batch, batch_idx):
         x, y = batch["image"], batch["label"]
 
         y_hat, mask = self._augment_and_forward(x)
-
         loss = self.rec_loss(y_hat, y, mask=mask if self.rec_loss_masked_only else None)
 
         self.log_dict({"train/loss": loss})
@@ -68,10 +67,6 @@ class SelfSupervisedModel(L.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         x, y = batch["image"], batch["label"]
-
-        assert len(x.shape) == 5
-        assert x.shape[1] == self.input_channels, f"Expected {self.input_channels} input channels but got {x.shape[1]}"
-        assert 0 <= x.min() and x.max() <= 1, f"Intensities should be normalized to (0, 1), but was {(x.min(), x.max())}"
 
         y_hat, mask = self._augment_and_forward(x)
         loss = self.rec_loss(y_hat, y, mask=mask if self.rec_loss_masked_only else None)
@@ -93,19 +88,16 @@ class SelfSupervisedModel(L.LightningModule):
     def _augment_and_forward(self, x):
         with torch.no_grad():
             # x, mask = random_mask(x, self.mask_ratio, self.mask_patch_size)
-            mask = x.copy()
+            mask = x
 
         y_hat = self.model(x)
-
-        assert y_hat is not None
-        assert y_hat.shape == x.shape, f"Got shape: {y_hat.shape}, expected: {x.shape}"
 
         return y_hat, mask
 
     def configure_optimizers(self):
         optimizer = AdamW(self.parameters(), lr=self.learning_rate)
 
-        print(f"Using optimizer {optimizer.class__.__name__} with learning rate {self.learning_rate}")
+        print(f"Using optimizer {optimizer.__class__.__name__} with learning rate {self.learning_rate}")
 
         # cosine_half_period is from max to min
         cosine_half_period = int(self.cosine_period_ratio * self.epochs) - self.warmup_epochs
@@ -165,14 +157,14 @@ class SelfSupervisedModel(L.LightningModule):
 
     @staticmethod
     def load_model(model, input_channels, output_channels, compile_mode):
-        print(f"Loading Model: {model.__class__.__name__}")
-
         model_kwargs = {
             "input_channels": input_channels,
             "output_channels": output_channels,
         }
-        model_kwargs = filter_kwargs(model_func, model_kwargs)
-        model = model_func(**model_kwargs)
+        model_kwargs = filter_kwargs(model, model_kwargs)
+        model = model(**model_kwargs)
 
         model = torch.compile(model, mode=compile_mode) if compile_mode is not None else model
+
+        print(f"Loaded Model: {model.__class__.__name__}")
         return model

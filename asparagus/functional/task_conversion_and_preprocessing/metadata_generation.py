@@ -35,10 +35,6 @@ def generate_dataset_json(
     enhanced_save_json(json_dict, os.path.join(output_file))
 
 
-def generate_path_json(paths, outpath):
-    enhanced_save_json(paths, outpath)
-
-
 def postprocess_standard_dataset(
     target_dir,
     task_name,
@@ -88,4 +84,4 @@ def postprocess_standard_dataset(
         },
         preprocessing_module=preprocessing_config,
     )
-    generate_path_json(target_all_files, join(target_dir, "paths.json"))
+    enhanced_save_json(target_all_files, join(target_dir, "paths.json"))
