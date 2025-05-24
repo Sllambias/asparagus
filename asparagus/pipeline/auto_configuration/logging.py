@@ -16,20 +16,17 @@ def logging(
     wandb_log_model: Union[bool, str] = False,
 ):
 
-    if isinstance(version, str):
-        version = int(version)
-
     loggers = [
         YuccaLogger(
             save_dir=save_dir,
             name=None,
-            version=version,
+            version=f"run_id={version}",
             steps_per_epoch=steps_per_epoch,
         )
     ]
     loggers.append(
         WandbLogger(
-            name=f"{wandb_experiment}_V{version}",
+            name=f"{wandb_experiment}_{version}",
             notes=wandb_run_description,
             save_dir=version_dir,
             project=wandb_project,

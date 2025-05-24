@@ -8,11 +8,30 @@ The idea of task conversion for large pretraining datasets is to convert the dat
 ### Generate data splits
 python asparagus/pipeline/run/split.py -t TASK --fn split_80_20
 
+### Config tips.
+CLI change config: --config_name name_of_config
 
-### Run Pretraining with hydra config
-python asparagus/pipeline/run/train.py --config-name pretrain  
+For detailed control of the configs see also the core:base config.
 
+### Run Pretraining with the default pretrain config.
+python asparagus/pipeline/run/pretrain.py
 
+### Run Finetuning with hydra config
+python asparagus/pipeline/run/finetune.py 
+
+To change the pretrained model simply refer to its run_id and checkpoint name:
+```
+pretrained_run_id: 532
+pretrained_checkpoint_name: epoch=4-step=25.ckpt
+```
+
+Asparagus will create a "derived_models.log" in the folder of the pretrained model so you can always track which finetuned models and run_ids are its children. 
 
 ### Rerun previously executed jobs
 python my_app.py --experimental-rerun $OUTPUT_DIR/config.pickle
+
+
+### Asparagus Versioning
+Versioning is controlled by unique IDs. Each time you start a run Asparagus will either generate a new unique ID or resume training an identical run and re-use its existing ID. To control this behavior use the "resume_training: [True/False]".
+
+When generating new IDs Asparagus will create IDs with higher numerical value than existing IDs for identical runs. I.e. if you have previously trained a model with run_id=532 using setup A and you want to run another identical training, without resuming run_id=532, then the new run_id will be higher than 532. This way you always know the order they were trained in.

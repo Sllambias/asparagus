@@ -37,8 +37,8 @@ def train(cfg: DictConfig) -> None:
 
     model = instantiate(
         cfg._internal_.net,
-        input_channels=file_store.dataset_json["metadata"]["n_modalities"],
-        output_channels=file_store.dataset_json["metadata"]["n_classes"],
+        input_channels=cfg.model.input_channels,
+        output_channels=cfg.model.output_channels,
         dimensions=cfg.model.dimensions,
     )
 

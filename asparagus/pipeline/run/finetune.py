@@ -26,7 +26,7 @@ def train(cfg: DictConfig) -> None:
 
     pl.seed_everything(seed=cfg.experiment.seed, workers=True)
 
-    add_run_to_pretrained_derivative_list(path_store.ckpt_path, path_store.output_dir)
+    add_run_to_pretrained_derivative_list(version_store.version, path_store.ckpt_parent_folder, path_store.output_dir)
 
     loggers = logging(
         ckpt_wandb_id=version_store.wandb_id,

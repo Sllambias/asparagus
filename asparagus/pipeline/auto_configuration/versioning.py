@@ -1,4 +1,4 @@
-from asparagus.functional.versioning import detect_version, detect_wandb_id
+from asparagus.functional.versioning import detect_version, detect_wandb_id, detect_used_ids, detect_id
 from asparagus.modules.dataclasses import VersioningConfig, PathingConfig
 from batchgenerators.utilities.file_and_folder_operations import maybe_mkdir_p as ensure_dir_exists, join, load_json
 from hydra.core.hydra_config import HydraConfig
@@ -14,13 +14,13 @@ def versioning(cfg) -> VersioningConfig:
     ensure_dir_exists(save_dir)
 
     # Detect the version of the data
-    version = detect_version(save_dir, continue_from_most_recent)
-    version_dir = join(save_dir, f"version_{version}")
-    wandb_id = detect_wandb_id(version_dir=version_dir, continue_from_most_recent=continue_from_most_recent)
+    run_id = detect_used_ids(save_dir=save_dir, continue_from_most_recent=continue_from_most_recent)
+    run_id_dir = join(save_dir, f"run_id={run_id}")
+    wandb_id = detect_wandb_id(version_dir=run_id_dir, continue_from_most_recent=continue_from_most_recent)
     # Create a simple path configuration
     cfg = VersioningConfig(
-        version=version,
-        version_dir=version_dir,
+        version=run_id,
+        version_dir=run_id_dir,
         wandb_id=wandb_id,
     )
 
@@ -29,7 +29,10 @@ def versioning(cfg) -> VersioningConfig:
 
 def pathing(cfg):
     output_dir = HydraConfig.get().runtime.output_dir
-    pretrained_ckpt = cfg.experiment.checkpoint
+    model_folder = detect_id(cfg.experiment.pretrained_run_id)
+    pretrained_ckpt = join(model_folder, "checkpoints", cfg.experiment.pretrained_checkpoint_name)
     dataset_json_path = cfg.data.data_path + "/dataset.json"
-    pathingcfg = PathingConfig(output_dir=output_dir, ckpt_path=pretrained_ckpt, dataset_json_path=dataset_json_path)
+    pathingcfg = PathingConfig(
+        output_dir=output_dir, ckpt_parent_folder=model_folder, ckpt_path=pretrained_ckpt, dataset_json_path=dataset_json_path
+    )
     return pathingcfg
