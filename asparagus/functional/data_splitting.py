@@ -9,7 +9,7 @@ def split_80_20(files: list):
 
 def split(files: list, fn: split_80_20, folds=5, save_path: str = None):
     splits = []
-    for i in folds:
+    for i in range(folds):
         train, val = fn(files)
         splits.append({"train": train, "val": val})
     if save_path is not None:

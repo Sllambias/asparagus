@@ -1,1 +1,2 @@
-from .self_supervised import SelfSupervisedModel
+from .self_supervised import SelfSupervisedModule
+from .segmentation_module import SegmentationModule

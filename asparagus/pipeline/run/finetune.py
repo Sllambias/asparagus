@@ -17,14 +17,16 @@ OmegaConf.register_new_resolver("random", lambda min, max: random.randint(min, m
 
 @hydra.main(
     config_path="/Users/zcr545/Desktop/Projects/repos/asparagus_data/configs",
-    config_name="train",
+    config_name="finetune",
     version_base="1.2",
 )
 def train(cfg: DictConfig) -> None:
     file_store, path_store, version_store = prepare_standard_experiment(cfg)
-
     steps_per_epoch = len(file_store.splits["train"]) // cfg.training.batch_size
+
     pl.seed_everything(seed=cfg.experiment.seed, workers=True)
+
+    add_run_to_pretrained_derivative_list(path_store.ckpt_path, path_store.output_dir)
 
     loggers = logging(
         ckpt_wandb_id=version_store.wandb_id,

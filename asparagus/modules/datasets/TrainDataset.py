@@ -31,8 +31,8 @@ class TrainDataset(Dataset):
         data = torch.load(file)
         data_dict = {
             "file_path": file,
-            "image": data,
-            "label": data,
+            "image": data[:-1],
+            "label": data[-1:],
         }
 
         return self._transform(data_dict)

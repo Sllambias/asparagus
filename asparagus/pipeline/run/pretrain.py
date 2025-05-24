@@ -7,7 +7,6 @@ import lightning as pl
 import random
 from asparagus.pipeline.auto_configuration import versioning, logging
 from hydra.core.hydra_config import HydraConfig
-from asparagus.functional.utils import add_run_to_pretrained_derivative_list
 from asparagus.pipeline.auto_configuration.experiment_setup import prepare_standard_experiment
 
 load_dotenv()
@@ -17,7 +16,7 @@ OmegaConf.register_new_resolver("random", lambda min, max: random.randint(min, m
 
 @hydra.main(
     config_path="/Users/zcr545/Desktop/Projects/repos/asparagus_data/configs",
-    config_name="train",
+    config_name="pretrain",
     version_base="1.2",
 )
 def train(cfg: DictConfig) -> None:
@@ -47,7 +46,6 @@ def train(cfg: DictConfig) -> None:
         cfg._internal_.lightning_module,
         model=model,
         steps_per_epoch=steps_per_epoch,
-        weights=path_store.ckpt_path,
     )
 
     data_module = instantiate(
@@ -68,6 +66,7 @@ def train(cfg: DictConfig) -> None:
     trainer.fit(
         model=model_module,
         datamodule=data_module,
+        ckpt_path="last",
     )
 
 

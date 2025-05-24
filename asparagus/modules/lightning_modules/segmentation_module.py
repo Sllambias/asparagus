@@ -6,11 +6,10 @@ from torch.optim import AdamW
 from torch.optim.lr_scheduler import LinearLR, CosineAnnealingLR, SequentialLR
 from yucca.functional.utils.kwargs import filter_kwargs
 from asparagus.modules.lightning_modules.base_module import BaseModule
+from yucca.modules.optimization.loss_functions.nnUNet_losses import DiceCE
 
-# from augmentations.mask import random_mask
 
-
-class SelfSupervisedModule(BaseModule):
+class SegmentationModule(BaseModule):
     def __init__(
         self,
         model: nn.Module,
@@ -20,10 +19,8 @@ class SelfSupervisedModule(BaseModule):
         warmup_epochs: int = 10,
         cosine_period_ratio: float = 1,
         patch_size: list | tuple = None,
-        mask_patch_size: int = 4,
-        mask_ratio: float = 0.6,
         compile_mode: str = None,
-        rec_loss_masked_only: bool = False,
+        weights: str = None,
     ):
         super().__init__(
             model=model,
@@ -33,22 +30,19 @@ class SelfSupervisedModule(BaseModule):
             warmup_epochs=warmup_epochs,
             cosine_period_ratio=cosine_period_ratio,
             compile_mode=compile_mode,
+            weights=weights,
         )
         # Model parameters
         self.patch_size = patch_size
 
         # losses
-        self._rec_loss_fn = nn.MSELoss(reduction="mean")
-        self.rec_loss_masked_only = rec_loss_masked_only
-
-        self.mask_ratio = mask_ratio
-        self.mask_patch_size = mask_patch_size
+        self.loss = DiceCE()
 
     def training_step(self, batch, batch_idx):
         x, y = batch["image"], batch["label"]
 
-        y_hat, mask = self._augment_and_forward(x)
-        loss = self.rec_loss(y_hat, y, mask=mask if self.rec_loss_masked_only else None)
+        pred = self.model(x)
+        loss = self.loss(pred, y)
 
         self.log_dict({"train/loss": loss}, sync_dist=True)
         return loss
@@ -56,28 +50,7 @@ class SelfSupervisedModule(BaseModule):
     def validation_step(self, batch, batch_idx):
         x, y = batch["image"], batch["label"]
 
-        y_hat, mask = self._augment_and_forward(x)
-        loss = self.rec_loss(y_hat, y, mask=mask if self.rec_loss_masked_only else None)
+        pred = self.model(x)
+        loss = self.loss(pred, y)
 
         self.log_dict({"val/loss": loss}, sync_dist=True)
-
-    def rec_loss(self, y, y_hat, mask=None):
-        """
-        Reconstruction MSE loss. If a mask tensor is provided, the loss will only be calculated on masked tokens.
-        """
-        if mask is not None:
-            y = y.clone()
-            y_hat = y_hat.clone()
-            y[~mask] = 0
-            y_hat[~mask] = 0
-
-        return self._rec_loss_fn(y, y_hat)
-
-    def _augment_and_forward(self, x):
-        with torch.no_grad():
-            # x, mask = random_mask(x, self.mask_ratio, self.mask_patch_size)
-            mask = x
-
-        y_hat = self.model(x)
-
-        return y_hat, mask
