@@ -304,10 +304,10 @@ class UNet(YuccaNet):
         encoder: nn.Module = UNetEncoder,
         encoder_basic_block=MultiLayerConvDropoutNormNonlin.get_block_constructor(2),
         decoder: nn.Module = UNetDecoder,
-        decoder_basic_block=MultiLayerConvDropoutNormNonlin.get_block_constructor(1),
+        decoder_basic_block=MultiLayerConvDropoutNormNonlin.get_block_constructor(2),
         dimensions: str = "3D",
         starting_filters: int = 32,
-        use_skip_connections: bool = False,
+        use_skip_connections: bool = True,
     ):
         super().__init__()
         if dimensions == "2D":
@@ -364,6 +364,20 @@ def unet_b_lw_dec(
         dimensions=dimensions,
         starting_filters=32,
         use_skip_connections=False,
+    )
+
+
+def unet_b(
+    input_channels: int = 1,
+    output_channels: int = 1,
+    dimensions: str = "3D",
+):
+
+    return UNet(
+        input_channels=input_channels,
+        output_channels=output_channels,
+        dimensions=dimensions,
+        starting_filters=32,
     )
 
 

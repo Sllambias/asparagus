@@ -5,7 +5,6 @@ from batchgenerators.utilities.file_and_folder_operations import (
 )
 from asparagus.functional.task_conversion_and_preprocessing import (
     generate_dataset_json,
-    generate_path_json,
     process_mri_case,
     process_dwi_case,
     process_pet_case,

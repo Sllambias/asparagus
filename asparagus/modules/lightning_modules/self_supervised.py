@@ -58,7 +58,7 @@ class SelfSupervisedModel(L.LightningModule):
         y_hat, mask = self._augment_and_forward(x)
         loss = self.rec_loss(y_hat, y, mask=mask if self.rec_loss_masked_only else None)
 
-        self.log_dict({"train/loss": loss})
+        self.log_dict({"train/loss": loss}, sync_dist=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -67,7 +67,7 @@ class SelfSupervisedModel(L.LightningModule):
         y_hat, mask = self._augment_and_forward(x)
         loss = self.rec_loss(y_hat, y, mask=mask if self.rec_loss_masked_only else None)
 
-        self.log_dict({"val/loss": loss})
+        self.log_dict({"val/loss": loss}, sync_dist=True)
 
     def rec_loss(self, y, y_hat, mask=None):
         """
@@ -150,17 +150,3 @@ class SelfSupervisedModel(L.LightningModule):
             f"Wrong shape: {rejected_keys_shape}.\n"
             f"Post check not succesful: {rejected_keys_data}."
         )
-
-    @staticmethod
-    def load_model(model, input_channels, output_channels, compile_mode):
-        # model_kwargs = {
-        #    "input_channels": input_channels,
-        #    "output_channels": output_channels,
-        # }
-        # model_kwargs = filter_kwargs(model, model_kwargs)
-        # model = model(**model_kwargs)
-
-        model = torch.compile(model, mode=compile_mode) if compile_mode is not None else model
-
-        print(f"Loaded Model: {model.__class__.__name__}")
-        return model

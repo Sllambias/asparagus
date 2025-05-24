@@ -7,8 +7,11 @@ def split_80_20(files: list):
     return train, val
 
 
-def split(files: list, fn: split_80_20, save_path: str = None):
-    train, val = fn(files)
+def split(files: list, fn: split_80_20, folds=5, save_path: str = None):
+    splits = []
+    for i in folds:
+        train, val = fn(files)
+        splits.append({"train": train, "val": val})
     if save_path is not None:
-        enhanced_save_json(obj={"train": train, "val": val}, file=save_path)
+        enhanced_save_json(obj=splits, file=save_path)
     return train, val

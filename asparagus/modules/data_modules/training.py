@@ -3,10 +3,10 @@ from torchvision.transforms import Compose
 import logging
 from typing import Literal, Optional, Tuple
 from torch.utils.data import DataLoader
-from asparagus.modules.datasets.PretrainDataset import PretrainDataset
+from asparagus.modules.datasets.TrainDataset import TrainDataset
 
 
-class PretrainDataModule(pl.LightningDataModule):
+class TrainDataModule(pl.LightningDataModule):
     def __init__(
         self,
         batch_size: int,
@@ -38,13 +38,13 @@ class PretrainDataModule(pl.LightningDataModule):
 
     def setup_fit(self):
 
-        self.train_dataset = PretrainDataset(
+        self.train_dataset = TrainDataset(
             self.train_split,
             composed_transforms=self.composed_train_transforms,
             patch_size=self.patch_size,
         )
 
-        self.val_dataset = PretrainDataset(
+        self.val_dataset = TrainDataset(
             self.val_split,
             composed_transforms=self.composed_val_transforms,
             patch_size=self.patch_size,

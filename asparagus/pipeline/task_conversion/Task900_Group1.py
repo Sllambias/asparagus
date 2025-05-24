@@ -2,7 +2,6 @@ import os
 from batchgenerators.utilities.file_and_folder_operations import join, maybe_mkdir_p as ensure_dir_exists, load_json
 from asparagus.functional.task_conversion_and_preprocessing import (
     generate_dataset_json,
-    generate_path_json,
     process_mri_case,
     detect_cases,
     detect_final_cases,

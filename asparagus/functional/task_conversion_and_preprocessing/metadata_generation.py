@@ -48,6 +48,8 @@ def postprocess_standard_dataset(
     source_files_excluded,
     preprocessing_config,
     processes=12,
+    n_classes=0,
+    n_modalities=0,
 ):
 
     source_all_files = len(source_files_standard) + len(source_files_DWI) + len(source_files_PET) + len(source_files_excluded)
@@ -81,6 +83,8 @@ def postprocess_standard_dataset(
             "files_target_directory_DWI": len(target_files_DWI),
             "files_target_directory_PET": len(target_files_PET),
             "files_delta_after_processing": files_delta,
+            "n_classes": n_classes,
+            "n_modalities": n_modalities,
         },
         preprocessing_module=preprocessing_config,
     )
