@@ -78,7 +78,7 @@ def detect_id(id: str, model_dir: str = get_models_path()):
     all_cases = []
     # 1. Build list of all files in the directory recursively.
     for dirpath, _, _ in os.walk(model_dir):
-        if dirpath.endswith(f"id={id}"):
+        if dirpath.endswith(f"run_id={id}"):
             all_cases.append(dirpath)
     if len(all_cases) < 1:
         logging.warning(f"found 0 matches for ID: {id} in {model_dir}")

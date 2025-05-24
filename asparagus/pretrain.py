@@ -8,6 +8,7 @@ import random
 from asparagus.pipeline.auto_configuration import versioning, logging
 from hydra.core.hydra_config import HydraConfig
 from asparagus.pipeline.auto_configuration.experiment_setup import prepare_standard_experiment
+from asparagus.paths import get_config_path
 
 load_dotenv()
 
@@ -15,7 +16,7 @@ OmegaConf.register_new_resolver("random", lambda min, max: random.randint(min, m
 
 
 @hydra.main(
-    config_path="/Users/zcr545/Desktop/Projects/repos/asparagus_data/configs",
+    config_path=get_config_path(),
     config_name="pretrain",
     version_base="1.2",
 )
