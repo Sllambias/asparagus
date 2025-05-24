@@ -4,10 +4,7 @@ import torch
 import torch.nn as nn
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import LinearLR, CosineAnnealingLR, SequentialLR
-from yucca.functional.utils.kwargs import filter_kwargs
 from abc import abstractmethod
-
-# from augmentations.mask import random_mask
 
 
 class BaseModule(L.LightningModule):
