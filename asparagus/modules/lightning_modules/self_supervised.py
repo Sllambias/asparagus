@@ -48,13 +48,9 @@ class SelfSupervisedModel(L.LightningModule):
         self.mask_ratio = mask_ratio
         self.mask_patch_size = mask_patch_size
 
-        self.compile_mode = compile_mode
-
         # Save params and start training
-        self.save_hyperparameters()
-        self.model = self.load_model(
-            model, input_channels=self.input_channels, output_channels=self.output_channels, compile_mode=self.compile_mode
-        )
+        self.save_hyperparameters(ignore=["model"])
+        self.model = torch.compile(model, mode=compile_mode) if compile_mode is not None else model
 
     def training_step(self, batch, batch_idx):
         x, y = batch["image"], batch["label"]
@@ -157,12 +153,12 @@ class SelfSupervisedModel(L.LightningModule):
 
     @staticmethod
     def load_model(model, input_channels, output_channels, compile_mode):
-        model_kwargs = {
-            "input_channels": input_channels,
-            "output_channels": output_channels,
-        }
-        model_kwargs = filter_kwargs(model, model_kwargs)
-        model = model(**model_kwargs)
+        # model_kwargs = {
+        #    "input_channels": input_channels,
+        #    "output_channels": output_channels,
+        # }
+        # model_kwargs = filter_kwargs(model, model_kwargs)
+        # model = model(**model_kwargs)
 
         model = torch.compile(model, mode=compile_mode) if compile_mode is not None else model
 

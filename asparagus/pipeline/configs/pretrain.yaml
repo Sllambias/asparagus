@@ -1,0 +1,83 @@
+defaults:
+  - _self_
+  - basecfg@basecfg: 
+
+hydra:
+  run:
+    dir: ${oc.env:ASPARAGUS_MODELS}/${experiment.task}/${model.net}__${model.dimensions}/script=${hydra:job.name}/basecfg=${hydra:job.basecfg}/cfg=${hydra:job.config_name}__clargs=${hydra.job.override_dirname}/${data.splits}__fold=${data.fold}/version=${experiment.version}__id=${experiment.id}
+  sweep:
+    dir: ${oc.env:ASPARAGUS_MODELS}/${experiment.task}/${model.net}__${model.dimensions}
+    subdir: script=${hydra:job.name}/basecfg=${hydra:job.basecfg}/cfg=${hydra:job.config_name}__clargs=${hydra.job.override_dirname}/${data.splits}__fold=${data.fold}/version=${experiment.version}__id=${experiment.id}
+  job:
+    config:
+      override_dirname:
+        exclude_keys:
+          - experiment.task
+          - model.net
+          - model.dimensions
+
+experiment:
+  task: "Task998_LauritSyn"
+  version: 0
+  seed: ${now:%H%M%S}
+  id: ${now:%Y%m%d%H%M%S}${hydra:job.num}
+
+data:
+  data_module: PretrainDataModule
+  data_path: ${oc.env:ASPARAGUS_DATA}/${experiment.task}
+  splits: split_80_20
+  fold: 0
+
+model:
+  net: unet_b_lw_dec
+  lightning_module: SelfSupervisedModel
+  dimensions: 2D
+
+training:
+  epochs: 5
+  batch_size: 2
+  learning_rate: 1e-4
+  limit_train_batches: 5
+  limit_val_batches: 5
+  patch_size: [32, 32]
+
+hardware:
+  accelerator: "cpu"
+  num_devices: 1
+  num_workers: 1
+  precision: "bf16-mixed"
+
+logging:
+  progress_bar: True
+  profile: False
+  wandb_log_model: False
+  wandb_logging: True
+
+_internal_:
+  data_module:
+    _target_: asparagus.modules.data_modules.${data.data_module}
+    batch_size: ${training.batch_size}
+    num_workers: ${hardware.num_workers}
+    patch_size: ${training.patch_size}
+  lightning_module:
+    _target_: asparagus.modules.lightning_modules.self_supervised.${model.lightning_module}
+    epochs: ${training.epochs}
+    learning_rate: ${training.learning_rate}
+  net:
+    _target_: asparagus.modules.networks.nets.unet.${model.net}
+  trainer:
+    _target_: lightning.Trainer
+    accelerator: ${hardware.accelerator}
+    default_root_dir: ${hydra:run.dir}
+    devices: ${hardware.num_devices}
+    enable_progress_bar: ${logging.progress_bar}
+    limit_train_batches: ${training.limit_train_batches}
+    limit_val_batches: ${training.limit_val_batches}
+    max_epochs: ${training.epochs}
+    precision: ${hardware.precision}
+  splits_path: ${oc.env:ASPARAGUS_DATA}/${experiment.task}/${data.splits}.json
+
+# unused:
+#  output_channels:
+#  input_channels:
+#  steps_per_epoch:

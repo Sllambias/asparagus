@@ -1,30 +1,12 @@
 from typing import Literal
-
 import torch
 import torch.nn as nn
-
+import logging
 from yucca.modules.networks.networks.YuccaNet import YuccaNet
 from asparagus.modules.networks.blocks.conv_blocks import (
     DoubleConvDropoutNormNonlin,
     MultiLayerConvDropoutNormNonlin,
 )
-
-
-class UNet(YuccaNet):
-
-    def __init__(
-        self,
-        encoder: nn.Module,
-        decoder: nn.Module,
-    ):
-        super().__init__()
-
-        self.encoder = encoder
-        self.decoder = decoder
-
-    def forward(self, x):
-        enc = self.encoder(x)
-        return self.decoder(enc)
 
 
 class UNetEncoder(nn.Module):
@@ -313,26 +295,76 @@ class UNetDecoder(nn.Module):
         return logits
 
 
+class UNet(YuccaNet):
+
+    def __init__(
+        self,
+        input_channels: int,
+        output_channels: int,
+        encoder: nn.Module = UNetEncoder,
+        encoder_basic_block=MultiLayerConvDropoutNormNonlin.get_block_constructor(2),
+        decoder: nn.Module = UNetDecoder,
+        decoder_basic_block=MultiLayerConvDropoutNormNonlin.get_block_constructor(1),
+        dimensions: str = "3D",
+        starting_filters: int = 32,
+        use_skip_connections: bool = False,
+    ):
+        super().__init__()
+        if dimensions == "2D":
+            conv_op = nn.Conv2d
+            dropout_op = nn.Dropout2d
+            norm_op = nn.InstanceNorm2d
+            pool_op = nn.MaxPool2d
+            upsample_op = torch.nn.ConvTranspose2d
+        elif dimensions == "3D":
+            conv_op = nn.Conv3d
+            dropout_op = nn.Dropout3d
+            norm_op = nn.InstanceNorm3d
+            pool_op = nn.MaxPool3d
+            upsample_op = torch.nn.ConvTranspose3d
+        else:
+            logging.warn("Uuh, dimensions not in ['2D', '3D']")
+
+        self.encoder = encoder(
+            basic_block=encoder_basic_block,
+            conv_op=conv_op,
+            dropout_op=dropout_op,
+            input_channels=input_channels,
+            norm_op=norm_op,
+            pool_op=pool_op,
+            starting_filters=starting_filters,
+        )
+        self.decoder = decoder(
+            basic_block=decoder_basic_block,
+            conv_op=conv_op,
+            dropout_op=dropout_op,
+            norm_op=norm_op,
+            output_channels=output_channels,
+            starting_filters=starting_filters,
+            upsample_op=upsample_op,
+            use_skip_connections=use_skip_connections,
+        )
+
+    def forward(self, x):
+        enc = self.encoder(x)
+        return self.decoder(enc)
+
+
 def unet_b_lw_dec(
     input_channels: int = 1,
     output_channels: int = 1,
+    dimensions: str = "3D",
 ):
-    enc = UNetEncoder(
+
+    return UNet(
+        encoder_basic_block=MultiLayerConvDropoutNormNonlin.get_block_constructor(2),
+        decoder_basic_block=MultiLayerConvDropoutNormNonlin.get_block_constructor(1),
         input_channels=input_channels,
-        starting_filters=32,
-        basic_block=MultiLayerConvDropoutNormNonlin.get_block_constructor(2),
-    )
-    dec = UNetDecoder(
         output_channels=output_channels,
-        use_skip_connections=False,
-        basic_block=MultiLayerConvDropoutNormNonlin.get_block_constructor(1),
+        dimensions=dimensions,
         starting_filters=32,
+        use_skip_connections=False,
     )
-    unet_model = UNet(
-        encoder=enc,
-        decoder=dec,
-    )
-    return unet_model
 
 
 if __name__ == "__main__":

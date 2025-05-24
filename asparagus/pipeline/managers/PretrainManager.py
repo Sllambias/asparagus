@@ -8,7 +8,7 @@ from batchgenerators.utilities.file_and_folder_operations import join, load_json
 from typing import Literal, Union, Optional
 from asparagus.modules.lightning_modules import SelfSupervisedModel
 from asparagus.modules.datasets import PretrainDataset
-from asparagus.modules.datamodules import PretrainDataModule
+from asparagus.modules.data_modules import PretrainDataModule
 from asparagus.modules.networks.nets.unet import unet_b_lw_dec
 from asparagus.paths import get_data_path
 
