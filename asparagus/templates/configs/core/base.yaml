@@ -1,0 +1,52 @@
+defaults:
+  - _self_
+
+hydra:
+  run:
+    dir: ${oc.env:ASPARAGUS_MODELS}/${experiment.task}/${model.net}__${model.dimensions}/script=${hydra:job.name}/root=${experiment.rootcfg}__stem=${experiment.stemcfg}/leaf=${hydra:job.config_name}__clargs=${hydra.job.override_dirname}/${data.splits}__fold=${data.fold}
+  sweep:
+    dir: ${oc.env:ASPARAGUS_MODELS}/${experiment.task}/${model.net}__${model.dimensions}
+    subdir: script=${hydra:job.name}/root=${experiment.rootcfg}__stem=${experiment.stemcfg}/leaf=${hydra:job.config_name}__clargs=${hydra.job.override_dirname}/${data.splits}__fold=${data.fold}
+  job:
+    config:
+      override_dirname:
+        exclude_keys:
+          - experiment.task
+          - experiment.pretrained_run_id
+          - experiment.pretrained_checkpoint_name
+          - model.net
+          - model.dimensions
+          - hardware.accelerator
+          - hardware.num_devices
+          - hardware.num_workers
+          - hardware.precision
+          - hardware.strategy
+
+  callbacks:
+    save_job_info:
+      _target_: hydra.experimental.callbacks.PickleJobInfoCallback
+  output_subdir: hydra
+
+_internal_:
+  data_module:
+    _target_: asparagus.modules.data_modules.${data.data_module}
+    batch_size: ${training.batch_size}
+    num_workers: ${hardware.num_workers}
+    patch_size: ${training.patch_size}
+  lightning_module:
+    _target_: asparagus.modules.lightning_modules.${model.lightning_module}
+    epochs: ${training.epochs}
+    learning_rate: ${training.learning_rate}
+  net:
+    _target_: asparagus.modules.networks.nets.unet.${model.net}
+  trainer:
+    _target_: lightning.Trainer
+    accelerator: ${hardware.accelerator}
+    default_root_dir: ${hydra:run.dir}
+    devices: ${hardware.num_devices}
+    enable_progress_bar: ${logging.progress_bar}
+    limit_train_batches: ${training.limit_train_batches}
+    limit_val_batches: ${training.limit_val_batches}
+    max_epochs: ${training.epochs}
+    precision: ${hardware.precision}
+  splits_path: ${oc.env:ASPARAGUS_DATA}/${experiment.task}/${data.splits}.json

@@ -34,3 +34,7 @@ def get_models_path():
 
 def get_results_path():
     return get_environment_variable("ASPARAGUS_RESULTS")
+
+
+def get_config_path():
+    return get_environment_variable("ASPARAGUS_CONFIGS")

@@ -1,0 +1,45 @@
+defaults:
+  - _self_
+  - core/base@
+
+experiment:
+  pretrained_run_id: 
+  pretrained_checkpoint_name: 
+  rootcfg: base
+  stemcfg: 
+  task: TaskXXX_MYTASK
+  seed: ${random:0,1000000}
+  resume_training: True
+
+data:
+  data_module: TrainDataModule
+  data_path: ${oc.env:ASPARAGUS_DATA}/${experiment.task}
+  splits: split_80_20
+  fold: 0
+
+model:
+  net: unet_b
+  lightning_module: SegmentationModule
+  dimensions: 2D
+
+training:
+  epochs: 5
+  batch_size: 8
+  learning_rate: 1e-4
+  limit_train_batches: 50
+  limit_val_batches: 5
+  patch_size: [32, 32]
+
+hardware:
+  accelerator: "cpu"
+  num_devices: 1
+  num_workers: 6
+  precision: "bf16-mixed"
+  strategy: "auto"
+
+logging:
+  progress_bar: True
+  profile: False
+  wandb_log_model: False
+  wandb_logging: True
+
