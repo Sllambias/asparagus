@@ -76,15 +76,23 @@ if __name__ == "__main__":
         load_json,
     )
 
-    splits = load_json("/Users/zcr545/Desktop/Projects/repos/asparagus_data/preprocessed_data/Task999_DummyData/splits.json")
+    dataset_json = load_json(
+        "/Users/zcr545/Desktop/Projects/repos/asparagus_data/preprocessed_data/Task997_LauritSynSeg/dataset.json"
+    )
+    splits = load_json(
+        "/Users/zcr545/Desktop/Projects/repos/asparagus_data/preprocessed_data/Task997_LauritSynSeg/split_80_20.json"
+    )[0]
     train_split = splits["train"]
-    val_split = splits["validation"]
-    data_module = PretrainDataModule(
+    val_split = splits["val"]
+    data_module = TrainDataModule(
         train_split=train_split,
         val_split=val_split,
-        patch_size=(32, 32, 32),
+        patch_size=(32, 32),
         batch_size=2,
         num_workers=6,
     )
     data_module.setup("fit")
-    print(data_module.train_dataset[0]["image"].shape)
+    data_module_iterator = iter(data_module.train_dataloader())
+    x = next(data_module_iterator)
+    print(type(x))
+    print(next(iter(data_module.train_dataset))["image"].shape)

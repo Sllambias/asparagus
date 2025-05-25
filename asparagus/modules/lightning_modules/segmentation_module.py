@@ -1,10 +1,6 @@
+# %%
 import copy
-import lightning as L
-import torch
 import torch.nn as nn
-from torch.optim import AdamW
-from torch.optim.lr_scheduler import LinearLR, CosineAnnealingLR, SequentialLR
-from yucca.functional.utils.kwargs import filter_kwargs
 from asparagus.modules.lightning_modules.base_module import BaseModule
 from yucca.modules.optimization.loss_functions.nnUNet_losses import DiceCE
 
@@ -54,3 +50,6 @@ class SegmentationModule(BaseModule):
         loss = self.loss(pred, y)
 
         self.log_dict({"val/loss": loss}, sync_dist=True)
+
+
+# %%
