@@ -10,7 +10,7 @@ def versioning(cfg) -> VersioningConfig:
     """
     # Create the save directory if it doesn't exist
     save_dir = HydraConfig.get().runtime.output_dir
-    continue_from_most_recent = cfg.experiment.resume_training
+    continue_from_most_recent = cfg.training.resume_training
     ensure_dir_exists(save_dir)
 
     # Detect the version of the data
@@ -29,9 +29,9 @@ def versioning(cfg) -> VersioningConfig:
 
 def pathing(cfg):
     output_dir = HydraConfig.get().runtime.output_dir
-    if cfg.experiment.pretrained_run_id is not None:
-        model_folder = detect_id(cfg.experiment.pretrained_run_id)
-        pretrained_ckpt = join(model_folder, "checkpoints", cfg.experiment.pretrained_checkpoint_name)
+    if cfg.pretrained_run_id is not None:
+        model_folder = detect_id(cfg.pretrained_run_id)
+        pretrained_ckpt = join(model_folder, "checkpoints", cfg.pretrained_checkpoint_name)
     else:
         model_folder, pretrained_ckpt = "", ""
     dataset_json_path = cfg.data.data_path + "/dataset.json"

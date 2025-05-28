@@ -1,19 +1,15 @@
 defaults:
-  - _self_
   - core/base@
-  
-experiment:
-  pretrained_run_id: 
-  pretrained_checkpoint_name: 
-  rootcfg: base
-  stemcfg: 
-  task: TaskXXX_MYTASK
-  seed: ${random:0,1000000}
-  resume_training: True
+  - plugins/segmentation
+  - _self_
+
+task: 
+rootcfg: base
+stemcfg: 
 
 data:
   data_module: PretrainDataModule
-  data_path: ${oc.env:ASPARAGUS_DATA}/${experiment.task}
+  data_path: ${oc.env:ASPARAGUS_DATA}/${task}
   splits: split_80_20
   fold: 0
 
@@ -31,6 +27,8 @@ training:
   limit_train_batches: 5
   limit_val_batches: 5
   patch_size: [32, 32]
+  seed: ${random:0,1000000}
+  resume_training: True
 
 hardware:
   accelerator: "cpu"

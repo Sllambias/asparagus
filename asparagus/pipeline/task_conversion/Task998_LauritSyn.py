@@ -18,9 +18,11 @@ from asparagus.functional.task_conversion_and_preprocessing import (
 from asparagus.paths import get_data_path
 from asparagus.modules.dataclasses.presets.preprocessing_presets import GBrainPreprocessingConfig
 import torch
+from multiprocessing.pool import Pool
+from itertools import repeat
 
 
-def convert():
+def convert(processes=6):
     task_name = "Task998_LauritSyn"
     file_suffix = ".pt"
 
@@ -28,15 +30,11 @@ def convert():
     ensure_dir_exists(target_dir)
 
     torch.manual_seed(421890)
-    for i in range(500):
-        data = torch.FloatTensor(
-            1,
-            torch.randint(low=20, high=768, size=(1,)),
-            torch.randint(low=20, high=768, size=(1,)),
-            torch.randint(low=20, high=768, size=(1,)),
-        ).uniform_(-1.1e37, 1.1e37)
 
-        torch.save(data, os.path.join(target_dir, f"LauritSyn_{i}.pt"))
+    p = Pool(processes)
+    p.starmap_async(generate_random_case, zip(range(500), repeat(target_dir)))
+    p.close()
+    p.join()
 
     postprocess_standard_dataset(
         target_dir=target_dir,
@@ -52,6 +50,17 @@ def convert():
         preprocessing_config=None,
         processes=1,
     )
+
+
+def generate_random_case(i, target_dir):
+    dims = (
+        1,
+        torch.randint(low=20, high=768, size=(1,)),
+        torch.randint(low=20, high=768, size=(1,)),
+        torch.randint(low=20, high=768, size=(1,)),
+    )
+    data = torch.FloatTensor(*dims).uniform_(-1.1e37, 1.1e37)
+    torch.save(data, os.path.join(target_dir, f"LauritSyn_{i}.pt"))
 
 
 if __name__ == "__main__":

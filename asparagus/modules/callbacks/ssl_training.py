@@ -9,20 +9,20 @@ import logging
 from yucca.modules.optimization.loss_functions.nnUNet_losses import DiceCE
 
 
-class OnlineSegmentationPlugin(Callback):  # pragma: no cover
+class OnlineSegmentationPlugin(Callback):
+
     def __init__(
         self,
         data_module,
-        model_class: nn.Module,
+        model: nn.Module,
         dimensions: str,
+        output_channels: int,
         epochs: int = 3,
-        train_steps_per_epoch: int = 15,
-        val_steps_per_epoch: int = 5,
         batch_size: int = 2,
         every_n_epochs: int = 5,
         train_n_last_params: int = 6,
-        input_channels: Optional[int] = 1,
-        output_channels: Optional[int] = 5,
+        train_steps_per_epoch: int = 15,
+        val_steps_per_epoch: int = 5,
     ) -> None:
         super().__init__()
         self.dimensions = dimensions
@@ -33,24 +33,16 @@ class OnlineSegmentationPlugin(Callback):  # pragma: no cover
         self.batch_size = batch_size
         self.every_n_epochs = every_n_epochs
         self.output_channels = output_channels
-        self.input_channels = input_channels
-        self.model_class = model_class
+        self.model = model
         self.train_n_last_params = train_n_last_params
         if train_n_last_params % 2 != 0:
             logging.warn("Train_n_last_layers not a multiple of 2. Most layers are weight+bias")
 
     def setup(self, trainer, pl_module, stage="fit"):
-        self.model = self.model_class(
-            input_channels=self.input_channels,
-            output_channels=self.output_channels,
-            dimensions=self.dimensions,
-        ).to(pl_module.device)
-
+        self.model = self.model.to(pl_module.device)
         self.data_module.setup("fit")
-        self.train_data_iterator = iter(self.data_module.train_dataloader())
-        self.val_data_iterator = iter(self.data_module.val_dataloader())
         self.loss = DiceCE()
-        self.dice = GeneralizedDiceScore(self.output_channels, include_background=False)
+        self.dice = GeneralizedDiceScore(self.output_channels, include_background=False).to(pl_module.device)
 
     def on_train_epoch_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
         if not trainer.current_epoch % self.every_n_epochs == 0:
@@ -96,13 +88,13 @@ class OnlineSegmentationPlugin(Callback):  # pragma: no cover
     ):
         with torch.no_grad():
             x, y = self.to_device(batch, pl_module.device)
-        # forward pass
-        pred = self.model(x)  # type: ignore[operator]
+
+        pred = self.model(x)
+
         loss = self.loss(pred, y)
 
-        acc = self.dice(pred.argmax(1), y.squeeze().long())
-
-        # update finetune weights
+        # acc = self.dice(pred.argmax(1), y.squeeze().long())
+        acc = 0
         loss.backward()
         self.optimizer.step()
         self.optimizer.zero_grad()
@@ -118,22 +110,19 @@ class OnlineSegmentationPlugin(Callback):  # pragma: no cover
         with torch.no_grad():
             x, y = self.to_device(batch, pl_module.device)
 
-        # forward pass
-        pred = self.model(x)  # type: ignore[operator]
+        pred = self.model(x)
         loss = self.loss(pred, y)
 
-        acc = self.dice(pred.argmax(1), y.squeeze().long())
-
+        # acc = self.dice(pred.argmax(1), y.squeeze().long())
+        acc = 0
         pl_module.log("online_seg_val_acc", acc, sync_dist=True)
         pl_module.log("online_seg_val_loss", loss, sync_dist=True)
 
     def train(self, pl_module) -> None:
         for epoch in range(self.epochs):
-            for step in range(self.train_steps_per_epoch):
-                batch = next(self.train_data_iterator)
+            for batch in self.data_module.train_dataloader():
                 self.train_step(batch, pl_module)
-            for step in range(self.val_steps_per_epoch):
-                batch = next(self.val_data_iterator)
+            for batch in self.data_module.val_dataloader():
                 self.val_step(batch, pl_module)
 
     def state_dict(self) -> dict:

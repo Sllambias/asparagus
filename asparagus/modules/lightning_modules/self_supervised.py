@@ -19,7 +19,6 @@ class SelfSupervisedModule(BaseModule):
         learning_rate: float,
         warmup_epochs: int = 10,
         cosine_period_ratio: float = 1,
-        patch_size: list | tuple = None,
         mask_patch_size: int = 4,
         mask_ratio: float = 0.6,
         compile_mode: str = None,
@@ -34,8 +33,6 @@ class SelfSupervisedModule(BaseModule):
             cosine_period_ratio=cosine_period_ratio,
             compile_mode=compile_mode,
         )
-        # Model parameters
-        self.patch_size = patch_size
 
         # losses
         self._rec_loss_fn = nn.MSELoss(reduction="mean")
@@ -45,42 +42,31 @@ class SelfSupervisedModule(BaseModule):
         self.mask_patch_size = mask_patch_size
 
     def training_step(self, batch, batch_idx):
-        x, y = batch["image"], batch["label"]
+        x, y, mask = batch["image"], batch["label"], batch["mask"]
 
-        y_hat, mask = self._augment_and_forward(x)
-        loss = self.rec_loss(y_hat, y, mask=mask if self.rec_loss_masked_only else None)
+        pred = self.model(x)
+        loss = self.rec_loss(pred, y, mask=mask if self.rec_loss_masked_only else None)
 
         self.log_dict({"train/loss": loss}, sync_dist=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
-        x, y = batch["image"], batch["label"]
+        x, y, mask = batch["image"], batch["label"], batch["mask"]
 
-        y_hat, mask = self._augment_and_forward(x)
-        loss = self.rec_loss(y_hat, y, mask=mask if self.rec_loss_masked_only else None)
+        pred = self.model(x)
+        loss = self.rec_loss(pred, y, mask=mask if self.rec_loss_masked_only else None)
 
         self.log_dict({"val/loss": loss}, sync_dist=True)
 
-    def rec_loss(self, y, y_hat, mask=None):
+    def rec_loss(self, pred, y, mask=None):
         """
         Reconstruction MSE loss. If a mask tensor is provided, the loss will only be calculated on masked tokens.
         """
         if mask is not None:
-            y = y.clone()
-            y_hat = y_hat.clone()
             y[~mask] = 0
-            y_hat[~mask] = 0
+            pred[~mask] = 0
 
-        return self._rec_loss_fn(y, y_hat)
-
-    def _augment_and_forward(self, x):
-        with torch.no_grad():
-            # x, mask = random_mask(x, self.mask_ratio, self.mask_patch_size)
-            mask = x
-
-        y_hat = self.model(x)
-
-        return y_hat, mask
+        return self._rec_loss_fn(pred, y)
 
 
 class SelfSupervisedMultiModelModule(SelfSupervisedModule):

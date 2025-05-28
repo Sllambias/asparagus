@@ -4,9 +4,11 @@ import logging
 from typing import Literal, Optional, Tuple
 from torch.utils.data import DataLoader
 from asparagus.modules.datasets.PretrainDataset import PretrainDataset
+from asparagus.modules.transforms.composed_transforms import self_supervised_train_transforms
 
 
 class PretrainDataModule(pl.LightningDataModule):
+
     def __init__(
         self,
         batch_size: int,
@@ -19,8 +21,8 @@ class PretrainDataModule(pl.LightningDataModule):
     ):
         super().__init__()
         self.batch_size = batch_size
-        self.composed_train_transforms = composed_train_transforms
-        self.composed_val_transforms = composed_val_transforms
+        self.composed_train_transforms = self_supervised_train_transforms(patch_size=patch_size)
+        self.composed_val_transforms = self_supervised_train_transforms(patch_size=patch_size)
         self.num_workers = num_workers
         self.patch_size = patch_size
         self.train_split = train_split

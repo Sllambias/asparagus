@@ -111,6 +111,40 @@ def process_numpy_case(path, image_save_path, pkl_save_path, preprocessing_confi
         logging.error(f"ValueError {e}: {path}")
 
 
+def process_image_label_case(
+    image_path,
+    label_path,
+    image_save_path,
+    image_pkl_save_path,
+    preprocessing_config,
+    dtype=torch.float32,
+    strict=True,
+):
+    if (
+        os.path.isfile(image_save_path)
+        and os.path.isfile(image_pkl_save_path)
+        and os.path.isfile(label_save_path)
+        and os.path.isfile(label_pkl_save_path)
+    ):
+        return
+    try:
+        image = nib.load(image_path)
+        label = nib.load(label_path)
+
+        image, label, image_props = preprocess_case_for_training_with_label(
+            images=[image], label=label, **asdict(preprocessing_config), strict=strict
+        )
+        os.makedirs(os.path.split(image_save_path)[0], exist_ok=True)
+        torch.save(torch.cat([torch.tensor(image), torch.tensor(label).unsqueeze(0)]), image_save_path)
+        save_pickle(image_props, image_pkl_save_path)
+
+        del image, label, image_props
+    except EOFError:
+        logging.error(f"EOFError: {image_path} or {label_path} is corrupted.")
+    except ValueError as e:
+        logging.error(f"ValueError {e}: {image_path} or {label_path}")
+
+
 def preprocess_case_for_training_without_label(
     images: List[Union[np.ndarray, nib.Nifti1Image]],
     normalization_operation: list,

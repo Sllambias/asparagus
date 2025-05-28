@@ -7,6 +7,7 @@ from yucca.modules.data.augmentation.transforms.cropping_and_padding import (
     CropPad,
     Torch_CropPad,
 )
+import logging
 
 
 class PretrainDataset(Dataset):
@@ -20,8 +21,6 @@ class PretrainDataset(Dataset):
 
         self.files = files
         self.composed_transforms = composed_transforms
-        self.patch_size = patch_size
-        self.croppad = Torch_CropPad(patch_size=self.patch_size)
 
     def __len__(self):
         return len(self.files)
@@ -32,13 +31,11 @@ class PretrainDataset(Dataset):
         data_dict = {
             "file_path": file,
             "image": data,
-            "label": data,
         }
-
+        logging.debug(f"Loaded data from {file} with shape {data.shape}")
         return self._transform(data_dict)
 
     def _transform(self, data_dict):
-        data_dict = self.croppad(data_dict)
         if self.composed_transforms is not None:
             data_dict = self.composed_transforms(data_dict)
         return data_dict

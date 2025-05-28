@@ -1,0 +1,39 @@
+defaults:
+  - _self_
+  - ../arch/unet_b@seg.model
+
+seg: 
+  task: 
+  every_n_global_epochs: 3
+
+  training:
+    batch_size: ${training.batch_size}
+    epochs: 10
+    patch_size: ${training.patch_size}
+    
+  data:
+    data_module: TrainDataModule
+    splits: split_80_20
+    data_path: ${oc.env:ASPARAGUS_DATA}/${seg.task}
+    fold: 0
+
+  model:
+    net: unet_b
+    train_n_last_params: 6
+    dimensions: ${training.patch_size|length}D
+
+  _internal_:
+    splits_path: ${oc.env:ASPARAGUS_DATA}/${seg.task}/${seg.data.splits}.json
+    dataset_json_path: ${oc.env:ASPARAGUS_DATA}/${seg.task}/dataset.json
+    net:
+      _target_: asparagus.modules.networks.nets.${seg.model.net}
+    data_module:
+      _target_: asparagus.modules.data_modules.${seg.data.data_module}
+      batch_size: ${seg.training.batch_size}
+      num_workers: ${hardware.num_workers}
+      patch_size: ${seg.training.patch_size}
+    plugin:
+      _target_: asparagus.modules.callbacks.ssl_training.OnlineSegmentationPlugin
+      epochs: ${seg.training.epochs}
+      every_n_epochs: ${seg.every_n_global_epochs}
+      train_n_last_params: ${seg.train_n_last_params}

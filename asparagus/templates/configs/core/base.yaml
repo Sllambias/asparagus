@@ -1,19 +1,16 @@
-defaults:
-  - _self_
-
 hydra:
   run:
-    dir: ${oc.env:ASPARAGUS_MODELS}/${experiment.task}/${model.net}__${model.dimensions}/script=${hydra:job.name}/root=${experiment.rootcfg}__stem=${experiment.stemcfg}/leaf=${hydra:job.config_name}__clargs=${hydra.job.override_dirname}/${data.splits}__fold=${data.fold}
+    dir: ${oc.env:ASPARAGUS_MODELS}/${task}/${model.net}__${model.dimensions}/script=${hydra:job.name}/root=${rootcfg}__stem=${stemcfg}/leaf=${hydra:job.config_name}__clargs=${hydra.job.override_dirname}/${data.splits}__fold=${data.fold}
   sweep:
-    dir: ${oc.env:ASPARAGUS_MODELS}/${experiment.task}/${model.net}__${model.dimensions}
-    subdir: script=${hydra:job.name}/root=${experiment.rootcfg}__stem=${experiment.stemcfg}/leaf=${hydra:job.config_name}__clargs=${hydra.job.override_dirname}/${data.splits}__fold=${data.fold}
+    dir: ${oc.env:ASPARAGUS_MODELS}/${task}/${model.net}__${model.dimensions}
+    subdir: script=${hydra:job.name}/root=${rootcfg}__stem=${stemcfg}/leaf=${hydra:job.config_name}__clargs=${hydra.job.override_dirname}/${data.splits}__fold=${data.fold}
   job:
     config:
       override_dirname:
         exclude_keys:
-          - experiment.task
-          - experiment.pretrained_run_id
-          - experiment.pretrained_checkpoint_name
+          - task
+          - pretrained_run_id
+          - pretrained_checkpoint_name
           - model.net
           - model.dimensions
           - hardware.accelerator
@@ -38,7 +35,7 @@ _internal_:
     epochs: ${training.epochs}
     learning_rate: ${training.learning_rate}
   net:
-    _target_: asparagus.modules.networks.nets.unet.${model.net}
+    _target_: asparagus.modules.networks.nets.${model.net}
   trainer:
     _target_: lightning.Trainer
     accelerator: ${hardware.accelerator}
@@ -49,4 +46,12 @@ _internal_:
     limit_val_batches: ${training.limit_val_batches}
     max_epochs: ${training.epochs}
     precision: ${hardware.precision}
-  splits_path: ${oc.env:ASPARAGUS_DATA}/${experiment.task}/${data.splits}.json
+  splits_path: ${oc.env:ASPARAGUS_DATA}/${task}/${data.splits}.json
+
+pretrained_run_id:
+
+plugins:
+
+training:
+  patch_size:
+  batch_size:
