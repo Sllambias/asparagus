@@ -9,7 +9,7 @@ The idea of task conversion for large pretraining datasets is to convert the dat
 ```python asparagus/pipeline/run/split.py -t TASK --fn split_80_20```
 
 ## Config tips.
-CLI view config without running script: ```--cfg all```
+CLI view config without running script: ```--cfg job```
 
 CLI change config: ```--config-name name_of_config```
 For detailed control of the configs see also the core:base config.
