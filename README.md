@@ -11,6 +11,20 @@ The idea of task conversion for large pretraining datasets is to convert the dat
 ## Config tips.
 CLI change config: ```--config_name name_of_config```
 For detailed control of the configs see also the core:base config.
+CLI add config: ```+FOLDER=CONFIG```
+For example, the following prompt will pretrain a model on Task998 using the model config found in model/unet_b_lw_dec.yaml, adding the online segmentation plugin found in plugin/seg_Task997.yaml, with the hardware setup found in hardware/1gpu, and, finally overriding any model dimensions with "2D" (the model.dimensions is found in model/unet_b_lw_dec and defaults to 3D).
+```python asparagus/pretrain.py task=Task998_LauritSyn +model=unet_b_lw_dec +plugins=seg_Task997 +hardware=1gpu model.dimensions=2D```
+for a folder structure that looks like this:
+```
+CONFIG_DIR/
+├── pretrain.yaml
+├── hardware/
+|   ├── 1gpu.yaml
+├── model/
+|   ├── unet_b_lw_dec.yaml
+├── plugin/
+|   ├── seg_Task997.yaml
+```
 
 ## Run Pretraining with the default pretrain config.
 ```python asparagus/pretrain.py experiment.task=Task998_LauritSyn```
