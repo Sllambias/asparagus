@@ -27,6 +27,14 @@ CONFIG_DIR/
 |   ├── seg_Task997.yaml
 ```
 
+To create a config identical to the example above one would need to import the configs using defaults as such:
+```
+defaults:
+  - ../hardware/1gpu@hardware
+  - ../plugins/seg_Task997@plugin
+  - ../model/unet_b_lw_dec@model
+```
+
 ## Run Pretraining with the default pretrain config.
 ```python asparagus/pretrain.py experiment.task=Task998_LauritSyn```
 
