@@ -15,8 +15,8 @@ class FinetuneSearchpathPlugin(SearchPathPlugin):
         # be available in a package.
         # Remember to verify the config is packaged properly (build sdist and look inside,
         # and verify MANIFEST.in is correct).
-
-        search_path.append(provider="finetune-searchpath-plugin", path=get_additional_finetune_config_path())
+        for path in get_additional_finetune_config_path():
+            search_path.append(provider="finetune-searchpath-plugin", path="file://" + path)
 
 
 class TrainSearchpathPlugin(SearchPathPlugin):
@@ -27,8 +27,8 @@ class TrainSearchpathPlugin(SearchPathPlugin):
         # be available in a package.
         # Remember to verify the config is packaged properly (build sdist and look inside,
         # and verify MANIFEST.in is correct).
-
-        search_path.append(provider="pretrain-searchpath-plugin", path=get_additional_train_config_path())
+        for path in get_additional_train_config_path():
+            search_path.append(provider="train-searchpath-plugin", path="file://" + path)
 
 
 class PretrainSearchpathPlugin(SearchPathPlugin):
@@ -39,5 +39,5 @@ class PretrainSearchpathPlugin(SearchPathPlugin):
         # be available in a package.
         # Remember to verify the config is packaged properly (build sdist and look inside,
         # and verify MANIFEST.in is correct).
-
-        search_path.append(provider="pretrain-searchpath-plugin", path=get_additional_pretrain_config_path())
+        for path in get_additional_pretrain_config_path():
+            search_path.append(provider="pretrain-searchpath-plugin", path="file://" + path)

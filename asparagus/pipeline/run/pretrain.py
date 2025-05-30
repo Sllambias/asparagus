@@ -13,13 +13,13 @@ from asparagus.paths import get_config_path
 from asparagus.modules.callbacks.ssl_training import OnlineSegmentationPlugin
 from asparagus.modules.data_modules.training import TrainDataModule
 from asparagus.modules.networks.nets.unet import unet_b
-from asparagus.asparagus.modules.hydra.plugins.searchpath_plugins import ExampleSearchPathPlugin
+from asparagus.modules.hydra.plugins.searchpath_plugins import PretrainSearchpathPlugin
 from hydra.core.plugins import Plugins
 
 load_dotenv()
 
 OmegaConf.register_new_resolver("random", lambda min, max: random.randint(min, max))
-Plugins.instance().register(ExampleSearchPathPlugin)
+Plugins.instance().register(PretrainSearchpathPlugin)
 
 
 @hydra.main(
@@ -43,29 +43,29 @@ def train(cfg: DictConfig) -> None:
         wandb_experiment=HydraConfig.get().job.config_name,
     )
 
-    callbacks = [TQDMProgressBar(refresh_rate=50)] + plugins
+    callbacks = [TQDMProgressBar(refresh_rate=200)] + plugins
     profilers = None
 
     model = instantiate(
-        cfg._model,
+        cfg.model._model,
         input_channels=1,
         output_channels=1,
     )
 
     model_module = instantiate(
-        cfg._lightning_module,
+        cfg.lightning._lightning_module,
         model=model,
         steps_per_epoch=steps_per_epoch,
     )
 
     data_module = instantiate(
-        cfg._data_module,
+        cfg.lightning._data_module,
         train_split=file_store.splits["train"],
         val_split=file_store.splits["val"],
     )
 
     trainer = instantiate(
-        cfg._trainer,
+        cfg.lightning._trainer,
         callbacks=callbacks,
         log_every_n_steps=250,
         logger=loggers,

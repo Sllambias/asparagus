@@ -2,6 +2,7 @@ from asparagus.pipeline.auto_configuration import versioning, pathing
 from asparagus.modules.dataclasses import TrainingFiles
 from batchgenerators.utilities.file_and_folder_operations import load_json
 from hydra.utils import instantiate
+import logging
 
 
 def prepare_standard_experiment(cfg):
@@ -10,6 +11,7 @@ def prepare_standard_experiment(cfg):
     filecfg = TrainingFiles(
         dataset_json=load_json(pathingcfg.dataset_json_path), splits=load_json(cfg.splits_path)[cfg.data.fold]
     )
+    logging.warn(f"###RUN-ID={versioncfg.version}###")
     return filecfg, pathingcfg, versioncfg
 
 

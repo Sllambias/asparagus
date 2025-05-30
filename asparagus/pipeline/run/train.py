@@ -37,31 +37,31 @@ def train(cfg: DictConfig) -> None:
         wandb_experiment=HydraConfig.get().job.config_name,
     )
 
-    callbacks = [TQDMProgressBar(refresh_rate=50)]
+    callbacks = [TQDMProgressBar(refresh_rate=100)]
     profilers = None
 
     model = instantiate(
-        cfg._internal_.net,
+        cfg.model._model,
         input_channels=file_store.dataset_json["metadata"]["n_modalities"],
         output_channels=file_store.dataset_json["metadata"]["n_classes"],
     )
 
     model_module = instantiate(
-        cfg._internal_.lightning_module,
+        cfg.lightning._lightning_module,
         model=model,
         steps_per_epoch=steps_per_epoch,
     )
 
     data_module = instantiate(
-        cfg._internal_.data_module,
+        cfg.lightning._data_module,
         train_split=file_store.splits["train"],
         val_split=file_store.splits["val"],
     )
 
     trainer = instantiate(
-        cfg._internal_.trainer,
+        cfg.lightning._trainer,
         callbacks=callbacks,
-        log_every_n_steps=1,
+        log_every_n_steps=250,
         logger=loggers,
         profiler=profilers,
         default_root_dir=path_store.output_dir,

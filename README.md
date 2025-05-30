@@ -75,6 +75,9 @@ Asparagus will create a "derived_models.log" in the folder of the pretrained mod
 
 
 ## Asparagus Versioning
+To get RUN-ID (version) from a log/output file use:
+
+
 Versioning is controlled by unique IDs. Each time you start a run Asparagus will either generate a new unique ID or resume training an identical run and re-use its existing ID. To control this behavior use the "resume_training: [True/False]".
 
 When generating new IDs Asparagus will create IDs with higher numerical value than existing IDs for identical runs. I.e. if you have previously trained a model with run_id=532 using setup A and you want to run another identical training, without resuming run_id=532, then the new run_id will be higher than 532. This way you always know the order they were trained in.
