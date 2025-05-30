@@ -1,10 +1,11 @@
+import lightning as pl
+import random
 import hydra
 from omegaconf import DictConfig, OmegaConf
 from hydra.utils import instantiate
 from batchgenerators.utilities.file_and_folder_operations import load_json
 from dotenv import load_dotenv
-import lightning as pl
-import random
+from lightning.pytorch.callbacks import TQDMProgressBar
 from asparagus.pipeline.auto_configuration import logging
 from hydra.core.hydra_config import HydraConfig
 from asparagus.pipeline.auto_configuration.experiment_setup import prepare_standard_experiment, prepare_ssl_plugins
@@ -12,15 +13,18 @@ from asparagus.paths import get_config_path
 from asparagus.modules.callbacks.ssl_training import OnlineSegmentationPlugin
 from asparagus.modules.data_modules.training import TrainDataModule
 from asparagus.modules.networks.nets.unet import unet_b
+from asparagus.plugin import ExampleSearchPathPlugin
+from hydra.core.plugins import Plugins
 
 load_dotenv()
 
 OmegaConf.register_new_resolver("random", lambda min, max: random.randint(min, max))
+Plugins.instance().register(ExampleSearchPathPlugin)
 
 
 @hydra.main(
     config_path=get_config_path(),
-    config_name="pretrain",
+    config_name="main_pretrain",
     version_base="1.2",
 )
 def train(cfg: DictConfig) -> None:
@@ -39,7 +43,7 @@ def train(cfg: DictConfig) -> None:
         wandb_experiment=HydraConfig.get().job.config_name,
     )
 
-    callbacks = [] + plugins
+    callbacks = [TQDMProgressBar(refresh_rate=50)] + plugins
     profilers = None
 
     model = instantiate(

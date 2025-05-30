@@ -10,6 +10,7 @@ from hydra.core.hydra_config import HydraConfig
 from asparagus.functional.utils import add_run_to_pretrained_derivative_list
 from asparagus.pipeline.auto_configuration.experiment_setup import prepare_standard_experiment
 from asparagus.paths import get_config_path
+from lightning.pytorch.callbacks import TQDMProgressBar
 
 load_dotenv()
 
@@ -18,7 +19,7 @@ OmegaConf.register_new_resolver("random", lambda min, max: random.randint(min, m
 
 @hydra.main(
     config_path=get_config_path(),
-    config_name="finetune",
+    config_name="main_finetune",
     version_base="1.2",
 )
 def train(cfg: DictConfig) -> None:
@@ -37,7 +38,9 @@ def train(cfg: DictConfig) -> None:
         version_dir=version_store.version_dir,
         wandb_experiment=HydraConfig.get().job.config_name,
     )
-    callbacks, profilers = (None, None)
+
+    callbacks = [TQDMProgressBar(refresh_rate=50)]
+    profilers = None
 
     model = instantiate(
         cfg._internal_.net,

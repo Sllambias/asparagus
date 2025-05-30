@@ -1,4 +1,3 @@
-# %%
 import copy
 import torch.nn as nn
 from asparagus.modules.lightning_modules.base_module import BaseModule
@@ -50,6 +49,3 @@ class SegmentationModule(BaseModule):
         loss = self.loss(pred, y)
 
         self.log_dict({"val/loss": loss}, sync_dist=True)
-
-
-# %%

@@ -4,7 +4,7 @@ from lightning.pytorch import Callback
 from lightning import LightningModule, Trainer
 from lightning.pytorch.utilities import rank_zero_warn
 from torch import Tensor, nn
-from torchmetrics.segmentation.generalized_dice import GeneralizedDiceScore
+from torchmetrics.segmentation import DiceScore
 import logging
 from yucca.modules.optimization.loss_functions.nnUNet_losses import DiceCE
 
@@ -21,14 +21,10 @@ class OnlineSegmentationPlugin(Callback):
         batch_size: int = 2,
         every_n_epochs: int = 5,
         train_n_last_params: int = 6,
-        train_steps_per_epoch: int = 15,
-        val_steps_per_epoch: int = 5,
     ) -> None:
         super().__init__()
         self.dimensions = dimensions
         self.epochs = epochs
-        self.train_steps_per_epoch = train_steps_per_epoch
-        self.val_steps_per_epoch = val_steps_per_epoch
         self.data_module = data_module
         self.batch_size = batch_size
         self.every_n_epochs = every_n_epochs
@@ -42,7 +38,7 @@ class OnlineSegmentationPlugin(Callback):
         self.model = self.model.to(pl_module.device)
         self.data_module.setup("fit")
         self.loss = DiceCE()
-        self.dice = GeneralizedDiceScore(self.output_channels, include_background=False).to(pl_module.device)
+        self.dice = DiceScore(self.output_channels, include_background=False, average="macro").to(pl_module.device)
 
     def on_train_epoch_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
         if not trainer.current_epoch % self.every_n_epochs == 0:
@@ -93,7 +89,7 @@ class OnlineSegmentationPlugin(Callback):
 
         loss = self.loss(pred, y)
 
-        # acc = self.dice(pred.argmax(1), y.squeeze().long())
+        acc = self.dice(pred.argmax(1), y.squeeze().long())
         acc = 0
         loss.backward()
         self.optimizer.step()
@@ -113,7 +109,7 @@ class OnlineSegmentationPlugin(Callback):
         pred = self.model(x)
         loss = self.loss(pred, y)
 
-        # acc = self.dice(pred.argmax(1), y.squeeze().long())
+        acc = self.dice(pred.argmax(1), y.squeeze().long())
         acc = 0
         pl_module.log("online_seg_val_acc", acc, sync_dist=True)
         pl_module.log("online_seg_val_loss", loss, sync_dist=True)
