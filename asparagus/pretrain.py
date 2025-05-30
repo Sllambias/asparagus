@@ -13,7 +13,7 @@ from asparagus.paths import get_config_path
 from asparagus.modules.callbacks.ssl_training import OnlineSegmentationPlugin
 from asparagus.modules.data_modules.training import TrainDataModule
 from asparagus.modules.networks.nets.unet import unet_b
-from asparagus.plugin import ExampleSearchPathPlugin
+from asparagus.asparagus.modules.hydra.plugins.searchpath_plugins import ExampleSearchPathPlugin
 from hydra.core.plugins import Plugins
 
 load_dotenv()

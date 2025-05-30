@@ -1,3 +1,4 @@
+# %%
 import os
 from dotenv import load_dotenv
 
@@ -20,6 +21,17 @@ def get_environment_variable(var):
     return path
 
 
+def get_environment_variables(var):
+    load_dotenv()
+    if not var_is_set(var):
+        raise ValueError(f"Missing required environment variable {var}.")
+
+    paths = os.environ[var].split(":")
+    for path in paths:
+        ensure_dir_exists(path)
+    return paths
+
+
 def get_source_path():
     return get_environment_variable("ASPARAGUS_SOURCE")
 
@@ -38,3 +50,15 @@ def get_results_path():
 
 def get_config_path():
     return get_environment_variable("ASPARAGUS_CONFIGS")
+
+
+def get_additional_pretrain_config_path():
+    return get_environment_variables("ASPARAGUS_PRETRAIN_CONFIGS")
+
+
+def get_additional_train_config_path():
+    return get_environment_variables("ASPARAGUS_TRAIN_CONFIGS")
+
+
+def get_additional_finetune_config_path():
+    return get_environment_variables("ASPARAGUS_FINETUNE_CONFIGS")
