@@ -1,9 +1,8 @@
-from typing import Literal
 import torch
 import torch.nn as nn
 import logging
 from yucca.modules.networks.networks.YuccaNet import YuccaNet
-from asparagus.modules.networks.blocks.conv_blocks import (
+from asparagus.modules.networks.components.blocks import (
     DoubleConvDropoutNormNonlin,
     MultiLayerConvDropoutNormNonlin,
 )

@@ -43,26 +43,25 @@ def train(cfg: DictConfig) -> None:
     profilers = None
 
     model = instantiate(
-        cfg._internal_.net,
-        input_channels=cfg.model.input_channels,
-        output_channels=cfg.model.output_channels,
-        dimensions=cfg.model.dimensions,
+        cfg._model,
+        input_channels=1,
+        output_channels=1,
     )
 
     model_module = instantiate(
-        cfg._internal_.lightning_module,
+        cfg._lightning_module,
         model=model,
         steps_per_epoch=steps_per_epoch,
     )
 
     data_module = instantiate(
-        cfg._internal_.data_module,
+        cfg._data_module,
         train_split=file_store.splits["train"],
         val_split=file_store.splits["val"],
     )
 
     trainer = instantiate(
-        cfg._internal_.trainer,
+        cfg._trainer,
         callbacks=callbacks,
         log_every_n_steps=250,
         logger=loggers,

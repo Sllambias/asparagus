@@ -1,0 +1,131 @@
+specific_runs:
+  hydra:
+    run:
+      dir: ${oc.env:ASPARAGUS_MODELS}/${task}/${model.net}__${model.dimensions}/script=${hydra:job.name}/root=${rootcfg}__stem=${stemcfg}/leaf=${hydra:job.config_name}__clargs=${hydra.job.override_dirname}/${data.splits}__fold=${data.fold}
+    sweep:
+      dir: ${oc.env:ASPARAGUS_MODELS}/${task}/${model.net}__${model.dimensions}
+      subdir: script=${hydra:job.name}/root=${rootcfg}__stem=${stemcfg}/leaf=${hydra:job.config_name}__clargs=${hydra.job.override_dirname}/${data.splits}__fold=${data.fold}
+    job:
+      config:
+        override_dirname:
+          exclude_keys:
+          - task
+          - pretrained_run_id
+          - pretrained_checkpoint_name
+          - model.net
+          - model.dimensions
+          - hardware.accelerator
+          - hardware.num_devices
+          - hardware.num_workers
+          - hardware.precision
+          - hardware.strategy
+    callbacks:
+      save_job_info:
+        _target_: hydra.experimental.callbacks.PickleJobInfoCallback
+    output_subdir: hydra
+  _internal_:
+    data_module:
+      _target_: asparagus.modules.data_modules.${data.data_module}
+      batch_size: ${training.batch_size}
+      num_workers: ${hardware.num_workers}
+      patch_size: ${training.patch_size}
+    lightning_module:
+      _target_: asparagus.modules.lightning_modules.${model.lightning_module}
+      epochs: ${training.epochs}
+      learning_rate: ${training.learning_rate}
+    net:
+      _target_: asparagus.modules.networks.nets.${model.net}
+      dimensions: ${model.dimensions}
+    trainer:
+      _target_: lightning.Trainer
+      accelerator: ${hardware.accelerator}
+      default_root_dir: ${hydra:run.dir}
+      devices: ${hardware.num_devices}
+      enable_progress_bar: ${logging.progress_bar}
+      limit_train_batches: ${training.limit_train_batches}
+      limit_val_batches: ${training.limit_val_batches}
+      max_epochs: ${training.epochs}
+      precision: ${hardware.precision}
+    splits_path: ${oc.env:ASPARAGUS_DATA}/${task}/${data.splits}.json
+  pretrained_run_id: null
+  plugins: null
+  training:
+    patch_size:
+    - 128
+    - 128
+    - 128
+    batch_size: 2
+    epochs: 20
+    learning_rate: 0.0001
+    limit_train_batches: null
+    limit_val_batches: null
+    seed: ${random:0,1000000}
+    resume_training: false
+  ? ''
+  : ? ''
+    : ? ''
+      : hardware:
+          accelerator: auto
+          num_devices: 1
+          num_workers: 6
+          precision: bf16-mixed
+          strategy: auto
+        plugins:
+          seg:
+            task: Task997_LauritSynSeg
+            every_n_global_epochs: 3
+            training:
+              batch_size: ${training.batch_size}
+              epochs: 10
+              patch_size: ${training.patch_size}
+              train_steps_per_epoch: 15
+              val_steps_per_epoch: 5
+            data:
+              data_module: TrainDataModule
+              splits: split_80_20
+              data_path: ${oc.env:ASPARAGUS_DATA}/${plugins.seg.task}
+              fold: 0
+            model:
+              dimensions: ${model.dimensions}
+              net: ${model.finetune_online_net}
+              train_n_last_params: ${model.finetune_online_train_n_last_params}
+            _internal_:
+              splits_path: ${oc.env:ASPARAGUS_DATA}/${plugins.seg.task}/${plugins.seg.data.splits}.json
+              dataset_json_path: ${oc.env:ASPARAGUS_DATA}/${plugins.seg.task}/dataset.json
+              data_module:
+                _target_: asparagus.modules.data_modules.${plugins.seg.data.data_module}
+                batch_size: ${plugins.seg.training.batch_size}
+                num_workers: ${hardware.num_workers}
+                patch_size: ${plugins.seg.training.patch_size}
+              net:
+                _target_: asparagus.modules.networks.nets.${plugins.seg.model.net}
+                dimensions: ${plugins.seg.model.dimensions}
+              plugin:
+                _target_: asparagus.modules.callbacks.ssl_training.OnlineSegmentationPlugin
+                epochs: ${plugins.seg.training.epochs}
+                every_n_epochs: ${plugins.seg.every_n_global_epochs}
+                train_n_last_params: ${plugins.seg.model.train_n_last_params}
+                dimensions: ${plugins.seg.model.dimensions}
+                train_steps_per_epoch: ${plugins.seg.training.train_steps_per_epoch}
+                val_steps_per_epoch: ${plugins.seg.training.val_steps_per_epoch}
+        model:
+          net: unet_b_lw_dec
+          dimensions: 3D
+          finetune_net: unet_b
+          finetune_online_net: unet_b
+          finetune_online_train_n_last_params: 6
+  task: Task998_LauritSyn
+  rootcfg: base
+  stemcfg: null
+  data:
+    data_module: PretrainDataModule
+    data_path: ${oc.env:ASPARAGUS_DATA}/${task}
+    splits: split_80_20
+    fold: 0
+  model:
+    lightning_module: SelfSupervisedModule
+  logging:
+    progress_bar: true
+    profile: false
+    wandb_log_model: false
+    wandb_logging: true
