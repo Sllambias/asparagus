@@ -19,14 +19,17 @@ OmegaConf.register_new_resolver("random", lambda min, max: random.randint(min, m
 
 @hydra.main(
     config_path=get_config_path(),
-    config_name="main_train",
+    config_name="main_finetune_cls",
     version_base="1.2",
 )
-def train(cfg: DictConfig) -> None:
+def main(cfg: DictConfig) -> None:
+    print(OmegaConf.to_yaml(cfg))
     file_store, path_store, version_store = prepare_standard_experiment(cfg)
-
     steps_per_epoch = len(file_store.splits["train"]) // cfg.training.batch_size
+
     pl.seed_everything(seed=cfg.training.seed, workers=True)
+
+    add_run_to_pretrained_derivative_list(version_store.version, path_store.ckpt_parent_folder, path_store.output_dir)
 
     loggers = logging(
         ckpt_wandb_id=version_store.wandb_id,
@@ -37,11 +40,11 @@ def train(cfg: DictConfig) -> None:
         wandb_experiment=HydraConfig.get().job.config_name,
     )
 
-    callbacks = [TQDMProgressBar(refresh_rate=100)]
+    callbacks = [TQDMProgressBar(refresh_rate=50)]
     profilers = None
 
     model = instantiate(
-        cfg.model._model,
+        cfg.model._finetune_cls_net,
         input_channels=file_store.dataset_json["metadata"]["n_modalities"],
         output_channels=file_store.dataset_json["metadata"]["n_classes"],
     )
@@ -50,6 +53,7 @@ def train(cfg: DictConfig) -> None:
         cfg.lightning._lightning_module,
         model=model,
         steps_per_epoch=steps_per_epoch,
+        weights=path_store.ckpt_path,
     )
 
     data_module = instantiate(
@@ -70,9 +74,8 @@ def train(cfg: DictConfig) -> None:
     trainer.fit(
         model=model_module,
         datamodule=data_module,
-        ckpt_path="last",
     )
 
 
 if __name__ == "__main__":
-    train()
+    main()

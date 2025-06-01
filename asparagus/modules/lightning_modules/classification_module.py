@@ -1,4 +1,5 @@
 import copy
+import torch
 import torch.nn as nn
 from asparagus.modules.lightning_modules.base_module import BaseModule
 from yucca.modules.optimization.loss_functions.nnUNet_losses import DiceCE
@@ -27,7 +28,7 @@ class SegmentationModule(BaseModule):
             weights=weights,
         )
         # losses
-        self.loss = DiceCE()
+        self.loss = torch.nn.CrossEntropyLoss()
 
     def training_step(self, batch, batch_idx):
         x, y = batch["image"], batch["label"]

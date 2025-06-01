@@ -40,7 +40,7 @@ def prepare_online_segmentation(cfg):
     )
 
     model = instantiate(
-        cfg.plugins.seg._model,
+        cfg.model._plugin_seg_net,
         input_channels=num_modalities,
         output_channels=num_classes,
     )

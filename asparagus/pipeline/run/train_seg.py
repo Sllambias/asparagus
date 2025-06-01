@@ -1,37 +1,33 @@
-import lightning as pl
-import random
 import hydra
 from omegaconf import DictConfig, OmegaConf
 from hydra.utils import instantiate
 from batchgenerators.utilities.file_and_folder_operations import load_json
 from dotenv import load_dotenv
-from lightning.pytorch.callbacks import TQDMProgressBar
-from asparagus.pipeline.auto_configuration import logging
+import lightning as pl
+import random
+from asparagus.pipeline.auto_configuration import versioning, logging
 from hydra.core.hydra_config import HydraConfig
-from asparagus.pipeline.auto_configuration.experiment_setup import prepare_standard_experiment, prepare_ssl_plugins
+from asparagus.functional.utils import add_run_to_pretrained_derivative_list
+from asparagus.pipeline.auto_configuration.experiment_setup import prepare_standard_experiment
 from asparagus.paths import get_config_path
-from asparagus.modules.callbacks.ssl_training import OnlineSegmentationPlugin
-from asparagus.modules.networks.nets.unet import unet_b
-from asparagus.modules.hydra.plugins.searchpath_plugins import PretrainSearchpathPlugin
-from hydra.core.plugins import Plugins
+from lightning.pytorch.callbacks import TQDMProgressBar
 
 load_dotenv()
 
 OmegaConf.register_new_resolver("random", lambda min, max: random.randint(min, max))
-Plugins.instance().register(PretrainSearchpathPlugin)
 
 
 @hydra.main(
     config_path=get_config_path(),
-    config_name="main_pretrain",
+    config_name="main_train",
     version_base="1.2",
 )
 def main(cfg: DictConfig) -> None:
     print(OmegaConf.to_yaml(cfg))
     file_store, path_store, version_store = prepare_standard_experiment(cfg)
-    plugins = prepare_ssl_plugins(cfg)
+
     steps_per_epoch = len(file_store.splits["train"]) // cfg.training.batch_size
-    pl.seed_everything(seed=cfg.training.seed, workers=True)
+    pl.seed_everything(seed=cfg.training.training.seed, workers=True)
 
     loggers = logging(
         ckpt_wandb_id=version_store.wandb_id,
@@ -42,13 +38,13 @@ def main(cfg: DictConfig) -> None:
         wandb_experiment=HydraConfig.get().job.config_name,
     )
 
-    callbacks = [TQDMProgressBar(refresh_rate=200)] + plugins
+    callbacks = [TQDMProgressBar(refresh_rate=100)]
     profilers = None
 
     model = instantiate(
-        cfg.model._pretrain_net,
-        input_channels=1,
-        output_channels=1,
+        cfg.model._train_seg_net,
+        input_channels=file_store.dataset_json["metadata"]["n_modalities"],
+        output_channels=file_store.dataset_json["metadata"]["n_classes"],
     )
 
     model_module = instantiate(

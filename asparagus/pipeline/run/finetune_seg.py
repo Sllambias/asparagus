@@ -19,14 +19,15 @@ OmegaConf.register_new_resolver("random", lambda min, max: random.randint(min, m
 
 @hydra.main(
     config_path=get_config_path(),
-    config_name="main_finetune",
+    config_name="main_finetune_seg",
     version_base="1.2",
 )
-def train(cfg: DictConfig) -> None:
+def main(cfg: DictConfig) -> None:
+    print(OmegaConf.to_yaml(cfg))
     file_store, path_store, version_store = prepare_standard_experiment(cfg)
     steps_per_epoch = len(file_store.splits["train"]) // cfg.training.batch_size
 
-    pl.seed_everything(seed=cfg.experiment.seed, workers=True)
+    pl.seed_everything(seed=cfg.training.seed, workers=True)
 
     add_run_to_pretrained_derivative_list(version_store.version, path_store.ckpt_parent_folder, path_store.output_dir)
 
@@ -43,7 +44,7 @@ def train(cfg: DictConfig) -> None:
     profilers = None
 
     model = instantiate(
-        cfg.model._model,
+        cfg.model._finetune_seg_net,
         input_channels=file_store.dataset_json["metadata"]["n_modalities"],
         output_channels=file_store.dataset_json["metadata"]["n_classes"],
     )
@@ -77,4 +78,4 @@ def train(cfg: DictConfig) -> None:
 
 
 if __name__ == "__main__":
-    train()
+    main()

@@ -5,6 +5,7 @@ from yucca.modules.networks.networks.YuccaNet import YuccaNet
 from asparagus.modules.networks.components.blocks import (
     DoubleConvDropoutNormNonlin,
     MultiLayerConvDropoutNormNonlin,
+    ClsRegHead,
 )
 
 
@@ -349,6 +350,54 @@ class UNet(YuccaNet):
         return self.decoder(enc)
 
 
+class UNetCLSREG(YuccaNet):
+
+    def __init__(
+        self,
+        input_channels: int,
+        output_channels: int,
+        encoder: nn.Module = UNetEncoder,
+        encoder_basic_block=MultiLayerConvDropoutNormNonlin.get_block_constructor(2),
+        decoder: nn.Module = ClsRegHead,
+        dimensions: str = "3D",
+        starting_filters: int = 32,
+    ):
+        super().__init__()
+        if dimensions == "2D":
+            conv_op = nn.Conv2d
+            dropout_op = nn.Dropout2d
+            norm_op = nn.InstanceNorm2d
+            pool_op = nn.MaxPool2d
+            clsreg_pool_op = nn.AdaptiveAvgPool3d
+        elif dimensions == "3D":
+            conv_op = nn.Conv3d
+            dropout_op = nn.Dropout3d
+            norm_op = nn.InstanceNorm3d
+            pool_op = nn.MaxPool3d
+            clsreg_pool_op = nn.AdaptiveAvgPool3d
+        else:
+            logging.warn("Uuh, dimensions not in ['2D', '3D']")
+
+        self.encoder = encoder(
+            basic_block=encoder_basic_block,
+            conv_op=conv_op,
+            dropout_op=dropout_op,
+            input_channels=input_channels,
+            norm_op=norm_op,
+            pool_op=pool_op,
+            starting_filters=starting_filters,
+        )
+        self.decoder = decoder(
+            pool_op=clsreg_pool_op,
+            input_channels=input_channels,
+            output_channels=output_channels,
+        )
+
+    def forward(self, x):
+        enc = self.encoder(x)
+        return self.decoder(enc)
+
+
 def unet_b_lw_dec(
     input_channels: int = 1,
     output_channels: int = 1,
@@ -373,6 +422,20 @@ def unet_b(
 ):
 
     return UNet(
+        input_channels=input_channels,
+        output_channels=output_channels,
+        dimensions=dimensions,
+        starting_filters=32,
+    )
+
+
+def unet_clsreg_b(
+    input_channels: int = 1,
+    output_channels: int = 1,
+    dimensions: str = "3D",
+):
+
+    return UNetCLSREG(
         input_channels=input_channels,
         output_channels=output_channels,
         dimensions=dimensions,

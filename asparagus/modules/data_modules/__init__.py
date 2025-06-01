@@ -1,2 +1,2 @@
 from .pretraining import PretrainDataModule
-from .training import TrainDataModule
+from .training import SegDataModule, ClsDataModule

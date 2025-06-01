@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 
 
@@ -449,3 +450,20 @@ class MultiLayerResBlock(nn.Module):
             return MultiLayerResBlock(input_channels, output_channels, num_layers=n_layers, **kwargs)
 
         return _block
+
+
+class ClsRegHead(nn.Module):
+    def __init__(self, input_channels, output_channels, pool_op):
+        super().__init__()
+        if isinstance(pool_op, nn.AdaptiveAvgPool3d):
+            self.global_pool = pool_op((1, 1, 1))
+        elif isinstance(pool_op, nn.AdaptiveAvgPool2d):
+            self.global_pool = pool_op((1, 1))
+        self.fc = nn.Linear(input_channels, output_channels)
+
+    def forward(self, x):
+        x = x[-1]
+        x = self.global_pool(x)
+        x = torch.flatten(x, 1)
+        x = self.fc(x)
+        return x

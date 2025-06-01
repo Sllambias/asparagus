@@ -3,10 +3,10 @@ from torchvision.transforms import Compose
 import logging
 from typing import Literal, Optional, Tuple
 from torch.utils.data import DataLoader
-from asparagus.modules.datasets.TrainDataset import TrainDataset
+from asparagus.modules.datasets.TrainDataset import SegDataset, ClsDataset
 
 
-class TrainDataModule(pl.LightningDataModule):
+class SegDataModule(pl.LightningDataModule):
     def __init__(
         self,
         batch_size: int,
@@ -38,16 +38,76 @@ class TrainDataModule(pl.LightningDataModule):
 
     def setup_fit(self):
 
-        self.train_dataset = TrainDataset(
+        self.train_dataset = SegDataset(
             self.train_split,
             composed_transforms=self.composed_train_transforms,
             patch_size=self.patch_size,
         )
 
-        self.val_dataset = TrainDataset(
+        self.val_dataset = SegDataset(
             self.val_split,
             composed_transforms=self.composed_val_transforms,
             patch_size=self.patch_size,
+        )
+
+    def train_dataloader(self):
+        return DataLoader(
+            self.train_dataset,
+            num_workers=self.num_workers,
+            batch_size=self.batch_size,
+            pin_memory=False,
+            shuffle=True,
+            persistent_workers=True,
+        )
+
+    def val_dataloader(self):
+        return DataLoader(
+            self.val_dataset,
+            num_workers=self.num_workers,
+            batch_size=self.batch_size,
+            pin_memory=False,
+            shuffle=True,
+            persistent_workers=True,
+        )
+
+
+class ClsDataModule(pl.LightningDataModule):
+    def __init__(
+        self,
+        batch_size: int,
+        num_workers: int,
+        train_split: list,
+        val_split: list,
+        composed_train_transforms: Optional[Compose] = None,
+        composed_val_transforms: Optional[Compose] = None,
+    ):
+        super().__init__()
+        self.batch_size = batch_size
+        self.composed_train_transforms = composed_train_transforms
+        self.composed_val_transforms = composed_val_transforms
+        self.num_workers = num_workers
+        self.train_split = train_split
+        self.val_split = val_split
+
+        logging.info(f"Using {self.num_workers} workers")
+
+    def setup(self, stage: Literal["fit", "test", "predict"]):
+        if stage == "fit":
+            self.setup_fit()
+        elif stage == "test":
+            raise NotImplementedError("Test stage not supported for PretrainModule.")
+        elif stage == "predict":
+            raise NotImplementedError("Predict stage not supported for PretrainModule.")
+
+    def setup_fit(self):
+        self.train_dataset = ClsDataset(
+            self.train_split,
+            composed_transforms=self.composed_train_transforms,
+        )
+
+        self.val_dataset = ClsDataset(
+            self.val_split,
+            composed_transforms=self.composed_val_transforms,
         )
 
     def train_dataloader(self):

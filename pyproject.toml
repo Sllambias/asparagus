@@ -1,6 +1,6 @@
 [project]
 name = "asparagus"
-version = "0.0.1"
+version = "0.0.2"
 authors = [
   { name="Sebastian Llambias", email="llambias@live.com" },
 ]
@@ -25,10 +25,13 @@ dependencies = [
 
 [project.scripts]
 asp_tc = 'asparagus.pipeline.run.task_conversion:main'
+asp_split = 'asparagus.pipeline.run.split:main'
 asp_getid = 'asparagus.pipeline.run.get_id:main'
 asp_pretrain = 'asparagus.pipeline.run.pretrain:main'
-asp_train = 'asparagus.pipeline.run.pretrain:main'
-asp_finetrain = 'asparagus.pipeline.run.pretrain:main'
+asp_train_seg = 'asparagus.pipeline.run.train_seg:main'
+asp_train_cls = 'asparagus.pipeline.run.train_cls:main'
+asp_finetune_seg = 'asparagus.pipeline.run.finetune_seg:main'
+asp_finetune_cls = 'asparagus.pipeline.run.finetune_cls:main'
 
 [project.optional-dependencies]
 test = [

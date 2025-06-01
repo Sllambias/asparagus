@@ -15,7 +15,6 @@ class OnlineSegmentationPlugin(Callback):
         self,
         data_module,
         model: nn.Module,
-        dimensions: str,
         output_channels: int,
         epochs: int = 3,
         batch_size: int = 2,
@@ -23,7 +22,6 @@ class OnlineSegmentationPlugin(Callback):
         train_n_last_params: int = 6,
     ) -> None:
         super().__init__()
-        self.dimensions = dimensions
         self.epochs = epochs
         self.data_module = data_module
         self.batch_size = batch_size
@@ -89,14 +87,13 @@ class OnlineSegmentationPlugin(Callback):
 
         loss = self.loss(pred, y)
 
-        acc = self.dice(pred.argmax(1), y.squeeze().long())
-        acc = 0
+        acc = self.dice(pred.argmax(1), y.squeeze(1).long())
         loss.backward()
         self.optimizer.step()
         self.optimizer.zero_grad()
 
-        pl_module.log("online_train_acc", acc, sync_dist=True)
-        pl_module.log("online_train_loss", loss, sync_dist=True)
+        pl_module.log("online_train_acc", acc, sync_dist=True, prog_bar=False)
+        pl_module.log("online_train_loss", loss, sync_dist=True, prog_bar=False)
 
     def val_step(
         self,
@@ -105,14 +102,12 @@ class OnlineSegmentationPlugin(Callback):
     ):
         with torch.no_grad():
             x, y = self.to_device(batch, pl_module.device)
-
         pred = self.model(x)
         loss = self.loss(pred, y)
 
-        acc = self.dice(pred.argmax(1), y.squeeze().long())
-        acc = 0
-        pl_module.log("online_seg_val_acc", acc, sync_dist=True)
-        pl_module.log("online_seg_val_loss", loss, sync_dist=True)
+        acc = self.dice(pred.argmax(1), y.squeeze(1).long())
+        pl_module.log("online_seg_val_acc", acc, sync_dist=True, prog_bar=False)
+        pl_module.log("online_seg_val_loss", loss, sync_dist=True, prog_bar=False)
 
     def train(self, pl_module) -> None:
         for epoch in range(self.epochs):
