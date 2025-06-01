@@ -1,5 +1,7 @@
 from typing import Union, Optional
-from yucca.modules.callbacks.loggers import YuccaLogger
+
+# from yucca.modules.callbacks.loggers import YuccaLogger
+from asparagus.modules.callbacks.loggers import BaseLogger
 from lightning.pytorch.loggers import WandbLogger
 
 
@@ -17,7 +19,7 @@ def logging(
 ):
 
     loggers = [
-        YuccaLogger(
+        BaseLogger(
             save_dir=save_dir,
             name=None,
             version=f"run_id={version}",
