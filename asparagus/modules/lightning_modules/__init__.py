@@ -1,2 +1,3 @@
 from .self_supervised import SelfSupervisedModule, SelfSupervisedMultiModelModule
 from .segmentation_module import SegmentationModule
+from .classification_module import ClassificationModule

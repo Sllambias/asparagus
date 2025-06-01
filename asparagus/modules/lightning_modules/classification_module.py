@@ -5,7 +5,7 @@ from asparagus.modules.lightning_modules.base_module import BaseModule
 from yucca.modules.optimization.loss_functions.nnUNet_losses import DiceCE
 
 
-class SegmentationModule(BaseModule):
+class ClassificationModule(BaseModule):
     def __init__(
         self,
         model: nn.Module,
@@ -36,13 +36,14 @@ class SegmentationModule(BaseModule):
         pred = self.model(x)
         loss = self.loss(pred, y)
 
-        self.log_dict({"train/loss": loss}, sync_dist=True)
+        self.log_dict({"train/loss": loss}, on_step=True, on_epoch=True, sync_dist=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
         x, y = batch["image"], batch["label"]
 
         pred = self.model(x)
+        print(pred.shape, y.shape)
         loss = self.loss(pred, y)
 
-        self.log_dict({"val/loss": loss}, sync_dist=True)
+        self.log_dict({"val/loss": loss}, on_step=True, on_epoch=True, sync_dist=True)

@@ -109,7 +109,7 @@ class SelfSupervisedMultiModelModule(SelfSupervisedModule):
         y_hat, mask = self._augment_and_forward(x)
         loss = self.rec_loss(y_hat, y, mask=mask if self.rec_loss_masked_only else None)
 
-        self.log_dict({"train/loss": loss}, sync_dist=True)
+        self.log_dict({"train/loss": loss}, on_step=True, on_epoch=True, sync_dist=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -118,4 +118,4 @@ class SelfSupervisedMultiModelModule(SelfSupervisedModule):
         y_hat, mask = self._augment_and_forward(x)
         loss = self.rec_loss(y_hat, y, mask=mask if self.rec_loss_masked_only else None)
 
-        self.log_dict({"val/loss": loss}, sync_dist=True)
+        self.log_dict({"val/loss": loss}, on_step=True, on_epoch=True, sync_dist=True)

@@ -74,7 +74,7 @@ def generate_random_segcase(i, target_dir):
     )
 
     torch.save(
-        torch.cat([torch.tensor(data).unsqueeze(0), torch.tensor(seg).unsqueeze(0)]),
+        torch.cat([torch.tensor(images), torch.tensor(seg).unsqueeze(0)]),
         os.path.join(target_dir, f"LauritSynSeg_{i}.pt"),
     )
 

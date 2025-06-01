@@ -4,6 +4,7 @@ import logging
 from typing import Literal, Optional, Tuple
 from torch.utils.data import DataLoader
 from asparagus.modules.datasets.TrainDataset import SegDataset, ClsDataset
+from yucca.modules.data.samplers import InfiniteRandomSampler
 
 
 class SegDataModule(pl.LightningDataModule):
@@ -56,8 +57,8 @@ class SegDataModule(pl.LightningDataModule):
             num_workers=self.num_workers,
             batch_size=self.batch_size,
             pin_memory=False,
-            shuffle=True,
             persistent_workers=True,
+            sampler=InfiniteRandomSampler(self.train_dataset),
         )
 
     def val_dataloader(self):
@@ -66,8 +67,8 @@ class SegDataModule(pl.LightningDataModule):
             num_workers=self.num_workers,
             batch_size=self.batch_size,
             pin_memory=False,
-            shuffle=True,
             persistent_workers=True,
+            sampler=InfiniteRandomSampler(self.val_dataset),
         )
 
 
@@ -116,8 +117,8 @@ class ClsDataModule(pl.LightningDataModule):
             num_workers=self.num_workers,
             batch_size=self.batch_size,
             pin_memory=False,
-            shuffle=True,
             persistent_workers=True,
+            sampler=InfiniteRandomSampler(self.train_dataset),
         )
 
     def val_dataloader(self):
@@ -126,8 +127,8 @@ class ClsDataModule(pl.LightningDataModule):
             num_workers=self.num_workers,
             batch_size=self.batch_size,
             pin_memory=False,
-            shuffle=True,
             persistent_workers=True,
+            sampler=InfiniteRandomSampler(self.val_dataset),
         )
 
 

@@ -35,7 +35,7 @@ class SegmentationModule(BaseModule):
         pred = self.model(x)
         loss = self.loss(pred, y)
 
-        self.log_dict({"train/loss": loss}, sync_dist=True)
+        self.log_dict({"train/loss": loss}, on_step=True, on_epoch=True, sync_dist=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -44,4 +44,4 @@ class SegmentationModule(BaseModule):
         pred = self.model(x)
         loss = self.loss(pred, y)
 
-        self.log_dict({"val/loss": loss}, sync_dist=True)
+        self.log_dict({"val/loss": loss}, on_step=True, on_epoch=True, sync_dist=True)

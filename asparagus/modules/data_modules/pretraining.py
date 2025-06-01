@@ -8,7 +8,6 @@ from asparagus.modules.transforms.composed_transforms import self_supervised_tra
 
 
 class PretrainDataModule(pl.LightningDataModule):
-
     def __init__(
         self,
         batch_size: int,

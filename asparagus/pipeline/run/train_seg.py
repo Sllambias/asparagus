@@ -10,7 +10,7 @@ from hydra.core.hydra_config import HydraConfig
 from asparagus.functional.utils import add_run_to_pretrained_derivative_list
 from asparagus.pipeline.auto_configuration.experiment_setup import prepare_standard_experiment
 from asparagus.paths import get_config_path
-from lightning.pytorch.callbacks import TQDMProgressBar
+from lightning.pytorch.callbacks import TQDMProgressBar, ModelCheckpoint
 
 load_dotenv()
 
@@ -19,7 +19,7 @@ OmegaConf.register_new_resolver("random", lambda min, max: random.randint(min, m
 
 @hydra.main(
     config_path=get_config_path(),
-    config_name="main_train",
+    config_name="main_train_seg",
     version_base="1.2",
 )
 def main(cfg: DictConfig) -> None:
@@ -27,7 +27,7 @@ def main(cfg: DictConfig) -> None:
     file_store, path_store, version_store = prepare_standard_experiment(cfg)
 
     steps_per_epoch = len(file_store.splits["train"]) // cfg.training.batch_size
-    pl.seed_everything(seed=cfg.training.training.seed, workers=True)
+    pl.seed_everything(seed=cfg.training.seed, workers=True)
 
     loggers = logging(
         ckpt_wandb_id=version_store.wandb_id,
@@ -38,7 +38,16 @@ def main(cfg: DictConfig) -> None:
         wandb_experiment=HydraConfig.get().job.config_name,
     )
 
-    callbacks = [TQDMProgressBar(refresh_rate=100)]
+    callbacks = [
+        TQDMProgressBar(refresh_rate=100),
+        ModelCheckpoint(
+            every_n_epochs=cfg.model.ckpt_every_n_epoch,
+            save_top_k=1,
+            filename="last",
+            enable_version_counter=False,
+        ),
+        ModelCheckpoint(monitor="val/loss", mode="min", save_top_k=1, filename="best", enable_version_counter=False),
+    ]
     profilers = None
 
     model = instantiate(

@@ -14,7 +14,7 @@ from asparagus.functional.task_conversion_and_preprocessing import (
 from asparagus.paths import get_data_path
 import torch
 from multiprocessing.pool import Pool
-from asparagus.modules.dataclasses.presets.preprocessing_presets import GBrainPreprocessingConfig
+from asparagus.modules.dataclasses.presets.preprocessing_presets import ClsPreprocessingConfig
 from dataclasses import asdict
 from itertools import repeat
 import numpy as np
@@ -45,7 +45,7 @@ def convert(processes=6):
         source_files_DWI=[],
         source_files_PET=[],
         source_files_excluded=[],
-        preprocessing_config=GBrainPreprocessingConfig,
+        preprocessing_config=ClsPreprocessingConfig,
         processes=1,
         n_classes=5,
         n_modalities=1,
@@ -68,12 +68,12 @@ def generate_random_clscase(i, target_dir, n_classes):
 
     images, properties = preprocess_case_for_training_without_label(
         images=[data],
-        **asdict(GBrainPreprocessingConfig),
+        **asdict(ClsPreprocessingConfig),
         strict=False,
     )
 
     torch.save(
-        [torch.tensor(data).unsqueeze(0), label],
+        [torch.tensor(images), label],
         os.path.join(target_dir, f"LauritSynCls_{i}.pt"),
     )
 

@@ -61,17 +61,15 @@ class ClsDataset(Dataset):
     def __getitem__(self, idx):
         file = self.files[idx]
         data = torch.load(file)
-        label = torch.load(file.replace(".pt", ".txt"))
         data_dict = {
             "file_path": file,
-            "image": data,
-            "label": label,
+            "image": data[0],
+            "label": data[1],
         }
 
         return self._transform(data_dict)
 
     def _transform(self, data_dict):
-        data_dict = self.croppad(data_dict)
         if self.composed_transforms is not None:
             data_dict = self.composed_transforms(data_dict)
         return data_dict
