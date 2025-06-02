@@ -8,7 +8,6 @@ from lightning.pytorch.loggers import WandbLogger
 def logging(
     ckpt_wandb_id: Union[str, None],
     save_dir: str,
-    steps_per_epoch: int,
     version_dir: Union[str, None],
     version: Union[int, str],
     wandb_experiment: str,
@@ -23,7 +22,6 @@ def logging(
             save_dir=save_dir,
             name=None,
             version=f"run_id={version}",
-            steps_per_epoch=steps_per_epoch,
         )
     ]
     loggers.append(

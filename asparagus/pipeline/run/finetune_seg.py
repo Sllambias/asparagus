@@ -10,7 +10,7 @@ from hydra.core.hydra_config import HydraConfig
 from asparagus.functional.utils import add_run_to_pretrained_derivative_list
 from asparagus.pipeline.auto_configuration.experiment_setup import prepare_standard_experiment
 from asparagus.paths import get_config_path
-from lightning.pytorch.callbacks import TQDMProgressBar
+from lightning.pytorch.callbacks import TQDMProgressBar, ModelCheckpoint
 
 load_dotenv()
 
@@ -34,7 +34,6 @@ def main(cfg: DictConfig) -> None:
     loggers = logging(
         ckpt_wandb_id=version_store.wandb_id,
         save_dir=path_store.output_dir,
-        steps_per_epoch=steps_per_epoch,
         version=version_store.version,
         version_dir=version_store.version_dir,
         wandb_experiment=HydraConfig.get().job.config_name,

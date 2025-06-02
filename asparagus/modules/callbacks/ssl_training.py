@@ -20,6 +20,8 @@ class OnlineSegmentationPlugin(Callback):
         batch_size: int = 2,
         every_n_epochs: int = 5,
         train_n_last_params: int = 6,
+        limit_train_batches: int = 250,
+        limit_val_batches: int = 50,
     ) -> None:
         super().__init__()
         self.epochs = epochs
@@ -29,6 +31,8 @@ class OnlineSegmentationPlugin(Callback):
         self.output_channels = output_channels
         self.model = model
         self.train_n_last_params = train_n_last_params
+        self.limit_train_batches = limit_train_batches
+        self.limit_val_batches = limit_val_batches
         if train_n_last_params % 2 != 0:
             logging.warn("Train_n_last_layers not a multiple of 2. Most layers are weight+bias")
 
@@ -92,8 +96,8 @@ class OnlineSegmentationPlugin(Callback):
         self.optimizer.step()
         self.optimizer.zero_grad()
 
-        pl_module.log("online_train_acc", acc, sync_dist=True, prog_bar=False)
-        pl_module.log("online_train_loss", loss, sync_dist=True, prog_bar=False)
+        pl_module.log("online_train_acc", acc.item(), sync_dist=True, prog_bar=True)
+        pl_module.log("online_train_loss", loss.item(), sync_dist=True, prog_bar=True)
 
     def val_step(
         self,
@@ -106,14 +110,18 @@ class OnlineSegmentationPlugin(Callback):
         loss = self.loss(pred, y)
 
         acc = self.dice(pred.argmax(1), y.squeeze(1).long())
-        pl_module.log("online_seg_val_acc", acc, sync_dist=True, prog_bar=False)
-        pl_module.log("online_seg_val_loss", loss, sync_dist=True, prog_bar=False)
+        pl_module.log("online_seg_val_acc", acc.item(), sync_dist=True, prog_bar=False)
+        pl_module.log("online_seg_val_loss", loss.item(), sync_dist=True, prog_bar=False)
 
     def train(self, pl_module) -> None:
         for epoch in range(self.epochs):
-            for batch in self.data_module.train_dataloader():
+            for idx, batch in enumerate(self.data_module.train_dataloader()):
+                if idx >= self.limit_train_batches:
+                    break
                 self.train_step(batch, pl_module)
-            for batch in self.data_module.val_dataloader():
+            for idx, batch in enumerate(self.data_module.val_dataloader()):
+                if idx >= self.limit_val_batches:
+                    break
                 self.val_step(batch, pl_module)
 
     def state_dict(self) -> dict:

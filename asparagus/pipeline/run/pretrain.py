@@ -5,7 +5,7 @@ from omegaconf import DictConfig, OmegaConf
 from hydra.utils import instantiate
 from batchgenerators.utilities.file_and_folder_operations import load_json
 from dotenv import load_dotenv
-from lightning.pytorch.callbacks import TQDMProgressBar
+from lightning.pytorch.callbacks import TQDMProgressBar, ModelCheckpoint
 from asparagus.pipeline.auto_configuration import logging
 from hydra.core.hydra_config import HydraConfig
 from asparagus.pipeline.auto_configuration.experiment_setup import prepare_standard_experiment, prepare_ssl_plugins
@@ -36,7 +36,6 @@ def main(cfg: DictConfig) -> None:
     loggers = logging(
         ckpt_wandb_id=version_store.wandb_id,
         save_dir=path_store.output_dir,
-        steps_per_epoch=steps_per_epoch,
         version=version_store.version,
         version_dir=version_store.version_dir,
         wandb_experiment=HydraConfig.get().job.config_name,

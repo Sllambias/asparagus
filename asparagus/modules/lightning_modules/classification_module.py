@@ -34,7 +34,7 @@ class ClassificationModule(BaseModule):
         x, y = batch["image"], batch["label"]
 
         pred = self.model(x)
-        loss = self.loss(pred, y)
+        loss = self.loss(pred, y.squeeze().long())
 
         self.log_dict({"train/loss": loss}, on_step=True, on_epoch=True, sync_dist=True)
         return loss
@@ -43,7 +43,6 @@ class ClassificationModule(BaseModule):
         x, y = batch["image"], batch["label"]
 
         pred = self.model(x)
-        print(pred.shape, y.shape)
-        loss = self.loss(pred, y)
+        loss = self.loss(pred, y.squeeze().long())
 
         self.log_dict({"val/loss": loss}, on_step=True, on_epoch=True, sync_dist=True)

@@ -368,7 +368,7 @@ class UNetCLSREG(YuccaNet):
             dropout_op = nn.Dropout2d
             norm_op = nn.InstanceNorm2d
             pool_op = nn.MaxPool2d
-            clsreg_pool_op = nn.AdaptiveAvgPool3d
+            clsreg_pool_op = nn.AdaptiveAvgPool2d
         elif dimensions == "3D":
             conv_op = nn.Conv3d
             dropout_op = nn.Dropout3d
@@ -389,7 +389,7 @@ class UNetCLSREG(YuccaNet):
         )
         self.decoder = decoder(
             pool_op=clsreg_pool_op,
-            input_channels=input_channels,
+            input_channels=starting_filters * 16,
             output_channels=output_channels,
         )
 

@@ -32,7 +32,6 @@ def main(cfg: DictConfig) -> None:
     loggers = logging(
         ckpt_wandb_id=version_store.wandb_id,
         save_dir=path_store.output_dir,
-        steps_per_epoch=steps_per_epoch,
         version=version_store.version,
         version_dir=version_store.version_dir,
         wandb_experiment=HydraConfig.get().job.config_name,

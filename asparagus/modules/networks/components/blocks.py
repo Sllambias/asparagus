@@ -455,9 +455,9 @@ class MultiLayerResBlock(nn.Module):
 class ClsRegHead(nn.Module):
     def __init__(self, input_channels, output_channels, pool_op):
         super().__init__()
-        if isinstance(pool_op, nn.AdaptiveAvgPool3d):
+        if issubclass(pool_op, nn.AdaptiveAvgPool3d):
             self.global_pool = pool_op((1, 1, 1))
-        elif isinstance(pool_op, nn.AdaptiveAvgPool2d):
+        elif issubclass(pool_op, nn.AdaptiveAvgPool2d):
             self.global_pool = pool_op((1, 1))
         self.fc = nn.Linear(input_channels, output_channels)
 
