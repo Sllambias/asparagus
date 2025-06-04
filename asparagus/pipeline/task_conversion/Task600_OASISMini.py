@@ -39,8 +39,7 @@ def convert(path: str = get_source_path(), subdir: str = "OASIS", processes=12):
         files_standard, source_dir, target_dir, file_suffix
     )
     files_label = [path.replace("Images", "Labels") for path in files_standard]
-    print(files_standard_out)
-    print(files_label)
+
     multiprocess_image_label_cases(
         files_standard=files_standard,
         files_label=files_label,

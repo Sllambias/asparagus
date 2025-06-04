@@ -3,7 +3,7 @@ PRETRAIN
 | it/s | GPU(s) | Workers | Model         | Augmentations | Plugins (time) | Patch Size |
 | ---- | ------ | ------- | ------------- | ------------- | -------------- | ---------- |
 | 6.08 | a40    | 14      | UNet_b_lw_dec | N/A           | mem leak       | 128*3      |
-| 8.55 | A100   | 14      | UNet_b_lw_dec | N/A           | N/A            | 128*3      |
+| 8.55 | A100   | 14      | UNet_b_lw_dec | N/A           | mem leak       | 128*3      |
 
 SEGMENTATION
 

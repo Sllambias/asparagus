@@ -10,7 +10,6 @@ from yucca.modules.optimization.loss_functions.nnUNet_losses import DiceCE
 
 
 class OnlineSegmentationPlugin(Callback):
-
     def __init__(
         self,
         data_module,
@@ -86,12 +85,12 @@ class OnlineSegmentationPlugin(Callback):
     ):
         with torch.no_grad():
             x, y = self.to_device(batch, pl_module.device)
-
+        self.model.train()
         pred = self.model(x)
 
         loss = self.loss(pred, y)
 
-        acc = self.dice(pred.argmax(1), y.squeeze(1).long())
+        acc = self.dice(pred.detach().argmax(1), y.squeeze(1).long())
         loss.backward()
         self.optimizer.step()
         self.optimizer.zero_grad()
@@ -106,6 +105,7 @@ class OnlineSegmentationPlugin(Callback):
     ):
         with torch.no_grad():
             x, y = self.to_device(batch, pl_module.device)
+        self.model.eval()
         pred = self.model(x)
         loss = self.loss(pred, y)
 
@@ -119,10 +119,10 @@ class OnlineSegmentationPlugin(Callback):
                 if idx >= self.limit_train_batches:
                     break
                 self.train_step(batch, pl_module)
-            for idx, batch in enumerate(self.data_module.val_dataloader()):
-                if idx >= self.limit_val_batches:
-                    break
-                self.val_step(batch, pl_module)
+            # for idx, batch in enumerate(self.data_module.val_dataloader()):
+            #    if idx >= self.limit_val_batches:
+            #        break
+            #    self.val_step(batch, pl_module)
 
     def state_dict(self) -> dict:
         return {"state_dict": self.model.state_dict(), "optimizer_state": self.optimizer.state_dict()}
