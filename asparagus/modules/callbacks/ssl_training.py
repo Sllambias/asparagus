@@ -119,10 +119,10 @@ class OnlineSegmentationPlugin(Callback):
                 if idx >= self.limit_train_batches:
                     break
                 self.train_step(batch, pl_module)
-            # for idx, batch in enumerate(self.data_module.val_dataloader()):
-            #    if idx >= self.limit_val_batches:
-            #        break
-            #    self.val_step(batch, pl_module)
+            for idx, batch in enumerate(self.data_module.val_dataloader()):
+                if idx >= self.limit_val_batches:
+                    break
+                self.val_step(batch, pl_module)
 
     def state_dict(self) -> dict:
         return {"state_dict": self.model.state_dict(), "optimizer_state": self.optimizer.state_dict()}
