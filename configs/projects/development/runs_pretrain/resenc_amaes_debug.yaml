@@ -1,0 +1,20 @@
+# @package _global_
+defaults:
+  - /default_pretrain
+  - /model/resenc_unet_b@model
+  - /hardware/1node40cpu@hardware
+  - _self_
+
+task: PT900_FOMO300K
+root: development
+stem: pretrain
+
+checkpoint_run_id:
+
+training:
+  batch_size: 8
+  accumulate_grad_batches: 1
+  max_samples: 500_000
+
+model:
+  use_skip_connections: False

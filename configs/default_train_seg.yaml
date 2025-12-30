@@ -1,0 +1,53 @@
+defaults:
+  - core/base@
+  - hardware/1gpu40cpu@hardware
+  - _self_
+
+task:
+root: base
+stem:
+
+model:
+  net: ${model.seg_net}
+  ckpt_every_n_epoch: 150
+  deep_supervision: True
+
+lightning:
+  data_module: SegDataModule
+  lightning_module: SegmentationModule
+
+data:
+  data_path: ${oc.env:ASPARAGUS_DATA}/${task}
+  train_split: split_40_10_50
+  test_split: TEST_40_10_50
+  fold: 0
+
+training:
+  epochs: 1000
+  batch_size: 2
+  warmup_epochs: 25
+  decoder_warmup_epochs: 0
+  train_batches_per_epoch_per_device: 250
+  val_batches_per_epoch_per_device: 50
+  patch_size: [160, 160, 160]
+  seed: ${random:0,1000000}
+  check_val_every_n_epoch: 3
+  accumulate_grad_batches: 1
+
+transforms:
+  cpu_tr_transforms: CPU_seg_train_transforms
+  cpu_val_transforms: CPU_seg_val_transforms
+  gpu_tr_transforms: GPU_all_train_transforms
+  gpu_val_transforms:
+  masking: False
+  normalize: True
+
+logger:
+  progress_bar: True
+  profile: False
+  wandb_log_model: False
+  wandb_logging: True
+  wandb_entity: ${oc.env:WANDB_ENTITY, "team-asparagus"}
+  mlflow_logging: False
+  log_images_every_n_epoch: 1
+  log_every_n_steps: 250

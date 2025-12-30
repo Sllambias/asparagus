@@ -1,0 +1,20 @@
+# @package _global_
+defaults:
+  - /core/base@
+  - /default_finetune_seg@
+  - /model/resenc_unet_b@model
+  - _self_
+
+task: SEG004_ATLAS2
+rootcfg: datapaper
+stemcfg: default_finetune
+
+training:
+  epochs: 150
+  warmup_epochs: 10
+  decoder_warmup_epochs: 10
+  batch_size: 2
+
+data: # dataset is 650 sessions
+  train_split: split_03_47_50
+  test_split: TEST_03_47_50

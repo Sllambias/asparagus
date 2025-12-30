@@ -1,0 +1,28 @@
+_pretrain_net:
+  _target_: asparagus.modules.networks.primus.${model.pretrain_net}
+  patch_size: ${training.patch_size}
+  patch_drop_rate: ${training.mask_ratio}
+
+_seg_net:
+  _target_: asparagus.modules.networks.primus.${model.seg_net}
+  patch_size: ${training.patch_size}
+  patch_drop_rate: 0.0
+
+_plugin_seg_net:
+  _target_: asparagus.modules.networks.primus.${model.plugin_seg_net}
+  patch_size: ${training.patch_size}
+  patch_drop_rate: 0.0
+
+pretrain_optim: AdamW
+pretrain_lr: 3e-4
+train_optim: AdamW
+train_lr: 3e-4
+finetune_optim: AdamW
+finetune_lr: 3e-5
+
+weight_decay: 5e-2
+nesterov: False
+momentum: 0.9
+
+min_test_patch_size: ${training.patch_size}
+deep_supervision: False # not supported

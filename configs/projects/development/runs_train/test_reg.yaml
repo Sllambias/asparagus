@@ -1,0 +1,25 @@
+# @package _global_
+defaults:
+  - /core/base@
+  - /default_train_reg@
+  - /hardware/1gpu12cpu@hardware
+  - /model/unet_b_lw_dec@model
+  - _self_
+
+task: 
+root: base
+stem: default_train_reg
+
+training:
+  epochs: 5
+  batch_size: 2
+  limit_train_batches: 50
+  limit_val_batches: 10
+  accumulate_grad_batches: 2
+  target_size: [32,32,32]
+  check_val_every_n_epoch: 1
+
+logger:
+  wandb_logging: True
+  log_every_n_steps: 5
+  log_images_every_n_epoch: 1

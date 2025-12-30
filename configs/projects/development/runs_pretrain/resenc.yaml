@@ -1,0 +1,23 @@
+# @package _global_
+defaults:
+  - /default_pretrain
+  - /model/resenc_unet_b@model
+  - _self_
+
+task: Task998_LauritSyn
+root: development
+stem: pretrain
+
+checkpoint_run_id:
+
+logger:
+  wandb_logging: true
+  mlflow_logging: true
+
+training:
+  batch_size: 8
+  max_samples: 100_000
+
+hardware:
+  num_devices: 2
+  compile_mode: null

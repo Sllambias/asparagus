@@ -1,0 +1,24 @@
+# @package _global_
+defaults:
+  - /default_finetune_cls
+  - _self_
+
+task: 
+
+
+data:
+  train_split: BIDSsplit_40_10_50
+  test_split: BIDSTEST_40_10_50
+
+training:
+  target_size:
+    - 32
+    - 32
+    - 32
+
+  epochs: 5
+  limit_train_batches: 10
+  limit_val_batches: 5
+
+logger:
+  wandb_logging: False

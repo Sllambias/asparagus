@@ -1,0 +1,15 @@
+# @package _global_
+defaults:
+  - core/test@
+  - _self_
+  - hardware/1gpu12cpu@hardware
+
+test_task:
+checkpoint_run_id:
+load_checkpoint_name: best.ckpt
+checkpoint_path: 
+test_split: TEST_40_10_50
+
+data:
+  test_data_path: ${oc.env:ASPARAGUS_DATA}/${test_task}
+  test_split_path: ${oc.env:ASPARAGUS_DATA}/${test_task}/${test_split}.json

@@ -1,0 +1,29 @@
+# @package _global_
+defaults:
+  - /core/base@
+  - /default_pretrain@
+  - /hardware/1gpu12cpu@hardware
+  - _self_
+
+task: 
+root: base
+stem: debug
+
+model:
+  dimensions: 3D
+
+training:
+  patch_size: [32, 32, 32]
+  batch_size: 2
+  steps_per_epoch: 50
+  val_steps_per_epoch: 10
+  epochs: 5
+
+logger:
+  progress_bar: True
+  profile: False
+  wandb_log_model: False
+  wandb_logging: True
+  mlflow_logging: False
+  log_every_n_steps: 1
+  log_images_every_n_epoch: 1

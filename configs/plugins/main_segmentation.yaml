@@ -1,0 +1,33 @@
+net: ${model.plugin_seg_net}
+
+seg: 
+  task:
+  every_n_global_epochs: 2
+  limit_train_batches: 250
+  limit_val_batches: 50
+
+  training:
+    batch_size: ${training.batch_size}
+    epochs: 5
+    patch_size: ${training.patch_size}
+
+  data:
+    data_module: SegDataModule
+    splits: split_80_20
+    data_path: ${oc.env:ASPARAGUS_DATA}/${plugins.seg.task}
+    fold: 0
+  
+  splits_path: ${oc.env:ASPARAGUS_DATA}/${plugins.seg.task}/${plugins.seg.data.splits}.json
+  dataset_json_path: ${oc.env:ASPARAGUS_DATA}/${plugins.seg.task}/dataset.json
+  _data_module:
+    _target_: asparagus.modules.data_modules.${plugins.seg.data.data_module}
+    batch_size: ${plugins.seg.training.batch_size}
+    num_workers: ${hardware.num_workers}
+  _plugin:
+    _target_: asparagus.modules.callbacks.ssl_training.OnlineSegmentationPlugin
+    epochs: ${plugins.seg.training.epochs}
+    every_n_epochs: ${plugins.seg.every_n_global_epochs}
+    train_n_last_params: ${model.plugin_seg_train_n_last_params}
+    limit_train_batches: ${plugins.seg.limit_train_batches}
+    limit_val_batches: ${plugins.seg.limit_val_batches}
+

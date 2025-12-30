@@ -1,0 +1,13 @@
+defaults:
+  - core/resenc_unet@
+
+dimensions: 3D
+
+pretrain_net: resenc_unet_b
+
+seg_net: resenc_unet_b
+cls_net: 
+
+plugin_seg_net: 
+plugin_seg_train_n_last_params: 10
+

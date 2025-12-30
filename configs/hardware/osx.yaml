@@ -1,0 +1,7 @@
+accelerator: "mps"
+num_nodes: 1
+num_devices: 1
+num_workers: 10
+precision: "16-mixed"
+strategy: "auto"
+compile_mode: 

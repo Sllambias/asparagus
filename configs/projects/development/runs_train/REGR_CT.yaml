@@ -1,0 +1,23 @@
+# @package _global_
+defaults:
+  - /core/base@
+  - /default_train_reg@
+  - /hardware/1gpu12cpu@hardware
+  - /model/unet_b_lw_dec@model
+  - _self_
+
+task: 
+root: base
+stem: default_train
+
+training:
+  batch_size: 1
+  
+transforms:
+  cpu_tr_transforms: CPU_CT_C0_clsreg_train_transforms_crop
+  cpu_val_transforms: CPU_CT_C0_clsreg_val_test_transforms_crop
+
+model:
+  train_lr: 0.0001
+  train_optim: AdamW
+  weight_decay: 1e-2

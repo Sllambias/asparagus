@@ -1,0 +1,23 @@
+# @package _global_
+defaults:
+  - /default_finetune_seg
+  - _self_
+
+task: 
+
+data:
+  train_split: split_40_10_50
+  test_split: TEST_40_10_50
+
+training:
+  patch_size:
+    - 32
+    - 32
+    - 32
+
+  epochs: 5
+  limit_train_batches: 10
+  limit_val_batches: 5
+
+logger:
+  wandb_logging: False

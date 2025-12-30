@@ -1,0 +1,34 @@
+_pretrain_net:
+  _target_: asparagus.modules.networks.resenc_unet.${model.pretrain_net}
+  dimensions: ${model.dimensions}
+  use_skip_connections: ${model.use_skip_connections}
+
+_seg_net:
+  _target_: asparagus.modules.networks.resenc_unet.${model.seg_net}
+  dimensions: ${model.dimensions}
+  deep_supervision: ${model.deep_supervision}
+
+_cls_net:
+  _target_: asparagus.modules.networks.resenc_unet.${model.cls_net}
+  dimensions: ${model.dimensions}
+
+_plugin_seg_net:
+  _target_: asparagus.modules.networks.resenc_unet.${model.plugin_seg_net}
+  dimensions: ${model.dimensions}
+
+pretrain_optim: AdamW
+pretrain_lr: 1e-4
+
+train_optim: SGD
+train_lr: 1e-2
+
+finetune_optim: AdamW
+finetune_lr: 1e-3
+
+weight_decay: 3e-5
+nesterov: True
+momentum: 0.99
+
+min_test_patch_size: [96, 96, 96]
+deep_supervision: False
+use_skip_connections: True
