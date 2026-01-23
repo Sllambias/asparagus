@@ -60,7 +60,7 @@ class BaseModule(L.LightningModule):
         self.repeat_stem_weights = repeat_stem_weights
         assert 0 < cosine_period_ratio <= 1
 
-        self.save_hyperparameters(ignore=["model"])
+        self.save_hyperparameters(ignore=["model", "train_transforms", "val_transforms", "test_transforms"])
         self.model = model
 
         if weights is not None:

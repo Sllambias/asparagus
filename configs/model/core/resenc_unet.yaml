@@ -11,6 +11,10 @@ _seg_net:
 _cls_net:
   _target_: asparagus.modules.networks.resenc_unet.${model.cls_net}
   dimensions: ${model.dimensions}
+  dropout_op_kwargs:
+    encoder_dropout_rate: ${model.encoder_dropout_rate}
+    decoder_dropout_rate: ${model.decoder_dropout_rate}
+    inplace: true
 
 _plugin_seg_net:
   _target_: asparagus.modules.networks.resenc_unet.${model.plugin_seg_net}

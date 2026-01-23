@@ -26,6 +26,7 @@ def pathing(cfg, train=True):
         pretrained_ckpt = os.path.join(model_folder, "checkpoints", cfg.load_checkpoint_name)
         assert cfg.checkpoint_path is None, "You cannot provide both a checkpoint path and a checkpoint run id"
     elif cfg.checkpoint_path is not None and cfg.checkpoint_path != "":
+        model_folder = None
         pretrained_ckpt = cfg.checkpoint_path
     else:
         model_folder, pretrained_ckpt = None, None

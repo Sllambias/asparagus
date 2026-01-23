@@ -3,14 +3,14 @@ defaults:
 
 dimensions: 3D
 
-pretrain_net: resenc_unet_b
+pretrain_net:
 
-seg_net: resenc_unet_b
-cls_net:
+seg_net:
+cls_net: resenc_unet_b_clsreg
 
 plugin_seg_net:
-plugin_seg_train_n_last_params: 10
+plugin_seg_train_n_last_params:
 
 # Dropout rates (0.0 = no dropout)
 encoder_dropout_rate: 0.0
-decoder_dropout_rate: 0.0
+decoder_dropout_rate: 0.2

@@ -1,0 +1,61 @@
+name: Deploy to Open Repo
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: |
+      github.event.repository.name == 'internal_asparagus' &&
+      github.event.push.pusher.username != 'github-actions[bot]'
+    name: Push built output to target repo via SSH
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository (no persisted credentials)
+        uses: actions/checkout@v4
+        with:
+          ref: deploy
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Configure git author
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Update deployment branch and remove this workflow so it doesn't get pushed
+        run: |
+          git merge --squash -X theirs origin/main --allow-unrelated-histories
+          git restore --staged README.md
+          git commit -m "deploy changes"
+          
+      - name: Start ssh-agent and add deploy key
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY }}
+
+      - name: Ensure github.com is in known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Set SSH remote and push via SSH
+        run: |
+          echo "Pushing to SSH remote: git@github.com:Sllambias/asparagus.git -> branch main"
+
+          git remote remove origin || true
+          git remote add ssh-origin git@github.com:Sllambias/asparagus.git
+
+          # Sanity checks
+          git remote -v
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK"
+          ssh -T -o StrictHostKeyChecking=no git@github.com || true
+
+          git push --force -u ssh-origin HEAD:main
