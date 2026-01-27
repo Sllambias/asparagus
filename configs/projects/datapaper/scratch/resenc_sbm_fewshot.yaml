@@ -1,0 +1,20 @@
+# @package _global_
+defaults:
+  - /core/base@
+  - /default_train_seg@
+  - /model/resenc_unet_b@model
+  - _self_
+
+task: SEG002_SBM
+rootcfg: datapaper
+stemcfg: default_train
+
+training:
+  epochs: 150
+  warmup_epochs: 10
+  decoder_warmup_epochs: 10
+  batch_size: 2
+
+data: # dataset is 105 sessions
+  train_split: split_19_31_50
+  test_split: TEST_19_31_50

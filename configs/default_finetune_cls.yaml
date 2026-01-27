@@ -1,0 +1,54 @@
+defaults:
+  - core/base@
+  - hardware/1gpu40cpu@hardware
+  - _self_
+
+task:
+checkpoint_run_id:
+load_checkpoint_name: last.ckpt
+root: base
+stem: ${checkpoint_run_id}_${load_checkpoint_name}
+
+model:
+  net: ${model.cls_net}
+  ckpt_every_n_epoch: 25
+
+lightning:
+  data_module: ClsRegDataModule
+  lightning_module: ClassificationModule
+
+data:
+  data_path: ${oc.env:ASPARAGUS_DATA}/${task}
+  train_split: split_75_15_10
+  fold: 0
+
+training:
+  epochs: 50
+  batch_size: 2
+  warmup_epochs: 10
+  decoder_warmup_epochs: 0
+  limit_train_batches: 250
+  limit_val_batches: 50
+  target_size: [128, 128, 128]
+  seed: ${random:0,1000000}
+  mask_ratio: 0.0
+  check_val_every_n_epoch: 3
+  accumulate_grad_batches: 1
+  repeat_stem_weights: True
+
+transforms:
+  cpu_tr_transforms: CPU_clsreg_train_transforms_crop
+  cpu_val_transforms: CPU_clsreg_val_test_transforms_crop
+  gpu_tr_transforms: GPU_all_train_transforms
+  gpu_val_transforms:
+  normalize: True
+
+logger:
+  progress_bar: True
+  profile: False
+  wandb_log_model: False
+  wandb_logging: True
+  wandb_entity: ${oc.env:WANDB_ENTITY, "team-asparagus"}
+  mlflow_logging: False
+  log_every_n_steps: 250
+  log_images_every_n_epoch: 5

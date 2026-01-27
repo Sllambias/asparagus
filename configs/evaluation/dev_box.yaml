@@ -1,0 +1,19 @@
+# @package _global_
+defaults:
+  - core/box@
+  - _self_
+
+checkpoint_run_id: 955624
+load_checkpoint_name: last.ckpt
+scheduler: auto
+default_hardware: 1gpu12cpu
+
+segmentation_tasks:
+  - task: DEBUG_FT_SEG
+    hardware: 1gpu40cpu
+classification_tasks:
+  -
+  - task: DEBUG_FT_CLS
+regression_tasks:
+  - task: DEBUG_FT_REGR
+  - task: DEBUG_FT_REGR

@@ -1,0 +1,89 @@
+hydra:
+  verbose: false
+  callbacks:
+    save_job_info:
+      _target_: hydra.experimental.callbacks.PickleJobInfoCallback
+  job:
+    config:
+      override_dirname:
+        exclude_keys:
+          - +model
+          - +hardware
+          - checkpoint_run_id
+          - data.test_split
+          - hardware
+          - hardware.accelerator
+          - hardware.num_devices
+          - hardware.num_nodes
+          - hardware.num_workers
+          - hardware.precision
+          - hardware.strategy
+          - load_checkpoint_name
+          - model
+          - model.net
+          - model.dimensions
+          - root
+          - run_id
+          - stem
+          - task
+
+  output_subdir: hydra
+  run:
+    dir: ${oc.env:ASPARAGUS_MODELS}/${task}/${model.net}__${model.dimensions}/script=${hydra:job.name}/root=${root}__stem=${stem}/leaf=${hydra:job.config_name}__clargs=${hydra.job.override_dirname}/${data.train_split}__fold=${data.fold}/run_id=${run_id}
+  sweep:
+    dir: ${oc.env:ASPARAGUS_MODELS}/${task}/${model.net}__${model.dimensions}
+    subdir: script=${hydra:job.name}/root=${root}__stem=${stem}/leaf=${hydra:job.config_name}__clargs=${hydra.job.override_dirname}/${data.train_split}__fold=${data.fold}/run_id=${run_id}
+
+lightning:
+  _data_module:
+    _target_: asparagus.modules.data_modules.${lightning.data_module}
+    batch_size: ${training.batch_size}
+    num_workers: ${eval:${hardware.num_workers} // ${hardware.num_devices}}
+  _lightning_module:
+    _target_: asparagus.modules.lightning_modules.${lightning.lightning_module}
+    warmup_epochs: ${training.warmup_epochs}
+    compile_mode: ${hardware.compile_mode}
+  _trainer:
+    _target_: lightning.Trainer
+    accelerator: ${hardware.accelerator}
+    default_root_dir: ${hydra:run.dir}
+    devices: ${hardware.num_devices}
+    num_nodes: ${hardware.num_nodes}
+    enable_progress_bar: ${logger.progress_bar}
+    precision: ${hardware.precision}
+
+train_split_path: ${oc.env:ASPARAGUS_DATA}/${task}/${data.train_split}.json
+test_task: ${task}
+test_split_path: ${oc.env:ASPARAGUS_DATA}/${test_task}/${data.test_split}.json
+
+transforms:
+  _gpu_tr_transforms:
+    _target_: asparagus.modules.transforms.presets.${transforms.gpu_tr_transforms}
+  _gpu_val_transforms:
+    _target_: asparagus.modules.transforms.presets.${transforms.gpu_val_transforms}
+  _cpu_tr_transforms:
+    _target_: asparagus.modules.transforms.presets.${transforms.cpu_tr_transforms}
+  _cpu_val_transforms:
+    _target_: asparagus.modules.transforms.presets.${transforms.cpu_val_transforms}
+
+data:
+  train_split:
+  test_split:
+
+checkpoint_run_id:
+checkpoint_path:
+
+plugins:
+run_id: ${version:}
+
+training:
+  patch_size:
+  batch_size:
+  mask_ratio:
+
+profiler:
+  enabled: false
+  _callback:
+    _target_: asparagus.modules.callbacks.ProfileCallback
+    profile_every_n_steps: 500
+    warmup_steps: 10

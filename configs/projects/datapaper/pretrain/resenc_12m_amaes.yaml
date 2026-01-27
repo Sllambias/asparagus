@@ -1,0 +1,20 @@
+# @package _global_
+defaults:
+  - /default_pretrain
+  - /model/resenc_unet_b@model
+  - /hardware/1node8gpus@hardware
+  - _self_
+
+task: PT900_FOMO300K
+root: datapaper
+stem: pretrain
+
+checkpoint_run_id:
+
+training:
+  batch_size: 8 # 16 pr. device using grad accumulation
+  accumulate_grad_batches: 2
+  max_samples: 12_000_000
+
+model:
+  use_skip_connections: False

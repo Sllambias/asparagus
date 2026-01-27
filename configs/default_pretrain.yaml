@@ -1,0 +1,78 @@
+defaults:
+  - core/base@
+  - hardware/2gpus@hardware
+  - _self_
+
+task:
+root: base
+stem:
+
+model:
+  net: ${model.pretrain_net}
+  ckpt_every_n_epoch: 5
+
+lightning:
+  data_module: PretrainDataModule
+  lightning_module: SelfSupervisedModule
+
+data:
+  data_path: ${oc.env:ASPARAGUS_DATA}/${task}
+  train_split: split_99_01_00
+  fold: 0
+
+training:
+  batch_size: 16
+  accumulate_grad_batches: 1
+  patch_size: [160, 160, 160]
+  seed: ${random:0,1000000}
+  mask_patch_size: 4
+  mask_ratio: 0.6
+  max_samples: 6_000_000
+  warmup_ratio: 0.02
+  # We follow DINOv2/DINOv3 and keep number of *steps* per epoch constant.
+  # We define our epoch length using FOMO60k as our reference dataset
+  # (they use Imagenet1k), which helps ensure stable scaling across gpus
+  # and simplifies logging intervals.
+  # Calculation is 60_529 / (16*2) ≈ 1890, i.e. num steps for 1 epoch
+  # on FOMO60k with our base setup of two devices and a per device
+  # batch size of 16. The key here is that this number is constant
+  # when we increase the number of devices _or_ use a bigger dataset.
+  steps_per_epoch: 1890 # <--- should be constant
+  val_steps_per_epoch: ${eval:"${training.steps_per_epoch} // 100"}
+  epochs: ${eval:"${training.max_samples} // (${training.steps_per_epoch} * ${hardware.num_devices} * ${hardware.num_nodes} * ${training.batch_size})"}
+  warmup_epochs: ${eval:"max(1, int(${training.epochs} * ${training.warmup_ratio}))"}
+  decoder_warmup_epochs: 0
+  rec_loss_masked_only: False
+  check_val_every_n_epoch: 1
+
+# num_devices 4
+# num_nodes 2
+# batch_size 8
+# max_samples 6_000_000
+# steps_per_epoch: 1890
+
+# samples_per_epoch = steps_per_epoch * num_devices * num_nodes * batch_size
+# epochs = 6_000_000 / samples_per_epoch
+
+transforms:
+  cpu_tr_transforms: pretrain_CPU_train_transforms
+  cpu_val_transforms: pretrain_CPU_val_transforms
+  gpu_tr_transforms: pretrain_GPU_train_transforms
+  gpu_val_transforms: pretrain_GPU_val_transforms
+  masking: True
+  normalize: True
+
+logger:
+  progress_bar: True
+  profile: False
+  wandb_log_model: False
+  wandb_logging: True
+  wandb_entity: ${oc.env:WANDB_ENTITY, "team-asparagus"}
+  mlflow_logging: False
+  log_every_n_steps: 250
+  log_images_every_n_epoch: 5
+
+profiler:
+  enabled: False
+  profile_every_n_steps: 500
+  warmup_steps: 10

@@ -1,0 +1,53 @@
+defaults:
+  - core/base@
+  - hardware/1gpu12cpu@hardware
+  - _self_
+
+task:
+root: base
+stem: REGv4
+
+model:
+  net: ${model.cls_net}
+  ckpt_every_n_epoch: 250
+  loss_weight:
+
+lightning:
+  data_module: ClsRegDataModule
+  lightning_module: RegressionModule
+
+data:
+  data_path: ${oc.env:ASPARAGUS_DATA}/${task}
+  train_split: split_40_10_50
+  test_split: TEST_40_10_50
+  fold: 0
+
+training:
+  epochs: 1000
+  batch_size: 4
+  accumulate_grad_batches: 48
+  warmup_epochs: 50
+  decoder_warmup_epochs: 0
+  train_batches_per_epoch_per_device: 250
+  val_batches_per_epoch_per_device: 50
+  target_size: [160, 160, 160]
+  seed: ${random:0,1000000}
+  resume_training: False
+  check_val_every_n_epoch: 5
+
+transforms:
+  cpu_tr_transforms: CPU_clsreg_train_transforms_crop
+  cpu_val_transforms: CPU_clsreg_val_test_transforms_crop
+  gpu_tr_transforms: GPU_all_train_transforms
+  gpu_val_transforms:
+  normalize: True
+
+logger:
+  progress_bar: True
+  profile: False
+  wandb_log_model: False
+  wandb_logging: True
+  wandb_entity: ${oc.env:WANDB_ENTITY, "team-asparagus"}
+  mlflow_logging: False
+  log_every_n_steps: 250
+  log_images_every_n_epoch: 1

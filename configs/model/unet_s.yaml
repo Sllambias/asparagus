@@ -1,0 +1,13 @@
+defaults:
+  - core/unet@
+
+dimensions: 3D
+
+pretrain_net: 
+
+seg_net: 
+cls_net: unet_clsreg_s
+
+plugin_seg_net: 
+plugin_seg_train_n_last_params: 10
+

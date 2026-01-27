@@ -1,0 +1,11 @@
+defaults:
+  - core/primus@
+
+dimensions: 3D
+
+pretrain_net: primus_m
+
+seg_net: primus_m
+
+plugin_seg_net: primus_m
+plugin_seg_train_n_last_params: 20

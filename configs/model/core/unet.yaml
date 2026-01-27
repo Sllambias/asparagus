@@ -1,0 +1,31 @@
+_pretrain_net:
+  _target_: asparagus.modules.networks.unet.${model.pretrain_net}
+  dimensions: ${model.dimensions}
+  use_skip_connections: ${model.use_skip_connections}
+
+_seg_net:
+  _target_: asparagus.modules.networks.unet.${model.seg_net}
+  dimensions: ${model.dimensions}
+  deep_supervision: ${model.deep_supervision}
+
+_cls_net:
+  _target_: asparagus.modules.networks.unet.${model.cls_net}
+  dimensions: ${model.dimensions}
+
+_plugin_seg_net:
+  _target_: asparagus.modules.networks.unet.${model.plugin_seg_net}
+  dimensions: ${model.dimensions}
+
+pretrain_optim: SGD
+pretrain_lr: 1e-2
+train_optim: SGD
+train_lr: 1e-2
+finetune_optim: SGD
+finetune_lr: 1e-3
+
+weight_decay: 3e-5
+nesterov: True
+momentum: 0.99
+
+use_skip_connections: True
+deep_supervision: False
