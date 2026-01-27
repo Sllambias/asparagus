@@ -1,0 +1,61 @@
+name: deploy from open
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    if: |
+      ${{ (github.event.repository.name == 'asparagus' &&
+      github.event.commits[0].author.name != 'github-actions[bot]') }}
+    name: Push built output to target repo via SSH
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository (no persisted credentials)
+        uses: actions/checkout@v4
+        with:
+          ref: deploy
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Start ssh-agent and add deploy key
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY }}
+          
+      - name: Configure git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/Sllambias/asparagus
+          git remote add ssh-origin git@github.com:Sllambias/internal_asparagus.git
+
+      - name: Ensure github.com is in known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts     
+
+      - name: Update deploy branch and commit changes
+        run: |
+          git fetch ssh-origin main
+          git rebase -X ours ssh-origin/main
+          git merge --squash -X theirs origin/main
+          git restore --staged README.md
+          git commit -m "deploy changes"
+
+      - name: Sync repositories
+        run: |
+          echo "Pushing to SSH remote: git@github.com:Sllambias/internal_asparagus.git -> branch main"
+          
+          git remote -v
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK"
+          ssh -T -o StrictHostKeyChecking=no git@github.com || true
+          
+          git push -u ssh-origin HEAD:main

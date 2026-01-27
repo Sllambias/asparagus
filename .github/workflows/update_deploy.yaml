@@ -1,0 +1,36 @@
+name: update deploy
+
+on:
+  workflow_run:
+    workflows: [deploy to open,deploy from open]
+    types:
+      - completed
+
+permissions:
+  contents: write
+
+jobs:
+  update_branch:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    name: Merge main into deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: deploy
+          fetch-depth: 0
+          persist-credentials: false
+          
+      - name: Configure git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/Sllambias/${{ github.event.repository.name }}
+
+      - name: Update deployment main
+        run: |
+          git merge --squash -X theirs origin/main
+          git restore --staged README.md
+          git commit -m "deploy changes"
+          git push 
