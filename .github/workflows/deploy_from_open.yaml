@@ -13,6 +13,7 @@ jobs:
   deploy:
     if: |
       ${{ (github.event.repository.name == 'asparagus' &&
+      github.event.commits[0].message != 'deploy changes' &&
       github.event.commits[0].author.name != 'github-actions[bot]') }}
     name: Push built output to target repo via SSH
     runs-on: ubuntu-latest
