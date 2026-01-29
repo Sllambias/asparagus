@@ -219,12 +219,10 @@ class SegmentationModule(BaseModule):
     def test_step(self, batch, batch_idx):
         x = batch["image"]
 
-        logits = self.model.predict(
-            mode=self.inference_mode,
+        logits = self.model.sliding_window_predict(
             data=x,
             patch_size=fit_patch_size_to_image_size(self.inference_patch_size, list(x.shape[2:])),
             overlap=0.5,
-            sliding_window_prediction=True,
         )
 
         src_logits = reverse_preprocessing(logits, batch["properties"])
@@ -249,12 +247,10 @@ class SegmentationModule(BaseModule):
 
     def predict_step(self, batch, batch_idx):
         x = batch["image"]
-        logits = self.model.predict(
-            mode=self.inference_mode,
+        logits = self.model.sliding_window_predict(
             data=x,
             patch_size=self.inference_patch_size,
             overlap=0.5,
-            sliding_window_prediction=True,
         )
         logits = reverse_preprocessing(
             array=logits,
