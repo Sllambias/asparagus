@@ -51,7 +51,6 @@ def main(cfg: DictConfig) -> None:
         ckpt_cfg.lightning._lightning_module,
         model=model,
         weights=path_store.ckpt_path,
-        inference_mode=ckpt_cfg.model.dimensions,
         inference_patch_size=ckpt_cfg.training.patch_size,
         test_output_path=output_path,
     )

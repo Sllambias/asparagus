@@ -115,6 +115,7 @@ def main(cfg: DictConfig) -> None:
         optimizer=cfg.model.train_optim,
         learning_rate=cfg.model.train_lr,
         deep_supervision=cfg.model.deep_supervision,
+        inference_patch_size=cfg.training.patch_size,
         test_output_path=os.path.join(
             path_store.run_dir,
             "predictions",
