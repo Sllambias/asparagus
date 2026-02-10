@@ -79,14 +79,8 @@ class ClsRegBase(BaseModule):
             "train/loss", loss, on_step=False, on_epoch=True, sync_dist=True, batch_size=self.trainer.datamodule.batch_size
         )
 
-        metrics = self.train_metrics(pred, y)
-        self.log_dict(
-            format_multilabel_metrics(metrics, ignore_index=self.ignore_index_in_metrics),
-            on_step=False,
-            on_epoch=True,
-            sync_dist=True,
-            batch_size=self.trainer.datamodule.batch_size,
-        )
+        self.train_metrics.update(pred, y)
+
         if (
             self.current_epoch > 0
             and batch_idx == 0
@@ -106,6 +100,12 @@ class ClsRegBase(BaseModule):
 
         return loss
 
+    def on_train_epoch_end(self):
+        metrics_results = self.train_metrics.compute()
+        formatted_metrics = format_multilabel_metrics(metrics_results, ignore_index=self.ignore_index_in_metrics)
+        self.log_dict(formatted_metrics, sync_dist=True)
+        self.train_metrics.reset()
+
     def validation_step(self, batch, batch_idx):
         x, y = batch["image"], batch["CLSREG_label"]
 
@@ -113,14 +113,8 @@ class ClsRegBase(BaseModule):
         loss = self.loss(pred, y)
         self.log("val/loss", loss, on_step=False, on_epoch=True, sync_dist=True, batch_size=self.trainer.datamodule.batch_size)
 
-        metrics = self.val_metrics(pred, y)
-        self.log_dict(
-            format_multilabel_metrics(metrics, ignore_index=self.ignore_index_in_metrics),
-            on_step=False,
-            on_epoch=True,
-            sync_dist=True,
-            batch_size=self.trainer.datamodule.batch_size,
-        )
+        self.val_metrics.update(pred, y)
+
         if (
             self.current_epoch > 0
             and batch_idx == 0
@@ -137,6 +131,12 @@ class ClsRegBase(BaseModule):
                 log_key="val",
                 task_type=self.task_type,
             )
+
+    def on_validation_epoch_end(self):
+        metrics_results = self.val_metrics.compute()
+        formatted_metrics = format_multilabel_metrics(metrics_results, ignore_index=self.ignore_index_in_metrics)
+        self.log_dict(formatted_metrics, sync_dist=True)
+        self.val_metrics.reset()
 
     def on_test_epoch_start(self):
         self.results = {}
