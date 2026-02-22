@@ -23,7 +23,7 @@ class ClsRegBase(BaseModule):
         decoder_warmup_epochs: int = 0,
         cosine_period_ratio: float = 1,
         compile_mode: str = None,
-        weights: str = None,
+        weights: dict = None,
         optimizer: str = "SGD",
         train_transforms: Optional[transforms.Compose] = None,
         test_transforms: Optional[transforms.Compose] = None,
@@ -75,6 +75,7 @@ class ClsRegBase(BaseModule):
 
         pred = self.model(x)
         loss = self.loss(pred, y)
+
         self.log(
             "train/loss", loss, on_step=False, on_epoch=True, sync_dist=True, batch_size=self.trainer.datamodule.batch_size
         )

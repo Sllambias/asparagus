@@ -44,7 +44,7 @@ class SegmentationModule(BaseModule):
         decoder_warmup_epochs: int = 0,
         cosine_period_ratio: float = 1,
         compile_mode: str = None,
-        weights: str = None,
+        weights: dict = None,
         deep_supervision: bool = False,
         train_transforms: Optional[transforms.Compose] = None,
         test_transforms: Optional[transforms.Compose] = None,

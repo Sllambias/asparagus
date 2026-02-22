@@ -29,9 +29,8 @@ class BaseModule(L.LightningModule):
         decoder_warmup_epochs: int = 0,
         cosine_period_ratio: float = 1,
         compile_mode: str = None,
-        weights: str = None,
+        weights: dict = None,
         load_decoder: bool = True,
-        repeat_stem_weights: bool = True,
         optimizer: str = "SGD",
         train_transforms: Optional[transforms.Compose] = None,
         test_transforms: Optional[transforms.Compose] = None,
@@ -39,6 +38,7 @@ class BaseModule(L.LightningModule):
         weight_decay: float = 3e-5,
         nesterov: bool = True,
         momentum: float = 0.99,
+        repeat_stem_weights: bool = True,
     ):
         super().__init__()
         self.learning_rate = learning_rate
@@ -60,11 +60,11 @@ class BaseModule(L.LightningModule):
         self.repeat_stem_weights = repeat_stem_weights
         assert 0 < cosine_period_ratio <= 1
 
-        self.save_hyperparameters(ignore=["model", "train_transforms", "val_transforms", "test_transforms"])
+        self.save_hyperparameters(ignore=["model", "weights", "train_transforms", "val_transforms", "test_transforms"])
         self.model = model
 
         if weights is not None:
-            self.load_weights(weights, load_decoder=load_decoder)
+            self.load_state_dict(weights, load_decoder=load_decoder, strict=False)
 
         self.model = torch.compile(model, mode=compile_mode) if compile_mode is not None else model
 
@@ -143,11 +143,6 @@ class BaseModule(L.LightningModule):
 
         return [optimizer], [scheduler_config]
 
-    def load_weights(self, weights, load_decoder=True):
-        ckpt = torch.load(weights, map_location="cpu", weights_only=False)
-        print(f"Loading weights trained for {ckpt['global_step']} steps / {ckpt['epoch']} epochs.")
-        self.load_state_dict(ckpt["state_dict"], load_decoder=load_decoder, strict=False)
-
     def load_state_dict(self, state_dict, load_decoder=True, *args, **kwargs):
         old_params = copy.deepcopy(self.state_dict())
 
@@ -161,10 +156,10 @@ class BaseModule(L.LightningModule):
             state_dict = {k.replace("_orig_mod.", ""): v for k, v in state_dict.items()}
 
         # Repeat stem weights when state_dict num_channels is smaller than new_state_dict num_channels
-        if self.model.stem_weight_name is not None and self.repeat_stem_weights:
+        if hasattr(self.model, "stem_weight_name") and self.model.stem_weight_name is not None and self.repeat_stem_weights:
             prefix = "model._orig_mod." if "_orig_mod" in list(state_dict.keys())[0] else "model."
             stem_name = f"{prefix}{self.model.stem_weight_name}"
-            pt_input_channels = state_dict[stem_name].shape[1]  # (N, C, H, W, Z) where N is num tokens.
+            pt_input_channels = state_dict[stem_name].shape[1]
             ft_input_channels = old_params[stem_name].shape[1]
             if pt_input_channels < ft_input_channels:
                 assert pt_input_channels == 1, (

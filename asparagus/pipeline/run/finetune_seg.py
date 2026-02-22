@@ -6,6 +6,7 @@ from asparagus.functional.versioning import generate_unused_run_id
 from asparagus.modules.hydra.plugins.searchpath_plugins import FinetuneSearchpathPlugin
 from asparagus.modules.transforms.presets import CPU_seg_test_transforms
 from asparagus.paths import get_config_path
+from asparagus.pipeline.auto_configuration.checkpoint import resolve_checkpoint
 from asparagus.pipeline.auto_configuration.experiment_setup import (
     prepare_standard_experiment,
 )
@@ -39,10 +40,10 @@ def main(cfg: DictConfig) -> None:
     print(f"{OmegaConf.to_yaml(cfg)}\n Version: {cfg.run_id}\n Run dir: {HydraConfig.get().run.dir}\n")
     logging_safe_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     file_store, path_store, version_store = prepare_standard_experiment(cfg)
+    weights = resolve_checkpoint(cfg)
     pl.seed_everything(seed=cfg.training.seed, workers=True)
 
     assert "load_checkpoint_name" in cfg.keys(), "load_checkpoint_name not in config. Did you supply a scratch config?"
-    assert path_store.ckpt_path is not None, "Checkpoint must be provided for finetuning."
 
     loggers = logging(
         ckpt_wandb_id=version_store.wandb_id,
@@ -112,7 +113,7 @@ def main(cfg: DictConfig) -> None:
         model=model,
         warmup_epochs=cfg.training.warmup_epochs,
         decoder_warmup_epochs=cfg.training.decoder_warmup_epochs,
-        weights=path_store.ckpt_path,
+        weights=weights,
         train_transforms=gpu_tr_transforms,
         val_transforms=None,
         optimizer=cfg.model.finetune_optim,

@@ -3,6 +3,7 @@ import os
 import random
 from asparagus.modules.transforms.presets import CPU_seg_test_transforms
 from asparagus.paths import get_config_path
+from asparagus.pipeline.auto_configuration.checkpoint import load_checkpoint_state_dict
 from asparagus.pipeline.auto_configuration.experiment_setup import prepare_inference
 from dotenv import load_dotenv
 from hydra.utils import instantiate
@@ -50,7 +51,7 @@ def main(cfg: DictConfig) -> None:
     model_module = instantiate(
         ckpt_cfg.lightning._lightning_module,
         model=model,
-        weights=path_store.ckpt_path,
+        weights=load_checkpoint_state_dict(path_store.ckpt_path),
         inference_patch_size=ckpt_cfg.training.patch_size,
         test_output_path=output_path,
     )

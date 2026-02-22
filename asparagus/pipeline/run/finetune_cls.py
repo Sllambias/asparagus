@@ -6,6 +6,7 @@ from asparagus.functional.versioning import generate_unused_run_id
 from asparagus.modules.hydra.plugins.searchpath_plugins import FinetuneSearchpathPlugin
 from asparagus.modules.transforms.presets import CPU_clsreg_val_test_transforms_crop
 from asparagus.paths import get_config_path
+from asparagus.pipeline.auto_configuration.checkpoint import resolve_checkpoint
 from asparagus.pipeline.auto_configuration.experiment_setup import (
     prepare_standard_experiment,
 )
@@ -39,6 +40,7 @@ def main(cfg: DictConfig) -> None:
     print(f"{OmegaConf.to_yaml(cfg)}\n Version: {cfg.run_id}\n Run dir: {HydraConfig.get().run.dir}\n")
     logging_safe_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     file_store, path_store, version_store = prepare_standard_experiment(cfg)
+    weights = resolve_checkpoint(cfg)
     pl.seed_everything(seed=cfg.training.seed, workers=True)
 
     loggers = logging(
@@ -107,7 +109,7 @@ def main(cfg: DictConfig) -> None:
         decoder_warmup_epochs=cfg.training.decoder_warmup_epochs,
         train_transforms=gpu_tr_transforms,
         val_transforms=None,
-        weights=path_store.ckpt_path,
+        weights=weights,
         log_image_every_n_epochs=cfg.logger.log_images_every_n_epoch,
         optimizer=cfg.model.finetune_optim,
         learning_rate=cfg.model.finetune_lr,

@@ -10,6 +10,8 @@ hydra:
           - +model
           - +hardware
           - checkpoint_run_id
+          - hf_model_id
+          - hf_weight_format
           - data.test_split
           - hardware
           - hardware.accelerator
@@ -72,6 +74,8 @@ data:
 
 checkpoint_run_id:
 checkpoint_path:
+hf_model_id:
+hf_weight_format: asparagus.functional.huggingface.HuggingFaceWeightMapper
 
 plugins:
 run_id: ${version:}

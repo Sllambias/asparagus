@@ -6,6 +6,7 @@ defaults:
 task:
 checkpoint_run_id:
 load_checkpoint_name: last.ckpt
+hf_model_id:
 root: base
 stem: ${checkpoint_run_id}_${load_checkpoint_name}
 
