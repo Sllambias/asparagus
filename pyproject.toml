@@ -28,6 +28,7 @@ dependencies = [
     "torchmetrics>=1.7.2",
     "torchvision==0.21.0",
     "wandb>=0.23.0",
+    "huggingface-hub>=1.5.0"
 ]
 
 
@@ -48,7 +49,7 @@ dcai = [
 [project.optional-dependencies]
 extras = [
     "mlflow>=3.0.0",
-    "gardening_tools[extras]>=0.1.1",    
+    "gardening_tools[extras]>=0.1.1",
 ]
 test = [
     "ruff>=0.14.8",
