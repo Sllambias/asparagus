@@ -37,7 +37,7 @@ transforms:
   cpu_tr_transforms: CPU_clsreg_train_transforms_crop
   cpu_val_transforms: CPU_clsreg_val_test_transforms_crop
   gpu_tr_transforms: GPU_all_train_transforms
-  gpu_val_transforms: 
+  gpu_val_transforms:
   normalize: True
 
 logger:
@@ -49,3 +49,4 @@ logger:
   mlflow_logging: False
   log_every_n_steps: 250
   log_images_every_n_epoch: 5
+  log_to_stdout: True

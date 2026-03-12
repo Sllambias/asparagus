@@ -30,7 +30,7 @@ class SelfSupervisedModule(BaseModule):
         train_transforms: Optional[transforms.Compose] = None,
         test_transforms: Optional[transforms.Compose] = None,
         val_transforms: Optional[transforms.Compose] = None,
-        optimizer: str = "SGD",
+        optimizer: str = "AdamW",
         mlflow_logging: bool = False,
         log_every_n_steps: int = 50,
         weight_decay: float = 3e-5,

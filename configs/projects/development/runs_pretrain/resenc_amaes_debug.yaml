@@ -2,7 +2,7 @@
 defaults:
   - /default_pretrain
   - /model/resenc_unet_b@model
-  - /hardware/1node40cpu@hardware
+  - /hardware/1gpu12cpu@hardware
   - _self_
 
 task: PT900_FOMO300K
@@ -13,8 +13,12 @@ checkpoint_run_id:
 
 training:
   batch_size: 8
-  accumulate_grad_batches: 1
-  max_samples: 500_000
+  accumulate_grad_batches: 2
+  max_samples: 6_000_000
+  warmup_ratio: 0.02
 
 model:
   use_skip_connections: False
+
+logger:
+  log_every_n_steps: 10

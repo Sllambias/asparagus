@@ -51,3 +51,4 @@ logger:
   mlflow_logging: False
   log_every_n_steps: 250
   log_images_every_n_epoch: 1
+  log_to_stdout: True

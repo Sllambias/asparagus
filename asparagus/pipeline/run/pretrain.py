@@ -47,6 +47,7 @@ def main(cfg: DictConfig) -> None:
         wandb_project="Pretrain",
         wandb_logging=cfg.logger.wandb_logging,
         mlflow_logging=cfg.logger.mlflow_logging,
+        log_to_stdout=cfg.logger.log_to_stdout,
     )
 
     callbacks = [
@@ -102,7 +103,7 @@ def main(cfg: DictConfig) -> None:
         cfg.lightning._lightning_module,
         model=model,
         learning_rate=cfg.model.pretrain_lr,
-        warmup_epochs=int(cfg.training.epochs * cfg.training.warmup_ratio),
+        warmup_epochs=cfg.training.warmup_epochs,
         train_transforms=gpu_tr_transforms,
         val_transforms=gpu_val_transforms,
         rec_loss_masked_only=cfg.training.rec_loss_masked_only,
@@ -112,6 +113,15 @@ def main(cfg: DictConfig) -> None:
         log_images_every_n_epoch=cfg.logger.log_images_every_n_epoch,
     )
 
+    print("Training duration configured as:")
+    print(f"  - Steps: {cfg.training.steps}")
+    print(f"  - Steps per pseudo epoch: {cfg.training.steps_per_epoch}")
+    print(f"  - Validation steps per pseudo epoch: {cfg.training.val_steps_per_epoch}")
+    print(
+        f"  - Pseudo Epochs: {cfg.training.steps / (cfg.training.steps_per_epoch * cfg.training.accumulate_grad_batches):.1f}"
+    )
+    print(f"  - Warmup Pseudo Epochs: {cfg.training.warmup_epochs} (ratio {cfg.training.warmup_ratio})")
+
     trainer = instantiate(
         cfg.lightning._trainer,
         callbacks=callbacks,
@@ -119,7 +129,7 @@ def main(cfg: DictConfig) -> None:
         logger=loggers,
         default_root_dir=path_store.run_dir,
         check_val_every_n_epoch=cfg.training.check_val_every_n_epoch,
-        max_epochs=cfg.training.epochs,
+        max_steps=cfg.training.steps,
         limit_train_batches=cfg.training.steps_per_epoch,
         limit_val_batches=cfg.training.val_steps_per_epoch,
         use_distributed_sampler=False,

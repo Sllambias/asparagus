@@ -37,10 +37,10 @@ training:
   # on FOMO60k with our base setup of two devices and a per device
   # batch size of 16. The key here is that this number is constant
   # when we increase the number of devices _or_ use a bigger dataset.
-  steps_per_epoch: 1890 # <--- should be constant
+  steps_per_epoch: 1890  # <--- should be constant ... but note that if gradient accumulation is used, then steps_per_epoch > number of backwards passes.
   val_steps_per_epoch: ${eval:"${training.steps_per_epoch} // 100"}
-  epochs: ${eval:"${training.max_samples} // (${training.steps_per_epoch} * ${hardware.num_devices} * ${hardware.num_nodes} * ${training.batch_size})"}
-  warmup_epochs: ${eval:"max(1, int(${training.epochs} * ${training.warmup_ratio}))"}
+  steps: ${eval:"${training.max_samples} // (${hardware.num_devices} * ${hardware.num_nodes} * ${training.batch_size} * ${training.accumulate_grad_batches})"}
+  warmup_epochs: ${eval:"max(1, int((${training.steps} // ${training.steps_per_epoch}) * ${training.warmup_ratio}))"}
   decoder_warmup_epochs: 0
   rec_loss_masked_only: False
   check_val_every_n_epoch: 1
@@ -53,6 +53,7 @@ training:
 
 # samples_per_epoch = steps_per_epoch * num_devices * num_nodes * batch_size
 # epochs = 6_000_000 / samples_per_epoch
+# steps = 6_000_000 / (num_devices * num_nodes * batch_size)
 
 transforms:
   cpu_tr_transforms: pretrain_CPU_train_transforms
@@ -71,6 +72,7 @@ logger:
   mlflow_logging: False
   log_every_n_steps: 250
   log_images_every_n_epoch: 5
+  log_to_stdout: False
 
 profiler:
   enabled: False

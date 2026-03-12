@@ -52,6 +52,7 @@ def main(cfg: DictConfig) -> None:
         wandb_entity=cfg.logger.wandb_entity,
         wandb_logging=cfg.logger.wandb_logging,
         mlflow_logging=cfg.logger.mlflow_logging,
+        log_to_stdout=cfg.logger.log_to_stdout,
     )
 
     best_ckpt_callback = ModelCheckpoint(
