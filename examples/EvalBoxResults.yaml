@@ -1,0 +1,52 @@
+segmentation_tasks:
+  SEG003_ISLES22_ADCDWI:
+    config: FT_SEG003
+    run_id: 12345
+    fold: 0
+    metrics:
+      dice: 0.65
+      nsd: 0.42
+  SEG003_ISLES22_ADCDWI:
+    config: FT_SEG003
+    run_id: 51256
+    fold: 1
+    metrics:
+      dice: 0.65
+      nsd: 0.42
+  SEG603_SBM: 
+    config: FT_SEG603
+    run_id: 51245
+    fold: 0
+    metrics:
+      dice: 0.13
+      nsd: 0.15
+classification_tasks:
+  CLS003_SALD:
+    config: FT_CLS003
+    run_id: 2145
+    fold: 0
+    metrics:
+      AUROC: 0.65
+      Accuracy: 0.42
+regression_tasks:
+  REGR003_SALD:
+    config: FT_REGR003
+    run_id: 21456906
+    fold: 0
+    metrics:
+      MSE: 0.65
+      MAE: 32.4
+  REGR003_SALD:
+    config: FT_REGR003V2
+    run_id: 86942
+    fold: 0
+    metrics:
+      MSE: 0.62
+      MAE: 29.4
+  REGR004_MCSA:
+    config: FT_REGR004
+    run_id: 906
+    fold: 0
+    metrics:
+      MSE: 0.4
+      MAE: 12.4
