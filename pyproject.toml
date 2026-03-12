@@ -55,18 +55,29 @@ test = [
     "ruff>=0.14.8",
     "pytest>=9.0.1"
 ]
+docs = [
+    "mkdocs-shadcn",
+    "mkdocs>=1.6.0",
+    "mkdocstrings[python]>=0.27.0",
+]
 
 
 [project.scripts]
 asp_getid = 'asparagus.pipeline.run.get_id:main'
 asp_pretrain = 'asparagus.pipeline.run.pretrain:main'
-asp_train_seg = 'asparagus.pipeline.run.train_seg:main'
-asp_test_seg = 'asparagus.pipeline.run.test_seg:main'
+
 asp_train_cls = 'asparagus.pipeline.run.train_cls:main'
+asp_train_seg = 'asparagus.pipeline.run.train_seg:main'
 asp_train_reg = 'asparagus.pipeline.run.train_reg:main'
+
+asp_test_cls = 'asparagus.pipeline.run.test_cls:main'
+asp_test_seg = 'asparagus.pipeline.run.test_seg:main'
+asp_test_reg = 'asparagus.pipeline.run.test_cls:main'
+
 asp_finetune_seg = 'asparagus.pipeline.run.finetune_seg:main'
 asp_finetune_cls = 'asparagus.pipeline.run.finetune_cls:main'
 asp_finetune_reg = 'asparagus.pipeline.run.finetune_reg:main'
+
 asp_eval_box_run = 'asparagus.pipeline.run.eval_box:main'
 asp_eval_box_prepare_data = 'asparagus.pipeline.run.eval_box:prepare_data'
 asp_eval_box_collect_results = 'asparagus.pipeline.run.eval_box:collect_results'

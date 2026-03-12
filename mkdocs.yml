@@ -1,0 +1,47 @@
+site_name: Asparagus
+site_description: Medical imaging ML framework built on PyTorch, Lightning, and Hydra
+repo_name: asparagus
+repo_url: https://github.com/Sllambias/asparagus       
+site_url: https://Sllambias.github.io/asparagus/        
+
+theme:
+  name: shadcn
+
+markdown_extensions:
+  - toc:
+      permalink: false
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation:        getting-started/install.md
+    - Environment Setup:   getting-started/environment_variables.md
+    - HPC Configuration:   getting-started/environment_on_gefion.md
+  - Data Pipeline:
+    - Preprocessing:       data-pipeline/preprocessing.md
+    - Data Structure:      data-pipeline/data_structure.md
+  - Training Workflows:
+    - Pretraining (SSL):   training-workflows/pretraining.md
+    - Segmentation:        training-workflows/segmentation.md
+    - Classification:      training-workflows/classification.md
+    - Regression:          training-workflows/regression.md
+    - Cross-Dataset Evaluation: training-workflows/cross_dataset.md
+    - Config Reference:    training-workflows/configs.md
+  - Evaluation:
+    - The EvalBox:         evaluation/evalbox.md
+  - Advanced:
+    - Common Issues:       advanced/common_issues.md
+    - Hacking Asparagus:   advanced/hacking_asparagus.md
+    - Training Benchmarks: advanced/training_times.md
+  - Project Info:
+    - About Us:            project/about.md
+    - Contributing:        project/contributing.md
+
+extra_css:
+  - assets/css/copy-code-button.css
+extra_javascript:
+  - assets/js/copy-code-button.js
