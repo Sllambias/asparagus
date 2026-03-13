@@ -39,11 +39,12 @@ training:
   # when we increase the number of devices _or_ use a bigger dataset.
   steps_per_epoch: 1890  # <--- should be constant ... but note that if gradient accumulation is used, then steps_per_epoch > number of backwards passes.
   val_steps_per_epoch: ${eval:"${training.steps_per_epoch} // 100"}
-  steps: ${eval:"${training.max_samples} // (${hardware.num_devices} * ${hardware.num_nodes} * ${training.batch_size} * ${training.accumulate_grad_batches})"}
+  global_batch_size: ${eval:"${training.batch_size} * ${hardware.num_devices} * ${hardware.num_nodes} * ${training.accumulate_grad_batches}"}
+  steps: ${eval:"${training.max_samples} // (${training.global_batch_size})"}
   warmup_epochs: ${eval:"max(1, int((${training.steps} // ${training.steps_per_epoch}) * ${training.warmup_ratio}))"}
   decoder_warmup_epochs: 0
   rec_loss_masked_only: False
-  check_val_every_n_epoch: 1
+  check_val_every_n_epoch: 3
 
 # num_devices 4
 # num_nodes 2

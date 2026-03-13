@@ -113,15 +113,6 @@ def main(cfg: DictConfig) -> None:
         log_images_every_n_epoch=cfg.logger.log_images_every_n_epoch,
     )
 
-    print("Training duration configured as:")
-    print(f"  - Steps: {cfg.training.steps}")
-    print(f"  - Steps per pseudo epoch: {cfg.training.steps_per_epoch}")
-    print(f"  - Validation steps per pseudo epoch: {cfg.training.val_steps_per_epoch}")
-    print(
-        f"  - Pseudo Epochs: {cfg.training.steps / (cfg.training.steps_per_epoch * cfg.training.accumulate_grad_batches):.1f}"
-    )
-    print(f"  - Warmup Pseudo Epochs: {cfg.training.warmup_epochs} (ratio {cfg.training.warmup_ratio})")
-
     trainer = instantiate(
         cfg.lightning._trainer,
         callbacks=callbacks,
@@ -135,6 +126,19 @@ def main(cfg: DictConfig) -> None:
         use_distributed_sampler=False,
         accumulate_grad_batches=cfg.training.accumulate_grad_batches,
     )
+
+    if trainer.is_global_zero:
+        print("Training duration configured as:")
+        print(f"  - Steps: {cfg.training.steps}")
+        print(f"  - Global batch size: {cfg.training.global_batch_size}")
+        print(f"  - Steps per pseudo epoch: {cfg.training.steps_per_epoch}")
+        print(f"  - Validation steps per pseudo epoch: {cfg.training.val_steps_per_epoch}")
+        print(
+            "  - Pseudo Epochs: {:.1f}".format(
+                cfg.training.steps / (cfg.training.steps_per_epoch * cfg.training.accumulate_grad_batches)
+            )
+        )
+        print(f"  - Warmup Pseudo Epochs: {cfg.training.warmup_epochs} (ratio {cfg.training.warmup_ratio})")
 
     trainer.fit(
         model=model_module,
