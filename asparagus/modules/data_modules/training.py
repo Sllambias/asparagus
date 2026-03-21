@@ -111,6 +111,7 @@ class ClsRegDataModule(pl.LightningDataModule):
         val_transforms: Optional[Compose] = None,
         test_transforms: Optional[Compose] = None,
         test_samples: Optional[list] = [],
+        use_random_datasampler: Optional[bool] = True,
     ):
         super().__init__()
         self.batch_size = batch_size
@@ -121,6 +122,7 @@ class ClsRegDataModule(pl.LightningDataModule):
         self.train_split = train_split
         self.val_split = val_split
         self.test_samples = test_samples
+        self.use_random_datasampler = use_random_datasampler
         logging.info(f"Using {self.num_workers} workers")
 
     def setup(self, stage: Literal["fit", "test", "predict"]):
@@ -149,9 +151,10 @@ class ClsRegDataModule(pl.LightningDataModule):
         )
 
     def train_dataloader(self):
-        sampler = RandomSampler(self.train_dataset, num_samples=999999, replacement=True)
-        if dist.is_initialized():
-            sampler = DistributedSamplerWrapper(sampler)
+        sampler = None
+        if self.use_random_datasampler:
+            sampler = RandomSampler(self.train_dataset, num_samples=999999, replacement=True)
+            sampler = DistributedSamplerWrapper(sampler) if dist.is_initialized() else sampler
 
         return DataLoader(
             self.train_dataset,
@@ -160,23 +163,25 @@ class ClsRegDataModule(pl.LightningDataModule):
             pin_memory=False,
             persistent_workers=True,
             drop_last=True,
+            shuffle=sampler is None,
             sampler=sampler,
         )
 
     def val_dataloader(self):
-        sampler = RandomSampler(self.val_dataset, num_samples=999999, replacement=True)
-        if dist.is_initialized():
-            sampler = DistributedSamplerWrapper(sampler)
+        sampler = None
+        if self.use_random_datasampler:
+            sampler = RandomSampler(self.val_dataset, num_samples=999999, replacement=True)
+            sampler = DistributedSamplerWrapper(sampler) if dist.is_initialized() else sampler
 
         return DataLoader(
             self.val_dataset,
             num_workers=self.num_workers // 2,
             batch_size=self.batch_size,
             pin_memory=False,
-            shuffle=False,
             persistent_workers=True,
-            drop_last=True,
+            drop_last=False,
             sampler=sampler,
+            shuffle=False,
         )
 
     def test_dataloader(self):

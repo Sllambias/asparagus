@@ -10,6 +10,7 @@ from asparagus.functional.lr_scheduling import (
     separate_encoder_decoder_weights,
     simple_warmup_cosine_decay_schedule,
 )
+from asparagus.functional.pos_embed import resize_pos_embed_3d
 from asparagus.functional.visualization import (
     get_logger_compatible_image_output_target,
     log_image_output_target_to_mlflow,
@@ -39,12 +40,16 @@ class BaseModule(L.LightningModule):
         nesterov: bool = True,
         momentum: float = 0.99,
         repeat_stem_weights: bool = True,
+        pretrained_target_size: Optional[tuple] = None,
+        target_size: Optional[tuple] = None,
     ):
         super().__init__()
         self.learning_rate = learning_rate
         self.train_transforms = train_transforms
         self.test_transforms = test_transforms
         self.val_transforms = val_transforms
+        self.pretrained_target_size = pretrained_target_size
+        self.target_size = target_size
 
         self.loss = None
         self.train_metrics = None
@@ -167,6 +172,24 @@ class BaseModule(L.LightningModule):
                 )
                 print(f"Repeating stem weights from {pt_input_channels} to {ft_input_channels} channels for {stem_name}.")
                 state_dict[stem_name] = state_dict[stem_name].repeat(1, ft_input_channels, 1, 1, 1) / ft_input_channels
+
+        # Interpolate positional embeddings when spatial dimensions differ
+        if self.pretrained_target_size is not None and self.target_size is not None:
+            for key in list(state_dict.keys()):
+                if key not in old_params or old_params[key].shape == state_dict[key].shape:
+                    continue
+                if key.endswith("pos_embed"):
+                    num_prefix_tokens = getattr(self.model.eva, "num_prefix_tokens", 0)
+                    patch_embed_size = tuple(self.model.encoder.proj.weight.shape[2:])
+                    print(f"Interpolating {key}: {state_dict[key].shape} -> {old_params[key].shape}")
+                    state_dict[key] = resize_pos_embed_3d(
+                        state_dict[key],
+                        old_params[key],
+                        num_prefix_tokens=num_prefix_tokens,
+                        pretrained_target_size=self.pretrained_target_size,
+                        target_size=self.target_size,
+                        patch_embed_size=patch_embed_size,
+                    )
 
         # Filter out keys that are not in the old state dict or have different shapes
         def should_load_key(key, state_dict, old_params, load_decoder):

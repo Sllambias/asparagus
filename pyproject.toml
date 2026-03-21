@@ -77,6 +77,7 @@ asp_test_reg = 'asparagus.pipeline.run.test_cls:main'
 asp_finetune_seg = 'asparagus.pipeline.run.finetune_seg:main'
 asp_finetune_cls = 'asparagus.pipeline.run.finetune_cls:main'
 asp_finetune_reg = 'asparagus.pipeline.run.finetune_reg:main'
+asp_linear_probe = 'asparagus.pipeline.run.linear_probe:main'
 
 asp_eval_box_run = 'asparagus.pipeline.run.eval_box:main'
 asp_eval_box_prepare_data = 'asparagus.pipeline.run.eval_box:prepare_data'

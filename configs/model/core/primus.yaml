@@ -8,6 +8,10 @@ _seg_net:
   patch_size: ${training.patch_size}
   patch_drop_rate: 0.0
 
+_cls_net:
+  _target_: asparagus.modules.networks.primus.${model.cls_net}
+  patch_size: ${training.target_size}
+
 _plugin_seg_net:
   _target_: asparagus.modules.networks.primus.${model.plugin_seg_net}
   patch_size: ${training.patch_size}

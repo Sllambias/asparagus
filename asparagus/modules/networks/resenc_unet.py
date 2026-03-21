@@ -10,6 +10,13 @@ from typing import List, Tuple, Type, Union
 
 
 class ResidualEncoderUNetCLSREG(BaseNet):
+    """Late-fusion classification/regression network.
+
+    Each input modality (channel group) is processed independently through a shared encoder.
+    The resulting features are concatenated along the channel dimension and passed through
+    a ClsRegHead (global pool + linear).
+    """
+
     def __init__(
         self,
         input_channels: int,
@@ -27,6 +34,7 @@ class ResidualEncoderUNetCLSREG(BaseNet):
         dropout_op_kwargs=None,
         nonlin=torch.nn.LeakyReLU,
         nonlin_kwargs={"inplace": True},
+        late_fusion: bool = False,
     ):
         super().__init__()
 
@@ -40,25 +48,26 @@ class ResidualEncoderUNetCLSREG(BaseNet):
 
         if dimensions == "2D":
             conv_op = nn.Conv2d
-            dropout_op = nn.Dropout2d
             norm_op = nn.InstanceNorm2d
             pool_op = nn.MaxPool2d
             clsreg_pool_op = nn.AdaptiveAvgPool2d
+            if encoder_dropout_rate > 0.0:
+                dropout_op = nn.Dropout2d
         elif dimensions == "3D":
             conv_op = nn.Conv3d
-            dropout_op = nn.Dropout3d
             norm_op = nn.InstanceNorm3d
             pool_op = nn.MaxPool3d
             clsreg_pool_op = nn.AdaptiveAvgPool3d
+            if encoder_dropout_rate > 0.0:
+                dropout_op = nn.Dropout3d
         else:
             logging.warning("Uuh, dimensions not in ['2D', '3D']")
 
         self.num_classes = output_channels
-
-        self.stem_weight_name = "encoder.stem.conv1.conv.weight"
+        self.late_fusion = late_fusion
 
         self.encoder = ResidualUNetEncoder(
-            input_channels=input_channels,
+            input_channels=1 if late_fusion else input_channels,
             features_per_stage=features_per_stage,
             conv_op=conv_op,
             kernel_size=kernel_size,
@@ -77,19 +86,34 @@ class ResidualEncoderUNetCLSREG(BaseNet):
 
         self.decoder = decoder(
             pool_op=clsreg_pool_op,
-            input_channels=features_per_stage[-1],
+            input_channels=features_per_stage[-1] * input_channels if late_fusion else features_per_stage[-1],
             output_channels=output_channels,
             dropout_rate=decoder_dropout_rate,
         )
 
+    def _encode(self, x):
+        if not self.late_fusion:
+            return self.encoder(x)  # early-fusion of modalities
+
+        # late-fusion of modalities
+        B, N = x.shape[:2]
+        skips = self.encoder(x.view(B * N, -1, *x.shape[2:]))
+        return [s.view(B, N * s.shape[1], *s.shape[2:]) for s in skips]
+
     def forward(self, x):
-        skips = self.encoder(x)
+        skips = self._encode(x)
         return self.decoder(skips)
 
     def forward_with_features(self, x):
-        skips = self.encoder(x)
+        skips = self._encode(x)
         output = self.decoder(skips)
         return output, skips[-1]
+
+    def freeze_backbone(self):
+        """Freeze the encoder backbone for linear probing."""
+        for param in self.encoder.parameters():
+            param.requires_grad = False
+        self.encoder.eval()
 
 
 # Encoder 29M parameters
@@ -144,7 +168,10 @@ def resenc_unet_b_clsreg(
     output_channels: int = 1,
     dimensions: str = "3D",
     dropout_op_kwargs: dict = None,
+    late_fusion: bool = False,
 ):
+    # input_channels is the number of modalities (e.g. 2 for T1+T2).
+    # Each modality is a single-channel volume, so the encoder always uses input_channels=1.
     return ResidualEncoderUNetCLSREG(
         dimensions=dimensions,
         input_channels=input_channels,
@@ -154,6 +181,7 @@ def resenc_unet_b_clsreg(
         kernel_size=3,
         n_blocks_per_stage=(1, 3, 4, 6, 6, 6),
         dropout_op_kwargs=dropout_op_kwargs,
+        late_fusion=late_fusion,
     )
 
 
@@ -175,6 +203,28 @@ def resenc_unet_l(
         n_blocks_per_stage=(1, 3, 4, 6, 6, 6),
         n_conv_per_stage_decoder=(1, 1, 1, 1, 1),
         deep_supervision=deep_supervision,
+    )
+
+
+def resenc_unet_l_clsreg(
+    input_channels: int = 1,
+    output_channels: int = 1,
+    dimensions: str = "3D",
+    deep_supervision=False,
+    dropout_op_kwargs: dict = None,
+):
+    # input_channels is the number of modalities (e.g. 2 for T1+T2).
+    # Each modality is a single-channel volume, so the encoder always uses input_channels=1.
+    return ResidualEncoderUNetCLSREG(
+        dimensions=dimensions,
+        input_channels=1,
+        num_modalities=input_channels,
+        output_channels=output_channels,
+        features_per_stage=(64, 128, 256, 512, 620, 620),
+        stride=2,
+        kernel_size=3,
+        n_blocks_per_stage=(1, 3, 4, 6, 6, 6),
+        dropout_op_kwargs=dropout_op_kwargs,
     )
 
 
