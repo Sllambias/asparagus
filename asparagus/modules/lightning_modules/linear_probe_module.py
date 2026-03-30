@@ -39,7 +39,6 @@ class LinearProbeModule(BaseModule):
         optimizer_momentum=0.9,
         optimizer_weight_decay=0,
     ):
-
         super().__init__(
             model=model,
             weights=weights,
