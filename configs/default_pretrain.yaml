@@ -25,7 +25,7 @@ training:
   accumulate_grad_batches: 1
   patch_size: [160, 160, 160]
   seed: ${random:0,1000000}
-  mask_patch_size: 4
+  mask_patch_size: ${model.patch_embed_size}
   mask_ratio: 0.6
   max_samples: 6_000_000
   warmup_ratio: 0.02

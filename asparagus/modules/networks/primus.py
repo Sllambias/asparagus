@@ -176,11 +176,11 @@ class PrimusCLSREG(BaseNet):
 
 
 @depends_on_timm()
-def primus_s(input_channels, output_channels, patch_size, patch_embed_size=(8, 8, 8), patch_drop_rate=0.0):
+def primus_s(input_channels, output_channels, patch_size, patch_embed_size=8, patch_drop_rate=0.0):
     model = Primus(
         input_channels=input_channels,
         embed_dim=396,
-        patch_embed_size=patch_embed_size,
+        patch_embed_size=(patch_embed_size,) * len(patch_size),
         num_classes=output_channels,
         eva_depth=12,
         eva_numheads=6,
@@ -193,11 +193,11 @@ def primus_s(input_channels, output_channels, patch_size, patch_embed_size=(8, 8
 
 
 @depends_on_timm()
-def primus_b(input_channels, output_channels, patch_size, patch_embed_size=(8, 8, 8), patch_drop_rate=0.0):
+def primus_b(input_channels, output_channels, patch_size, patch_embed_size=8, patch_drop_rate=0.0):
     model = Primus(
         input_channels=input_channels,
         embed_dim=792,
-        patch_embed_size=patch_embed_size,
+        patch_embed_size=(patch_embed_size,) * len(patch_size),
         num_classes=output_channels,
         eva_depth=12,
         eva_numheads=12,
@@ -211,11 +211,11 @@ def primus_b(input_channels, output_channels, patch_size, patch_embed_size=(8, 8
 
 
 @depends_on_timm()
-def primus_m(input_channels, output_channels, patch_size, patch_embed_size=(8, 8, 8), patch_drop_rate=0.0):
+def primus_m(input_channels, output_channels, patch_size, patch_embed_size=8, patch_drop_rate=0.0):
     model = Primus(
         input_channels=input_channels,
         embed_dim=864,
-        patch_embed_size=patch_embed_size,
+        patch_embed_size=(patch_embed_size,) * len(patch_size),
         num_classes=output_channels,
         eva_depth=16,
         eva_numheads=12,
@@ -229,11 +229,11 @@ def primus_m(input_channels, output_channels, patch_size, patch_embed_size=(8, 8
 
 
 @depends_on_timm()
-def primus_l(input_channels, output_channels, patch_size, patch_embed_size=(8, 8, 8), patch_drop_rate=0.0):
+def primus_l(input_channels, output_channels, patch_size, patch_embed_size=8, patch_drop_rate=0.0):
     model = Primus(
         input_channels=input_channels,
         embed_dim=1056,
-        patch_embed_size=patch_embed_size,
+        patch_embed_size=(patch_embed_size,) * len(patch_size),
         num_classes=output_channels,
         eva_depth=24,
         eva_numheads=16,
@@ -247,11 +247,11 @@ def primus_l(input_channels, output_channels, patch_size, patch_embed_size=(8, 8
 
 
 @depends_on_timm()
-def primus_h(input_channels, output_channels, patch_size, patch_embed_size=(8, 8, 8), patch_drop_rate=0.0):
+def primus_h(input_channels, output_channels, patch_size, patch_embed_size=8, patch_drop_rate=0.0):
     model = Primus(
         input_channels=input_channels,
         embed_dim=1248,
-        patch_embed_size=patch_embed_size,
+        patch_embed_size=(patch_embed_size,) * len(patch_size),
         num_classes=output_channels,
         eva_depth=32,
         eva_numheads=16,
@@ -265,11 +265,11 @@ def primus_h(input_channels, output_channels, patch_size, patch_embed_size=(8, 8
 
 
 @depends_on_timm()
-def primus_g(input_channels, output_channels, patch_size, patch_embed_size=(8, 8, 8), patch_drop_rate=0.0):
+def primus_g(input_channels, output_channels, patch_size, patch_embed_size=8, patch_drop_rate=0.0):
     model = Primus(
         input_channels=input_channels,
         embed_dim=1584,
-        patch_embed_size=patch_embed_size,
+        patch_embed_size=(patch_embed_size,) * len(patch_size),
         num_classes=output_channels,
         eva_depth=32,
         eva_numheads=24,
@@ -284,13 +284,13 @@ def primus_g(input_channels, output_channels, patch_size, patch_embed_size=(8, 8
 
 @depends_on_timm()
 def primus_m_clsreg(
-    input_channels, output_channels, patch_size, patch_embed_size=(8, 8, 8), dropout_rate=0.0, late_fusion: bool = False
+    input_channels, output_channels, patch_size, patch_embed_size=8, dropout_rate=0.0, late_fusion: bool = False
 ):
     return PrimusCLSREG(
         input_channels=input_channels,
         output_channels=output_channels,
         embed_dim=864,
-        patch_embed_size=patch_embed_size,
+        patch_embed_size=(patch_embed_size,) * len(patch_size),
         eva_depth=16,
         eva_numheads=12,
         input_shape=patch_size,

@@ -105,13 +105,13 @@ def compute_feature_stability(
     # Flatten spatial dimensions if present
     if current_features.dim() > 2:
         B = current_features.shape[0]
-        current_features = current_features.view(B, -1).float()
+        current_features = current_features.reshape(B, -1).float()
     else:
         current_features = current_features.float()
 
     if previous_features.dim() > 2:
         B = previous_features.shape[0]
-        previous_features = previous_features.view(B, -1).float()
+        previous_features = previous_features.reshape(B, -1).float()
     else:
         previous_features = previous_features.float()
 

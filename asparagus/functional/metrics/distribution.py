@@ -102,7 +102,7 @@ def compute_alignment_uniformity(
     # Flatten spatial dimensions if present
     if features.dim() > 2:
         B = features.shape[0]
-        features = features.view(B, -1).float()  # (B, D)
+        features = features.reshape(B, -1).float()  # (B, D)
     else:
         features = features.float()
 

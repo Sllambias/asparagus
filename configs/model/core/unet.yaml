@@ -26,6 +26,7 @@ finetune_lr: 1e-3
 weight_decay: 3e-5
 nesterov: True
 momentum: 0.99
+patch_embed_size: 4
 
 use_skip_connections: True
 deep_supervision: False
