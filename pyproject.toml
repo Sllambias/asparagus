@@ -40,9 +40,12 @@ dcai = [
     "torchmetrics>=1.7.2",
     "lightning==2.4.0",
     "pytorch-lightning==2.5.0",
-    "monai==1.4.0",
-    "pandas==2.2.2",
-    "wandb==0.21.3",
+    "monai==1.5.2",
+    "pandas==3.0.2",
+    "wandb==0.26.1",
+    "timm<=1.0.14",
+    "scikit-learn==1.8.0",
+    "einops==0.8.2",
 ]
 
 

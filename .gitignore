@@ -192,6 +192,7 @@ output
 tail_log.bash
 
 CLAUDE.md
+.codex
 
 .vscode/
 debug_logs
