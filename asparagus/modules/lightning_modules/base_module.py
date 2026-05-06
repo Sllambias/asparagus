@@ -110,7 +110,13 @@ class BaseModule(L.LightningModule):
 
         print(f"Using optimizer {optimizer.__class__.__name__} with learning rate {self.learning_rate}")
 
-        steps_per_epoch = self.trainer.estimated_stepping_batches // self.trainer.max_epochs
+        # Calculate steps per epoch based on trainer configuration
+        # if max_epochs is *not* set (i.e., set to -1), we are probably using max_steps
+        # if max_epochs is set, we can calculate steps per epoch based on estimated_stepping_batches
+        if self.trainer.max_epochs <= 0:
+            optimizer_steps_per_epoch = self.trainer.limit_train_batches // self.trainer.accumulate_grad_batches
+        else:
+            optimizer_steps_per_epoch = self.trainer.estimated_stepping_batches // self.trainer.max_epochs
 
         # Scheduler option 1: Three-phase schedule with separate decoder/joint warmup
         if self.decoder_warmup_epochs > 0:
@@ -118,26 +124,28 @@ class BaseModule(L.LightningModule):
                 optimizer,
                 self.decoder_warmup_epochs,
                 self.warmup_epochs,
-                steps_per_epoch,
+                optimizer_steps_per_epoch,
                 self.cosine_period_ratio,
-                self.trainer.max_epochs,
+                self.trainer.max_epochs,  # may be -1, if using max_steps
             )
         # Scheduler option 2: Two-phase schedule with joint warmup
         elif self.warmup_epochs > 0:
             scheduler = simple_warmup_cosine_decay_schedule(
                 optimizer,
                 self.warmup_epochs,
-                steps_per_epoch,
+                optimizer_steps_per_epoch,
                 self.cosine_period_ratio,
-                self.trainer.max_epochs,
+                self.trainer.max_epochs,  # may be -1, if using max_steps
+                self.trainer.max_steps,  # may be -1, if using max_epochs
             )
         # Scheduler option 3: Just cosine annealing
         else:
             scheduler = cosine_decay_schedule(
                 optimizer,
-                steps_per_epoch,
+                optimizer_steps_per_epoch,
                 self.cosine_period_ratio,
-                self.trainer.max_epochs,
+                self.trainer.max_epochs,  # may be -1, if using max_steps
+                self.trainer.max_steps,  # may be -1, if using max_epochs
             )
 
         scheduler_config = {

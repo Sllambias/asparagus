@@ -43,6 +43,7 @@ def sawtooth_warmup_cosine_decay_schedule(
     Phase 2: Both encoder and decoder warmup
     Phase 3: Cosine annealing for both
     """
+    assert max_epochs > 0 and steps_per_epoch > 0, "max_epochs and steps_per_epoch must be greater than 0"
     print(f"Using separate warmup: decoder for {decoder_warmup_epochs} epochs, then both for {warmup_epochs} epochs")
 
     decoder_warmup_steps = int(decoder_warmup_epochs * steps_per_epoch)
@@ -72,16 +73,24 @@ def sawtooth_warmup_cosine_decay_schedule(
     )
 
 
-def simple_warmup_cosine_decay_schedule(optimizer, warmup_epochs, steps_per_epoch, cosine_period_ratio, max_epochs):
+def simple_warmup_cosine_decay_schedule(
+    optimizer, warmup_epochs, steps_per_epoch, cosine_period_ratio, max_epochs=-1, max_steps=-1
+):
     """
     Phase 1: Warmup for both encoder and decoder
     Phase 2: Cosine annealing for both
     """
-    print(f"Using warmup for {warmup_epochs} epochs")
+    assert warmup_epochs >= 0, "Warmup epochs must be greater than or equal to 0."
+    assert cosine_period_ratio > 0, "Cosine period ratio must be greater than 0."
+    assert steps_per_epoch > 0, "Steps per epoch must be greater than 0."
+    assert max_epochs > 0 or max_steps > 0, "Either max_epochs or max_steps must be greater than 0."
+
+    # cosine_half_period is from max to min
+    if max_epochs > 0:
+        max_steps = max_epochs * steps_per_epoch
 
     total_warmup_steps = int(warmup_epochs * steps_per_epoch)
-    # cosine_half_period is from max to min
-    cosine_steps = int(cosine_period_ratio * (max_epochs * steps_per_epoch - total_warmup_steps))
+    cosine_steps = int(cosine_period_ratio * (max_steps - total_warmup_steps))
 
     cosine_scheduler = CosineAnnealingLR(optimizer, T_max=cosine_steps)
     warmup_scheduler = LinearLR(
@@ -90,6 +99,11 @@ def simple_warmup_cosine_decay_schedule(optimizer, warmup_epochs, steps_per_epoc
         total_iters=total_warmup_steps,
     )
 
+    print(f"Using warmup for {warmup_epochs} epochs ({total_warmup_steps} steps)")
+    print(f"Cosine decay for {cosine_steps} steps after warmup")
+    assert total_warmup_steps > 0, "Warmup steps must be greater than 0 for warmup schedule."
+    assert cosine_steps > 0, "Cosine steps must be greater than 0 for warmup cosine decay schedule."
+
     return SequentialLR(
         optimizer,
         schedulers=[warmup_scheduler, cosine_scheduler],
@@ -97,10 +111,13 @@ def simple_warmup_cosine_decay_schedule(optimizer, warmup_epochs, steps_per_epoc
     )
 
 
-def cosine_decay_schedule(optimizer, steps_per_epoch, cosine_period_ratio, max_epochs):
+def cosine_decay_schedule(optimizer, steps_per_epoch, cosine_period_ratio, max_epochs=-1, max_steps=-1):
     """
     Phase 1: Cosine annealing for both encoder and decoder
     """
     # cosine_half_period is from max to min
-    cosine_steps = int(cosine_period_ratio * (max_epochs * steps_per_epoch))
+    if max_epochs > 0:
+        max_steps = max_epochs * steps_per_epoch
+    cosine_steps = int(cosine_period_ratio * max_steps)
+    assert cosine_steps > 0, "Cosine steps must be greater than 0 for cosine decay schedule."
     return CosineAnnealingLR(optimizer, T_max=cosine_steps)

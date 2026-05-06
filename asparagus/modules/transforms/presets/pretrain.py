@@ -1,3 +1,4 @@
+from asparagus.modules.transforms import Torch_ClampTarget
 from gardening_tools.functional.transforms.spatial import get_max_rotated_size
 from gardening_tools.modules.transforms.bias_field import Torch_BiasField
 from gardening_tools.modules.transforms.blur import Torch_Blur
@@ -18,8 +19,9 @@ def CPU_val_transforms(patch_size):
     return transforms.Compose(
         [
             Torch_Normalize(normalize=True),
-            Torch_CropPad(patch_size=patch_size, p_oversample_foreground=0.4),
+            Torch_CropPad(patch_size=patch_size, p_oversample_foreground=0.0),
             Torch_CopyImageToLabel(copy=True),
+            Torch_ClampTarget(clamp=True, min_value=-2.0, max_value=4.0),
         ]
     )
 
@@ -36,7 +38,7 @@ def CPU_train_transforms(patch_size):
     return transforms.Compose(
         [
             Torch_Normalize(normalize=True),
-            Torch_CropPad(patch_size=pre_aug_patch_size, p_oversample_foreground=0.4),
+            Torch_CropPad(patch_size=pre_aug_patch_size, p_oversample_foreground=0.0),
             Torch_Spatial(
                 patch_size=patch_size,
                 p_deform_all_channel=0.0,
@@ -47,6 +49,7 @@ def CPU_train_transforms(patch_size):
                 skip_label=False,
             ),
             Torch_CopyImageToLabel(copy=True),
+            Torch_ClampTarget(clamp=True, min_value=-2.0, max_value=4.0),
         ]
     )
 
