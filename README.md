@@ -6,6 +6,7 @@
 </div>
 
 Welcome to Asparagus. 
+Documentation page: [https://sllambias.github.io/asparagus/](https://sllambias.github.io/asparagus/)
 
 Asparagus is a modular machine learning framework designed for medical imaging applications. The codebase is built on PyTorch, Lightning and Hydra and handles model training, experiment management, and evaluation with prepared data. To prepare your data see [Preprocessing](#1-preprocessing). The functional and modules directories follow the structure of torch.nn.functional and torch.nn with the former being stateless functions and the latter being classes that combine and build upon these with the logic and conventions adopted by Asparagus from PyTorch, Lightning, and Hydra.
 
