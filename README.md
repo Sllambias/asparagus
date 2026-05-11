@@ -1,4 +1,9 @@
-# Asparagus
+<div align="center">
+  <img width="250" height="250"  alt="asparagus_logo" src="https://github.com/user-attachments/assets/856c6cd1-e121-4739-a52c-d5e0d315ea5c" align="center"/>
+  <h1>
+    Asparagus
+  </h1>
+</div>
 
 Welcome to Asparagus. 
 
