@@ -6,6 +6,8 @@ site_url: https://Sllambias.github.io/asparagus/
 
 theme:
   name: shadcn
+  favicon: assets/imgs/favicon.ico
+  icon: assets/imgs/android-chrome-512x512.png
 
 markdown_extensions:
   - toc:
