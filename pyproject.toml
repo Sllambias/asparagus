@@ -29,6 +29,7 @@ dependencies = [
     "torchvision==0.21.0",
     "wandb>=0.23.0",
     "huggingface-hub>=1.5.0",
+    "einops>=0.8.2"
 ]
 
 
