@@ -32,6 +32,7 @@ training:
   accumulate_grad_batches: 1
   warmup_epochs: 0
   check_val_every_n_epoch: 1
+  load_decoder: True
 
 transforms:
   cpu_tr_transforms: CPU_clsreg_train_transforms_crop

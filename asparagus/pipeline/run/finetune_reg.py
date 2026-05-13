@@ -114,6 +114,7 @@ def main(cfg: DictConfig) -> None:
         learning_rate=cfg.model.finetune_lr,
         warmup_epochs=cfg.training.warmup_epochs,
         weight_decay=cfg.model.weight_decay,
+        load_decoder=cfg.training.load_decoder,
         test_output_path=os.path.join(
             path_store.run_dir,
             "predictions",

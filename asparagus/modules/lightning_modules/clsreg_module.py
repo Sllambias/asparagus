@@ -33,6 +33,7 @@ class ClsRegBase(BaseModule):
         momentum: float = 0.99,
         log_image_every_n_epochs: int = 50,
         test_output_path: str = None,
+        load_decoder: bool = True,
         repeat_stem_weights: bool = True,
     ):
         super().__init__(
@@ -50,6 +51,7 @@ class ClsRegBase(BaseModule):
             weight_decay=weight_decay,
             nesterov=nesterov,
             momentum=momentum,
+            load_decoder=load_decoder,
             repeat_stem_weights=repeat_stem_weights,
         )
         self.loss = None
