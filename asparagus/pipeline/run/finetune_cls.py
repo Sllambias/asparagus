@@ -114,6 +114,7 @@ def main(cfg: DictConfig) -> None:
         log_image_every_n_epochs=cfg.logger.log_images_every_n_epoch,
         optimizer=cfg.model.finetune_optim,
         learning_rate=cfg.model.finetune_lr,
+        load_decoder=cfg.training.load_decoder,
         repeat_stem_weights=cfg.training.repeat_stem_weights,
         test_output_path=os.path.join(
             path_store.run_dir,
