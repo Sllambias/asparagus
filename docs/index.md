@@ -121,17 +121,17 @@ asp_finetune_cls task=CLS004_Parrots \
 ### 4. Testing
 
 ```bash
-asp_test_seg task=SEG004_Parrots \
+asp_test_seg test_task=SEG004_Parrots \
     checkpoint_run_id=1234 \
     load_checkpoint_name=last.ckpt \
     test_split=TEST_75_15_10
 
-asp_test_cls task=CLS004_Parrots \
+asp_test_cls test_task=CLS004_Parrots \
     checkpoint_run_id=1234 \
     load_checkpoint_name=best.ckpt \
     test_split=TEST_75_15_10
 
-asp_test_reg task=REGR004_Parrots \
+asp_test_reg test_task=REGR004_Parrots \
     checkpoint_run_id=1234 \
     load_checkpoint_name=best.ckpt \
     test_split=TEST_75_15_10
