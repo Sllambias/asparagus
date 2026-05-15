@@ -70,6 +70,7 @@ logger:
   wandb_log_model: False
   wandb_logging: True
   wandb_entity: ${oc.env:WANDB_ENTITY, "team-asparagus"}
+  wandb_project: Pretrain
   mlflow_logging: False
   log_every_n_steps: 250
   log_images_every_n_epoch: 5
