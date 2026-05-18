@@ -188,7 +188,7 @@ class ClassificationModule(ClsRegBase):
         )
 
     def on_before_batch_transfer(self, batch, dataloader_idx):
-        batch["CLSREG_label"] = batch["CLSREG_label"].squeeze().long()
+        batch["CLSREG_label"] = batch["CLSREG_label"].view(-1).long()
         return batch
 
     def on_test_batch_end(self, outputs, batch, batch_idx, dataloader_idx=0):
