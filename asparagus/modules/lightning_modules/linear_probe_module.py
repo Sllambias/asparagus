@@ -66,7 +66,13 @@ class LinearProbeModule(BaseModule):
         else:
             self.global_pool = nn.AdaptiveAvgPool2d((1, 1))
 
-        feature_dim = self.model.decoder.fc.in_features
+        try:
+            # Asparagus by default expects decoder head here
+            feature_dim = self.model.decoder.fc.in_features
+        except AttributeError as e:
+            # Our MAE model has different layer name
+            logging.warning(f"`self.model.decoder.fc.in_features` raised {e}, falling back to `self.model.head.in_features`.")
+            feature_dim = self.model.head.in_features
 
         self.heads = nn.ModuleDict()
         for lr in learning_rates:
