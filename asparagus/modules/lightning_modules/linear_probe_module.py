@@ -207,9 +207,7 @@ class LinearProbeModule(BaseModule):
                     f"{prefix}/{head_name}/auprc_macro": MulticlassAveragePrecision(
                         num_classes=self.num_classes, average="macro"
                     ),
-                    f"{prefix}/{head_name}/f1_macro": MulticlassF1Score(
-                        num_classes=self.num_classes, average="macro"
-                    ),
+                    f"{prefix}/{head_name}/f1_macro": MulticlassF1Score(num_classes=self.num_classes, average="macro"),
                 }
             )
         return metrics
