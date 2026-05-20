@@ -24,7 +24,7 @@ data:
 
 training:
   warmup_epochs: 0
-  max_epochs: 15
+  epochs: 15
   batch_size: 4
   limit_train_batches: 1.0
   limit_val_batches: 1.0
