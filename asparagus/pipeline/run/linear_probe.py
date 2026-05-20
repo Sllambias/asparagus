@@ -49,7 +49,7 @@ def main(cfg: DictConfig) -> None:
         version=version_store.version,
         wandb_config=logging_safe_cfg,
         wandb_experiment=HydraConfig.get().job.config_name,
-        wandb_project="LinearProbe",
+        wandb_project=cfg.logger.wandb_project,
         wandb_logging=cfg.logger.wandb_logging,
         mlflow_logging=cfg.logger.mlflow_logging,
     )
