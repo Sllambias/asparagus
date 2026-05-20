@@ -7,5 +7,7 @@ pretrain_net: primus_s
 
 seg_net: primus_s
 
+cls_net: 
+
 plugin_seg_net: primus_s
 plugin_seg_train_n_last_params: 20

@@ -100,7 +100,7 @@ def main(cfg: DictConfig) -> None:
         train_transforms=cpu_tr_transforms,
         val_transforms=cpu_val_transforms,
         test_samples=file_store.test,
-        test_transforms=CPU_seg_test_transforms(),
+        test_transforms=CPU_seg_test_transforms(patch_size=cfg.training.patch_size),
     )
 
     model = instantiate(
@@ -120,7 +120,6 @@ def main(cfg: DictConfig) -> None:
         optimizer=cfg.model.finetune_optim,
         learning_rate=cfg.model.finetune_lr,
         deep_supervision=cfg.model.deep_supervision,
-        inference_mode=cfg.model.dimensions,
         inference_patch_size=cfg.training.patch_size,
         test_output_path=os.path.join(
             path_store.run_dir,

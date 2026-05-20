@@ -96,7 +96,7 @@ def main(cfg: DictConfig) -> None:
         train_transforms=cpu_tr_transforms,
         val_transforms=cpu_val_transforms,
         test_samples=file_store.test,
-        test_transforms=CPU_seg_test_transforms(),
+        test_transforms=CPU_seg_test_transforms(patch_size=cfg.training.patch_size),
     )
 
     model = instantiate(

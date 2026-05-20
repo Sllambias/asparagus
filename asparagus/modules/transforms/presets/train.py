@@ -1,7 +1,9 @@
+from asparagus.modules.transforms.crop import Torch_Crop
+from asparagus.modules.transforms.pad import Torch_Pad
 from gardening_tools.functional.transforms.spatial import get_max_rotated_size
 from gardening_tools.modules.transforms.bias_field import Torch_BiasField
 from gardening_tools.modules.transforms.blur import Torch_Blur
-from gardening_tools.modules.transforms.cropping_and_padding import Torch_CenterCrop, Torch_CropPad, Torch_Pad
+from gardening_tools.modules.transforms.cropping_and_padding import Torch_CenterCrop
 from gardening_tools.modules.transforms.deep_supervision import Torch_DownsampleSegForDS
 from gardening_tools.modules.transforms.gamma import Torch_Gamma
 from gardening_tools.modules.transforms.mirror import Torch_Mirror
@@ -34,7 +36,8 @@ def CPU_seg_train_transforms(patch_size, normalize=True):
     return transforms.Compose(
         [
             Torch_Normalize(normalize=normalize),
-            Torch_CropPad(patch_size=pre_aug_patch_size, p_oversample_foreground=0.33),
+            Torch_Pad(patch_size=pre_aug_patch_size),
+            Torch_Crop(patch_size=pre_aug_patch_size, p_oversample_foreground=0.33),
             Torch_Spatial(
                 patch_size=patch_size,
                 p_deform_all_channel=0.0,
@@ -176,17 +179,17 @@ def CPU_seg_val_transforms(patch_size, normalize=True):
     return transforms.Compose(
         [
             Torch_Normalize(normalize=normalize),
-            Torch_CropPad(patch_size=patch_size),
+            Torch_Pad(patch_size=patch_size),
+            Torch_Crop(patch_size=patch_size, p_oversample_foreground=0.0),
         ]
     )
 
 
-def CPU_seg_test_transforms(normalize=True):
+def CPU_seg_test_transforms(patch_size, normalize=True):
     return transforms.Compose(
         [
-            Torch_Normalize(
-                normalize=normalize
-            ),  # Torch_Pad(patch_size=min_patch_size) # TODO: This does not work with reverse preprocessing...
+            Torch_Normalize(normalize=normalize),
+            Torch_Pad(patch_size=patch_size),
         ]
     )
 
