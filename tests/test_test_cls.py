@@ -9,6 +9,7 @@ Note: batch_size=2 is required. ClassificationModule.on_before_batch_transfer
 uses squeeze() on labels; with batch_size=1 this collapses [B] to 0-dim,
 causing CrossEntropyLoss to fail with "batch_size (1) vs (0)".
 """
+
 from asparagus.modules.data_modules.training import ClsRegDataModule
 from asparagus.modules.lightning_modules import ClassificationModule
 from asparagus.modules.networks.unet import unet_clsreg_tiny

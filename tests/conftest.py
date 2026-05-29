@@ -1,7 +1,7 @@
+import lightning as L
 import pickle
 import pytest
 import torch
-from lightning import Trainer
 
 
 @pytest.fixture
@@ -90,14 +90,14 @@ def make_trainer(tmp_path):
         defaults = dict(
             accelerator="cpu",
             max_epochs=1,
-            limit_train_batches=2,
-            limit_val_batches=2,
+            limit_train_batches=5,
+            limit_val_batches=5,
             logger=False,
             enable_checkpointing=False,
             enable_progress_bar=False,
             num_sanity_val_steps=0,
         )
         defaults.update(kwargs)
-        return Trainer(default_root_dir=str(tmp_path), **defaults)
+        return L.Trainer(default_root_dir=str(tmp_path), **defaults)
 
     return _make

@@ -29,11 +29,23 @@ jobs:
           pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
           pip install -e ".[test]"
 
-      - name: Run pipeline tests
+      - name: Run pretrain test
         run: |
-          pytest tests/test_pretrain.py \
-                 tests/test_finetune_seg.py \
-                 tests/test_train_reg.py \
-                 tests/test_test_cls.py \
-                 tests/test_linear_probe.py \
-                 -v --timeout=300
+          pytest tests/test_pretrain.py -v --timeout=300
+
+      - name: Run finetune_seg test
+        run: |
+          pytest tests/test_finetune_seg.py -v --timeout=300
+
+      - name: Run train_reg test
+        run: |
+          pytest tests/test_train_reg.py -v --timeout=300
+
+      - name: Run test_cls test
+        run: |
+          pytest tests/test_test_cls.py -v --timeout=300
+
+      - name: Run linear probe test
+        run: |
+          pytest tests/test_linear_probe.py -v --timeout=300
+
