@@ -11,6 +11,7 @@ from torchmetrics import MetricCollection
 from torchmetrics.classification import (
     MulticlassAUROC,
     MulticlassAveragePrecision,
+    MulticlassF1Score,
 )
 from torchvision import transforms
 from typing import List, Optional
@@ -198,6 +199,7 @@ class LinearProbeModule(BaseModule):
             {
                 "AUROC_macro": MulticlassAUROC(num_classes=self.num_classes, average="macro"),
                 "AUPRC_macro": MulticlassAveragePrecision(num_classes=self.num_classes, average="macro"),
+                "F1_macro": MulticlassF1Score(num_classes=self.num_classes, average="macro"),
             }
         )
 
@@ -211,6 +213,7 @@ class LinearProbeModule(BaseModule):
                     f"{prefix}/{head_name}/auprc_macro": MulticlassAveragePrecision(
                         num_classes=self.num_classes, average="macro"
                     ),
+                    f"{prefix}/{head_name}/f1_macro": MulticlassF1Score(num_classes=self.num_classes, average="macro"),
                 }
             )
         return metrics

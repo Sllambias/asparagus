@@ -49,7 +49,7 @@ def main(cfg: DictConfig) -> None:
         version=version_store.version,
         wandb_config=logging_safe_cfg,
         wandb_experiment=HydraConfig.get().job.config_name,
-        wandb_project=cfg.task,
+        wandb_project=cfg.logger.wandb_project,
         wandb_logging=cfg.logger.wandb_logging,
         mlflow_logging=cfg.logger.mlflow_logging,
         log_to_stdout=cfg.logger.log_to_stdout,
@@ -96,7 +96,7 @@ def main(cfg: DictConfig) -> None:
         train_transforms=cpu_tr_transforms,
         val_transforms=cpu_val_transforms,
         test_samples=file_store.test,
-        test_transforms=CPU_seg_test_transforms(),
+        test_transforms=CPU_seg_test_transforms(patch_size=cfg.training.patch_size),
     )
 
     model = instantiate(

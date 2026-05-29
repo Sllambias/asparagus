@@ -24,7 +24,7 @@ data:
 
 training:
   warmup_epochs: 0
-  max_epochs: 15
+  epochs: 15
   batch_size: 4
   limit_train_batches: 1.0
   limit_val_batches: 1.0
@@ -47,6 +47,7 @@ logger:
   progress_bar: True
   wandb_logging: True
   wandb_entity: ${oc.env:WANDB_ENTITY, "team-asparagus"}
+  wandb_project: LinearProbe
   mlflow_logging: False
   log_every_n_steps: 25
   log_images_every_n_epoch: 9999999

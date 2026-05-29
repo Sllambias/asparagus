@@ -30,15 +30,13 @@ def main(cfg: DictConfig) -> None:
         cfg.test_task + "__" + cfg.test_split + "__" + cfg.load_checkpoint_name.replace(".ckpt", ".json"),
     )
 
-    # min_test_patch_size = ckpt_cfg.model.get("min_test_patch_size", ckpt_cfg.training.patch_size)
-
     data_module = instantiate(
         ckpt_cfg.lightning._data_module,
         batch_size=1,
         train_split=None,
         val_split=None,
         test_samples=file_store.test,
-        test_transforms=CPU_seg_test_transforms(),  # Currently missing: min_patch_size=min_test_patch_size
+        test_transforms=CPU_seg_test_transforms(patch_size=ckpt_cfg.training.patch_size),
         num_workers=cfg.hardware.num_workers,
     )
 

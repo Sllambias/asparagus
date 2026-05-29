@@ -23,9 +23,6 @@ from gardening_tools.functional.metrics import (
     volume_similarity,
 )
 from gardening_tools.functional.paths.write import save_json
-from gardening_tools.functional.transforms.cropping_and_padding import (
-    fit_patch_size_to_image_size,
-)
 from gardening_tools.modules.losses.deep_supervision import DeepSupervisionLoss
 from gardening_tools.modules.losses.DiceCE import DiceCE
 from gardening_tools.modules.metrics import GeneralizedDiceScore
@@ -51,7 +48,6 @@ class SegmentationModule(BaseModule):
         val_transforms: Optional[transforms.Compose] = None,
         optimizer: str = "SGD",
         inference_patch_size: list = [],
-        inference_mode: str = "3D",
         test_output_path: str = None,
         log_image_every_n_epochs: int = 50,
         weight_decay: float = 3e-5,
@@ -78,7 +74,6 @@ class SegmentationModule(BaseModule):
             load_decoder=load_decoder,
             repeat_stem_weights=repeat_stem_weights,
         )
-        self.inference_mode = inference_mode
         self.inference_patch_size = inference_patch_size
         self.test_output_path = test_output_path
         self.num_classes = model.num_classes
@@ -161,7 +156,6 @@ class SegmentationModule(BaseModule):
 
     def validation_step(self, batch, batch_idx):
         x, y = batch["image"], batch["label"]
-
         pred = self.model(x)
         loss = self.val_loss(pred, y)
         self.log(
@@ -221,7 +215,7 @@ class SegmentationModule(BaseModule):
 
         logits = self.model.sliding_window_predict(
             data=x,
-            patch_size=fit_patch_size_to_image_size(self.inference_patch_size, list(x.shape[2:])),
+            patch_size=self.inference_patch_size,
             overlap=0.5,
         )
 

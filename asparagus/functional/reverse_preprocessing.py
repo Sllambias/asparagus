@@ -8,15 +8,15 @@ def reverse_preprocessing(array, image_properties):
     pad_bbox = image_properties["pad_box"]
     crop_bbox = image_properties["crop_box"]
 
-    shape = array.shape[2:]
-    if len(shape) == 2:
+    ndim = len(array.shape[2:])
+    if ndim == 2:
         mode = "bilinear"
-    elif len(shape) == 3:
+    elif ndim == 3:
         mode = "trilinear"
 
     if len(pad_bbox) > 0:
         array = unpad_array(array, pad_bbox)
-        verify_shapes_are_equal(reference_shape=shape, target_shape=image_properties["shape_before_pad"])
+        verify_shapes_are_equal(reference_shape=array.shape[2:], target_shape=image_properties["shape_before_pad"])
 
     array = F.interpolate(array, size=image_properties["size_before_resample"], mode=mode)
 

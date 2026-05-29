@@ -34,6 +34,5 @@ nesterov: True
 momentum: 0.99
 patch_embed_size: 4
 
-min_test_patch_size: [96, 96, 96]
 deep_supervision: False
 use_skip_connections: True

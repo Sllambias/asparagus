@@ -3,7 +3,7 @@ defaults:
   - /core/base@
   - /default_train_seg@
   - /hardware/cpu@hardware
-  - /model/unet_tiny@model
+  - /model/unet_b_lw_dec@model
   - _self_
 
 task: 
@@ -19,7 +19,8 @@ training:
   train_batches_per_epoch_per_device: 10
   val_batches_per_epoch_per_device: 5
   epochs: 5
-
+  warmup_epochs: 0
+  
 logger:
   progress_bar: True
   profile: False

@@ -49,7 +49,7 @@ def main(cfg: DictConfig) -> None:
         version=version_store.version,
         wandb_config=logging_safe_cfg,
         wandb_experiment=HydraConfig.get().job.config_name,
-        wandb_project="LinearProbe",
+        wandb_project=cfg.logger.wandb_project,
         wandb_logging=cfg.logger.wandb_logging,
         mlflow_logging=cfg.logger.mlflow_logging,
     )
@@ -104,7 +104,7 @@ def main(cfg: DictConfig) -> None:
         logger=loggers,
         profiler=None,
         default_root_dir=path_store.run_dir,
-        max_epochs=cfg.training.max_epochs,
+        max_epochs=cfg.training.epochs,
         check_val_every_n_epoch=cfg.training.check_val_every_n_epoch,
         limit_train_batches=cfg.training.limit_train_batches,
         limit_val_batches=cfg.training.limit_val_batches,

@@ -50,6 +50,7 @@ def main(cfg: DictConfig) -> None:
         wandb_config=logging_safe_cfg,
         wandb_experiment=HydraConfig.get().job.config_name,
         wandb_entity=cfg.logger.wandb_entity,
+        wandb_project=cfg.logger.wandb_project,
         wandb_logging=cfg.logger.wandb_logging,
         mlflow_logging=cfg.logger.mlflow_logging,
         log_to_stdout=cfg.logger.log_to_stdout,

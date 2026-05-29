@@ -34,5 +34,4 @@ weight_decay: 5e-2
 nesterov: False
 momentum: 0.9
 
-min_test_patch_size: ${training.patch_size}
 deep_supervision: False # not supported
