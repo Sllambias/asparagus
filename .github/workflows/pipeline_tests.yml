@@ -27,7 +27,7 @@ jobs:
       - name: Install CPU-only torch then package
         run: |
           pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-          pip install -e ".[test]"
+          pip install -e ".[extras,test]"
 
       - name: Run pretrain test
         run: |
