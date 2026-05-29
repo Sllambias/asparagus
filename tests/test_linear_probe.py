@@ -28,9 +28,8 @@ def test_linear_probe_validate_fit_test(cls_probe_files, tmp_path, make_trainer)
         kernel_size=3,
         n_blocks_per_stage=(1, 1),
     )
-
     data_module = ClsRegDataModule(
-        batch_size=2,
+        batch_size=1,
         num_workers=2,  # val_dataloader uses num_workers//2; needs >=2
         train_split=cls_probe_files["train"],
         val_split=cls_probe_files["val"],

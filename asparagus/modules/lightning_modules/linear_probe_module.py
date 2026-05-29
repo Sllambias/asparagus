@@ -57,6 +57,8 @@ class LinearProbeModule(BaseModule):
         self.test_output_path = test_output_path
         self.optimizer_momentum = optimizer_momentum
         self.optimizer_weight_decay = optimizer_weight_decay
+        self.learning_rates = learning_rates
+        self.dimensions = dimensions
 
         for param in self.model.parameters():
             param.requires_grad = False
@@ -67,20 +69,6 @@ class LinearProbeModule(BaseModule):
         else:
             self.global_pool = nn.AdaptiveAvgPool2d((1, 1))
 
-        try:
-            # Asparagus by default expects decoder head here
-            feature_dim = self.model.decoder.fc.in_features
-        except AttributeError as e:
-            # Our MAE model has different layer name
-            logging.warning(f"`self.model.decoder.fc.in_features` raised {e}, falling back to `self.model.head.in_features`.")
-            feature_dim = self.model.head.in_features
-
-        self.heads = nn.ModuleDict()
-        for lr in learning_rates:
-            head_name = self._lr_to_linear_head_name(lr)
-            head = self._make_head(feature_dim, num_classes)
-            self.heads[head_name] = head
-
         self.loss_fn = nn.CrossEntropyLoss(weight=torch.Tensor(loss_weight) if loss_weight else None)
 
         self.train_metrics = self.configure_metrics("train")
@@ -89,17 +77,29 @@ class LinearProbeModule(BaseModule):
         # Test metrics (only for best head)
         self.test_metrics = self.configure_test_metrics()
 
+        self.heads = None
         self.best_head_lr = None
         self.ignore_index_in_metrics = -1
 
-    def _make_head(self, feature_dim: int, num_classes: int) -> nn.Module:
+    def configure_model(self):
+        if self.heads is None:
+            tmp_arr = torch.zeros((1, 1, 32, 32, 32)) if self.dimensions == "3D" else torch.zeros((1, 1, 32, 32))
+            feature_dim = self.get_features(tmp_arr).view(-1).size(0)
+            self.heads = nn.ModuleDict()
+
+            for lr in self.learning_rates:
+                head_name = self.lr_to_linear_head_name(lr)
+                head = self.make_head(feature_dim, self.num_classes)
+                self.heads[head_name] = head
+
+    def make_head(self, feature_dim: int, num_classes: int) -> nn.Module:
         head = nn.Linear(feature_dim, num_classes)
         nn.init.normal_(head.weight, mean=0.0, std=0.01)
         nn.init.zeros_(head.bias)
         return head
 
     @staticmethod
-    def _lr_to_linear_head_name(lr: float) -> str:
+    def lr_to_linear_head_name(lr: float) -> str:
         return f"lr_{lr:.0e}".replace(".", "_").replace("+", "").replace("-", "m")
 
     def train(self, mode=True):
@@ -107,7 +107,7 @@ class LinearProbeModule(BaseModule):
         self.model.eval()
         return self
 
-    def _get_features(self, x: torch.Tensor) -> torch.Tensor:
+    def get_features(self, x: torch.Tensor) -> torch.Tensor:
         with torch.no_grad():
             skips = self.model._encode(x)
 
@@ -117,13 +117,12 @@ class LinearProbeModule(BaseModule):
         return torch.flatten(features, 1)
 
     def on_before_batch_transfer(self, batch, dataloader_idx):
-        batch["CLSREG_label"] = batch["CLSREG_label"].squeeze(-1).long()
+        batch["CLSREG_label"] = batch["CLSREG_label"].view(-1).long()
         return batch
 
     def training_step(self, batch, batch_idx):
         x, y = batch["image"], batch["CLSREG_label"]
-        features = self._get_features(x)
-
+        features = self.get_features(x)
         total_loss = 0.0
         for head_name, head in self.heads.items():
             logits = head(features)
@@ -143,7 +142,7 @@ class LinearProbeModule(BaseModule):
     @torch.no_grad()
     def on_train_epoch_end(self):
         for lr in self.learning_rates:
-            head_name = self._lr_to_linear_head_name(lr)
+            head_name = self.lr_to_linear_head_name(lr)
             metrics = self.train_metrics[head_name].compute()
             formatted = format_multilabel_metrics(metrics, ignore_index=self.ignore_index_in_metrics)
             self.log_dict(formatted, sync_dist=True)
@@ -151,8 +150,7 @@ class LinearProbeModule(BaseModule):
 
     def validation_step(self, batch, batch_idx):
         x, y = batch["image"], batch["CLSREG_label"]
-        features = self._get_features(x)
-
+        features = self.get_features(x)
         for head_name, head in self.heads.items():
             logits = head(features)
             loss = self.loss_fn(logits, y)
@@ -170,7 +168,7 @@ class LinearProbeModule(BaseModule):
     def on_validation_epoch_end(self):
         current_aurocs = {}
         for lr in self.learning_rates:
-            head_name = self._lr_to_linear_head_name(lr)
+            head_name = self.lr_to_linear_head_name(lr)
             metrics = self.val_metrics[head_name].compute()
             formatted = format_multilabel_metrics(metrics, ignore_index=self.ignore_index_in_metrics)
             self.log_dict(formatted, sync_dist=True)
@@ -206,7 +204,7 @@ class LinearProbeModule(BaseModule):
     def configure_metrics(self, prefix: str):
         metrics = nn.ModuleDict()
         for lr in self.learning_rates:
-            head_name = self._lr_to_linear_head_name(lr)
+            head_name = self.lr_to_linear_head_name(lr)
             metrics[head_name] = MetricCollection(
                 {
                     f"{prefix}/{head_name}/auroc_macro": MulticlassAUROC(num_classes=self.num_classes, average="macro"),
@@ -219,15 +217,15 @@ class LinearProbeModule(BaseModule):
         return metrics
 
     def on_test_epoch_start(self):
-        logging.info(f"Testing with head: {self._lr_to_linear_head_name(self.best_head_lr)} (lr={self.best_head_lr})")
+        logging.info(f"Testing with head: {self.lr_to_linear_head_name(self.best_head_lr)} (lr={self.best_head_lr})")
         self.results = {}
         self.logits = []
         self.labels = []
 
     def test_step(self, batch, batch_idx):
         x = batch["image"]
-        features = self._get_features(x)
-        logits = self.heads[self._lr_to_linear_head_name(self.best_head_lr)](features)
+        features = self.get_features(x)
+        logits = self.heads[self.lr_to_linear_head_name(self.best_head_lr)](features)
 
         label = batch["CLSREG_label"]
         self.results[batch["file_path"]] = {
@@ -239,15 +237,13 @@ class LinearProbeModule(BaseModule):
 
     def on_test_epoch_end(self):
         logits_tensor = torch.stack(self.logits).float()
-        labels_tensor = torch.stack(self.labels)
-
+        labels_tensor = torch.stack(self.labels).view(-1)
         avg_results = self.test_metrics(logits_tensor, labels_tensor)
         avg_results = {key: value.cpu().numpy().tolist() for key, value in avg_results.items()}
-
         self.results["metrics"] = avg_results
-        self.results["best_head"] = self._lr_to_linear_head_name(self.best_head_lr)
+        self.results["best_head"] = self.lr_to_linear_head_name(self.best_head_lr)
         self.results["best_head_lr"] = self.best_head_lr
         os.makedirs(os.path.split(self.test_output_path)[0], exist_ok=True)
         save_json(self.results, self.test_output_path)
-        logging.info(f"Test using best head: {self._lr_to_linear_head_name(self.best_head_lr)} (lr={self.best_head_lr})")
+        logging.info(f"Test using best head: {self.lr_to_linear_head_name(self.best_head_lr)} (lr={self.best_head_lr})")
         logging.info(f"Aggregated test results for {len(self.results)} files: {avg_results}")
