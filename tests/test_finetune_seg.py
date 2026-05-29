@@ -4,6 +4,7 @@ Uses SegmentationModule + SegDataModule + unet_tiny on synthetic 8x8x8 seg volum
 Only tests trainer.fit() — trainer.test() is excluded because SegTestDataset._get_src_label()
 loads from ASPARAGUS_RAW_LABELS which is unavailable in CI.
 """
+
 from asparagus.modules.data_modules.training import SegDataModule
 from asparagus.modules.lightning_modules import SegmentationModule
 from asparagus.modules.networks.unet import unet_tiny

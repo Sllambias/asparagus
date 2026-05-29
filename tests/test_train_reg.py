@@ -3,6 +3,7 @@
 Uses RegressionModule + ClsRegDataModule + unet_clsreg_tiny on synthetic (image, label) data.
 Runs both trainer.fit() and trainer.test() mirroring the full pipeline.
 """
+
 from asparagus.modules.data_modules.training import ClsRegDataModule
 from asparagus.modules.lightning_modules import RegressionModule
 from asparagus.modules.networks.unet import unet_clsreg_tiny

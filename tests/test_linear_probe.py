@@ -11,6 +11,7 @@ a [B] label tensor to 0-dim when B=1, causing CrossEntropyLoss to fail.
 limit_test_batches=2 ensures both test files (labels 0 and 1) are processed
 so MulticlassAUROC has both classes present.
 """
+
 from asparagus.modules.data_modules.training import ClsRegDataModule
 from asparagus.modules.lightning_modules import LinearProbeModule
 from asparagus.modules.networks.resenc_unet import ResidualEncoderUNetCLSREG

@@ -3,12 +3,12 @@
 Uses SelfSupervisedModule + PretrainDataModule + unet_tiny on synthetic 8x8x8 volumes.
 Torch_CopyImageToLabel adds batch["label"] so the SSL reconstruction loss can run.
 """
-from gardening_tools.modules.transforms.copy_image_to_label import Torch_CopyImageToLabel
-from torchvision import transforms
 
 from asparagus.modules.data_modules.pretraining import PretrainDataModule
 from asparagus.modules.lightning_modules import SelfSupervisedModule
 from asparagus.modules.networks.unet import unet_tiny
+from gardening_tools.modules.transforms.copy_image_to_label import Torch_CopyImageToLabel
+from torchvision import transforms
 
 
 def test_pretrain_fit(pretrain_files, make_trainer):
