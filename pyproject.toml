@@ -58,7 +58,8 @@ extras = [
 ]
 test = [
     "ruff>=0.14.8",
-    "pytest>=9.0.1"
+    "pytest>=9.0.1",
+    "pytest-timeout>=2.3.0",
 ]
 docs = [
     "mkdocs-shadcn",
