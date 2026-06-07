@@ -20,8 +20,9 @@ from asparagus.modules.networks.resenc_unet import ResidualEncoderUNetCLSREG
 
 def run_linear_probe(model, files, tmp_path, make_trainer, dimensions, out_stem):
     """validate → fit → test. Shared by all linear-probe tests."""
+
     data_module = ClsRegDataModule(
-        batch_size=2,
+        batch_size=1,
         num_workers=2,  # val_dataloader uses num_workers//2; needs >=2
         train_split=files["train"],
         val_split=files["val"],

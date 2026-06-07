@@ -31,7 +31,7 @@ def run_cls_two_stage(model_fn, files, tmp_path, make_trainer, ckpt_stem):
         test_output_path=str(tmp_path / f"{ckpt_stem}_train_preds.json"),
     )
     train_dm = ClsRegDataModule(
-        batch_size=2,
+        batch_size=1,
         num_workers=2,  # val_dataloader uses num_workers//2; needs >=2
         train_split=files["train"],
         val_split=files["val"],
@@ -50,7 +50,7 @@ def run_cls_two_stage(model_fn, files, tmp_path, make_trainer, ckpt_stem):
         test_output_path=str(tmp_path / f"{ckpt_stem}_test_preds.json"),
     )
     test_dm = ClsRegDataModule(
-        batch_size=2,
+        batch_size=1,
         num_workers=2,  # val_dataloader uses num_workers//2; needs >=2
         train_split=None,
         val_split=None,

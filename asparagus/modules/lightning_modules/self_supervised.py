@@ -146,11 +146,11 @@ class SelfSupervisedModule(BaseModule):
 
     def _rec_loss(self, pred, y, mask=None):
         if mask is not None:
-            y_masked = y.clone()
-            pred_masked = pred.clone()
-            y_masked[~mask] = 0
-            pred_masked[~mask] = 0
-            return self._rec_loss_fn(pred_masked, y_masked)
+            # mask is True for kept/visible voxels and False for masked voxels.
+            assert mask.dtype == torch.bool, "Mask must be boolean"
+            masked = ~mask
+            assert masked.any(), "Mask contains no masked voxels"
+            return self._rec_loss_fn(pred[masked], y[masked])
 
         return self._rec_loss_fn(pred, y)
 
