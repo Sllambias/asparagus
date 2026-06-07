@@ -29,7 +29,7 @@ def test_test_cls_inference(cls_probe_files, tmp_path, make_trainer):
         test_output_path=str(tmp_path / "train_preds.json"),
     )
     train_dm = ClsRegDataModule(
-        batch_size=2,
+        batch_size=1,
         num_workers=2,  # val_dataloader uses num_workers//2; needs >=2
         train_split=cls_probe_files["train"],
         val_split=cls_probe_files["val"],
@@ -48,7 +48,7 @@ def test_test_cls_inference(cls_probe_files, tmp_path, make_trainer):
         test_output_path=str(tmp_path / "test_preds.json"),
     )
     test_dm = ClsRegDataModule(
-        batch_size=2,
+        batch_size=1,
         num_workers=2,  # val_dataloader uses num_workers//2; needs >=2
         train_split=None,
         val_split=None,
