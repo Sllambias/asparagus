@@ -301,5 +301,18 @@ def primus_m_clsreg(
     )
 
 
+@depends_on_timm()
+def primus_debug(input_channels, output_channels, input_shape=[32, 32, 32]):
+    return Primus(
+        input_channels=input_channels,
+        num_classes=output_channels,
+        input_shape=input_shape,
+        embed_dim=24,
+        patch_embed_size=(8, 8, 8),
+        eva_depth=4,
+        eva_numheads=4,
+    )
+
+
 if __name__ == "__main__":
     net = primus_s(1, 1, (64, 64, 64))

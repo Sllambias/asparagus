@@ -268,3 +268,22 @@ def resenc_unet_g(
         n_conv_per_stage_decoder=(1, 1, 1, 1, 1),
         deep_supervision=deep_supervision,
     )
+
+
+def resenc_unet_debug(
+    dimensions,
+    input_channels,
+    output_channels,
+    deep_supervision=False,
+):
+    return ResidualEncoderUNet(
+        dimensions=dimensions,
+        input_channels=input_channels,
+        output_channels=output_channels,
+        features_per_stage=(4, 8, 4, 4, 4, 4),
+        stride=1,
+        kernel_size=3,
+        n_blocks_per_stage=(1, 1, 1, 1, 1, 1),
+        n_conv_per_stage_decoder=(1, 1, 1, 1, 1, 1),
+        deep_supervision=deep_supervision,
+    )
