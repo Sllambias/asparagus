@@ -90,6 +90,18 @@ asp_test_seg \
     test_split=TEST_75_15_10
 ```
 
+Run single subject inference:
+
+```
+python asparagus/scripts/FOMO26/Task2_predict.py \
+    --flair path1.nii.gz \
+    --dwi path2.nii.gz \
+    --t2s path3.nii.gz \
+    --swi path4.nii.gz \
+    --output output_path.nii.gz \
+    --checkpoint_dir full_path_to/dir/with/run_id=123 \
+    --checkpoint_name best \
+```
 
 ### Switching checkpoints
 

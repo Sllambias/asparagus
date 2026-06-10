@@ -7,7 +7,7 @@ from asparagus.modules.datasets.TrainDataset import (
     ClsRegTestDataset,
     SegDataset,
     SegTestDataset,
-    PredictDataset,
+    SingleSubjectPredictDataset,
 )
 from lightning.fabric.utilities.distributed import DistributedSamplerWrapper
 from torch.utils.data import DataLoader, RandomSampler
@@ -67,7 +67,7 @@ class SegDataModule(pl.LightningDataModule):
         )
 
     def setup_predict(self):
-        self.predict_dataset = PredictDataset(
+        self.predict_dataset = SingleSubjectPredictDataset(
             self.predict_samples,
             transforms=self.test_transforms,
         )
@@ -118,8 +118,6 @@ class SegDataModule(pl.LightningDataModule):
             self.predict_dataset,
             num_workers=self.num_workers,
             batch_size=1,
-            pin_memory=False,
-            persistent_workers=True,
             collate_fn=collate_return,
         )
 

@@ -159,7 +159,7 @@ class ClsRegTestDataset(Dataset):
         return data_dict
 
 
-class PredictDataset(Dataset):
+class SingleSubjectPredictDataset(Dataset):
     def __init__(
         self,
         files: list,
@@ -168,32 +168,33 @@ class PredictDataset(Dataset):
         super().__init__()
 
         self.files = files
-        print(self.files)
-
         self.transforms = transforms
 
     def __len__(self):
-        return len(self.files)
+        return 1
 
     def __getitem__(self, idx):
         properties = {}
-        file = self.files[idx]
-        if file.endswith(".pt"):
-            data = torch.load(file)
-        elif file.endswith(".npy"):
-            data = torch.from_numpy(np.load(file))
-        elif file.endswith(".nii") or file.endswith(".nii.gz"):
-            data = nib.load(file)
-            properties["nifti_metadata"] = {
-                "affine": data.affine,
-                "header": data.header,
-                "reoriented": False,
-            }
-            data = torch.from_numpy(data.get_fdata()[np.newaxis])
-        else:
-            raise ValueError(f"Unsupported file type: {file}")
-        data = data.float()
-        data = data[:, :32, :32, :32]  # For testing, crop to 32x32 to avoid OOM on CPU transforms
+        all_channels = []
+        for file in self.files:
+            if file.endswith(".pt"):
+                data = torch.load(file)
+            elif file.endswith(".npy"):
+                data = torch.from_numpy(np.load(file))
+            elif file.endswith(".nii") or file.endswith(".nii.gz"):
+                data = nib.load(file)
+                properties["nifti_metadata"] = {
+                    "affine": data.affine,
+                    "header": data.header,
+                    "reoriented": False,
+                }
+                data = torch.from_numpy(data.get_fdata()[np.newaxis])
+            else:
+                raise ValueError(f"Unsupported file type: {file}")
+            data = data.float()
+            all_channels.append(data)
+
+        data = torch.vstack(all_channels)
         properties["original_size"] = data.shape[1:]  # Exclude channel dimension
         data_dict = {
             "file_path": file,

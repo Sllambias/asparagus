@@ -246,7 +246,6 @@ class SegmentationModule(BaseModule):
             patch_size=self.inference_patch_size,
             overlap=0.5,
         )
-
         src_logits = reverse_preprocessing(logits, batch["properties"])
         save_prediction_from_logits(
             src_logits.numpy(),
