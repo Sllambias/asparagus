@@ -1,3 +1,5 @@
+import nibabel as nib
+import numpy as np
 import torch
 import torchvision
 from asparagus.paths import get_data_path, get_source_labels_path
@@ -147,6 +149,57 @@ class ClsRegTestDataset(Dataset):
             "file_path": file,
             "image": data[0],
             "CLSREG_label": data[1],
+        }
+
+        return self._transform(data_dict)
+
+    def _transform(self, data_dict):
+        if self.transforms is not None:
+            data_dict = self.transforms(data_dict)
+        return data_dict
+
+
+class SingleSubjectPredictDataset(Dataset):
+    def __init__(
+        self,
+        files: list,
+        transforms: Optional[torchvision.transforms.Compose] = None,
+    ):
+        super().__init__()
+
+        self.files = files
+        self.transforms = transforms
+
+    def __len__(self):
+        return 1
+
+    def __getitem__(self, idx):
+        properties = {}
+        all_channels = []
+        for file in self.files:
+            if file.endswith(".pt"):
+                data = torch.load(file)
+            elif file.endswith(".npy"):
+                data = torch.from_numpy(np.load(file))
+            elif file.endswith(".nii") or file.endswith(".nii.gz"):
+                data = nib.load(file)
+                properties["nifti_metadata"] = {
+                    "affine": data.affine,
+                    "header": data.header,
+                    "reoriented": False,
+                }
+                data = torch.from_numpy(data.get_fdata()[np.newaxis])
+            else:
+                raise ValueError(f"Unsupported file type: {file}")
+            data = data.float()
+            all_channels.append(data)
+
+        data = torch.vstack(all_channels)
+        properties["original_size"] = data.shape[1:]  # Exclude channel dimension
+        data_dict = {
+            "file_path": file,
+            "image": data,
+            "properties": properties,
         }
 
         return self._transform(data_dict)

@@ -2,7 +2,13 @@ import lightning as pl
 import logging
 import torch.distributed as dist
 from asparagus.functional.collate import collate_return
-from asparagus.modules.datasets.TrainDataset import ClsRegDataset, ClsRegTestDataset, SegDataset, SegTestDataset
+from asparagus.modules.datasets.TrainDataset import (
+    ClsRegDataset,
+    ClsRegTestDataset,
+    SegDataset,
+    SegTestDataset,
+    SingleSubjectPredictDataset,
+)
 from lightning.fabric.utilities.distributed import DistributedSamplerWrapper
 from torch.utils.data import DataLoader, RandomSampler
 from torchvision.transforms import Compose
@@ -17,6 +23,7 @@ class SegDataModule(pl.LightningDataModule):
         train_split: list,
         val_split: list,
         test_samples: list = [],
+        predict_samples: Optional[list] = [],
         train_transforms: Optional[Compose] = None,
         test_transforms: Optional[Compose] = None,
         val_transforms: Optional[Compose] = None,
@@ -30,6 +37,7 @@ class SegDataModule(pl.LightningDataModule):
         self.train_split = train_split
         self.test_samples = test_samples
         self.val_split = val_split
+        self.predict_samples = predict_samples
 
         logging.info(f"Using {self.num_workers} workers")
 
@@ -39,7 +47,7 @@ class SegDataModule(pl.LightningDataModule):
         elif stage == "test":
             self.setup_test()
         elif stage == "predict":
-            raise NotImplementedError("Predict stage not supported for PretrainModule.")
+            self.setup_predict()
 
     def setup_fit(self):
         self.train_dataset = SegDataset(
@@ -55,6 +63,12 @@ class SegDataModule(pl.LightningDataModule):
     def setup_test(self):
         self.test_dataset = SegTestDataset(
             self.test_samples,
+            transforms=self.test_transforms,
+        )
+
+    def setup_predict(self):
+        self.predict_dataset = SingleSubjectPredictDataset(
+            self.predict_samples,
             transforms=self.test_transforms,
         )
 
@@ -96,6 +110,14 @@ class SegDataModule(pl.LightningDataModule):
             batch_size=1,
             pin_memory=False,
             persistent_workers=True,
+            collate_fn=collate_return,
+        )
+
+    def predict_dataloader(self):
+        return DataLoader(
+            self.predict_dataset,
+            num_workers=self.num_workers,
+            batch_size=1,
             collate_fn=collate_return,
         )
 

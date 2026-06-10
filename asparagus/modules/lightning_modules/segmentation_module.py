@@ -22,7 +22,7 @@ from gardening_tools.functional.metrics import (
     total_pos_pred,
     volume_similarity,
 )
-from gardening_tools.functional.paths.write import save_json
+from gardening_tools.functional.paths.write import save_json, save_prediction_from_logits
 from gardening_tools.modules.losses.deep_supervision import DeepSupervisionLoss
 from gardening_tools.modules.losses.DiceCE import DiceCE
 from gardening_tools.modules.metrics import GeneralizedDiceScore
@@ -246,12 +246,12 @@ class SegmentationModule(BaseModule):
             patch_size=self.inference_patch_size,
             overlap=0.5,
         )
-        logits = reverse_preprocessing(
-            array=logits,
-            image_properties=batch["properties"],
+        src_logits = reverse_preprocessing(logits, batch["properties"])
+        save_prediction_from_logits(
+            src_logits.numpy(),
+            self.test_output_path,
+            properties=batch["properties"],
         )
-        batch["logits"] = logits
-        return batch
 
     def compute_metrics_from_confusion_matrix(self, logits, label):
         metrics = {}
