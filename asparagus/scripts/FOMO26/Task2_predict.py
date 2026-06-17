@@ -11,8 +11,6 @@ load_dotenv()
 
 MODEL_DIR = None
 CHECKPOINT_NAME = None
-MODEL_DIR = "repos/asparagus_data/models/SEG000_LauritSynSeg/unet_tiny__3D/script=train_seg/root=base__stem=default_train_seg/leaf=test_seg__clargs=/split_40_10_50__fold=0/run_id=377904"
-CHECKPOINT_NAME = "best"
 
 
 def main(
