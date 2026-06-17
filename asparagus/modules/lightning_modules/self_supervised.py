@@ -182,6 +182,5 @@ class SelfSupervisedModule(BaseModule):
 
     def predict_step(self, batch, batch_idx):
         x = batch["image"]
-        print(x.shape)
         embeddings = self.model.encoder(x)[-1]
         return embeddings
