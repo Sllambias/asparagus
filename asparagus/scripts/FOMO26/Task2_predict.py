@@ -1,5 +1,4 @@
 import os
-import random
 from asparagus.modules.transforms.presets import CPU_seg_test_transforms
 from asparagus.pipeline.auto_configuration.checkpoint import load_checkpoint_state_dict
 from dotenv import load_dotenv
@@ -10,11 +9,10 @@ from omegaconf import OmegaConf
 
 load_dotenv()
 
-OmegaConf.register_new_resolver("random", lambda min, max: random.randint(min, max))
-OmegaConf.register_new_resolver("eval", eval)
-
 MODEL_DIR = None
 CHECKPOINT_NAME = None
+MODEL_DIR = "repos/asparagus_data/models/SEG000_LauritSynSeg/unet_tiny__3D/script=train_seg/root=base__stem=default_train_seg/leaf=test_seg__clargs=/split_40_10_50__fold=0/run_id=377904"
+CHECKPOINT_NAME = "best"
 
 
 def main(

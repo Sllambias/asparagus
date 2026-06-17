@@ -1,6 +1,5 @@
 import numpy as np
 import os
-import random
 from asparagus.modules.transforms.presets import CPU_clsreg_val_test_transforms_crop
 from asparagus.pipeline.auto_configuration.checkpoint import load_checkpoint_state_dict
 from dotenv import load_dotenv
@@ -9,9 +8,6 @@ from lightning import Trainer
 from omegaconf import OmegaConf
 
 load_dotenv()
-
-OmegaConf.register_new_resolver("random", lambda min, max: random.randint(min, max))
-OmegaConf.register_new_resolver("eval", eval)
 
 MODEL_DIR = None
 CHECKPOINT_NAME = None
