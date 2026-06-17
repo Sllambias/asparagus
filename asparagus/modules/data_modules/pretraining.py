@@ -1,6 +1,7 @@
 import lightning as pl
 import logging
 import torch.distributed as dist
+from asparagus.functional.collate import collate_return
 from asparagus.modules.datasets.PretrainDataset import PretrainDataset
 from asparagus.modules.datasets.TrainDataset import SingleSubjectPredictDataset
 from asparagus.modules.transforms.presets import pretrain_CPU_train_transforms, pretrain_CPU_val_transforms
@@ -8,7 +9,6 @@ from lightning.fabric.utilities.distributed import DistributedSamplerWrapper
 from torch.utils.data import DataLoader, RandomSampler
 from torchvision.transforms import Compose
 from typing import Literal, Optional
-from asparagus.functional.collate import collate_return
 
 
 class PretrainDataModule(pl.LightningDataModule):

@@ -6,7 +6,7 @@ import wandb
 from abc import abstractmethod
 from asparagus.functional.metrics.utils import format_multilabel_metrics
 from asparagus.modules.lightning_modules.base_module import BaseModule
-from gardening_tools.functional.paths.write import save_json, save_txt_from_numpy
+from gardening_tools.functional.paths.write import save_json
 from torchmetrics import MetricCollection
 from torchmetrics.classification import MulticlassAccuracy, MulticlassAUROC, MulticlassPrecision, MulticlassRecall
 from torchmetrics.regression import MeanAbsoluteError, MeanSquaredError

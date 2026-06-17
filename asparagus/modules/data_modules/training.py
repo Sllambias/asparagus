@@ -134,6 +134,7 @@ class ClsRegDataModule(pl.LightningDataModule):
         train_transforms: Optional[Compose] = None,
         val_transforms: Optional[Compose] = None,
         test_transforms: Optional[Compose] = None,
+        predict_transforms: Optional[Compose] = None,
         test_samples: Optional[list] = [],
         predict_samples: Optional[list] = [],
         use_random_datasampler: Optional[bool] = True,
@@ -149,7 +150,7 @@ class ClsRegDataModule(pl.LightningDataModule):
         self.test_samples = test_samples
         self.use_random_datasampler = use_random_datasampler
         self.predict_samples = predict_samples
-
+        self.predict_transforms = predict_transforms
         logging.info(f"Using {self.num_workers} workers")
 
     def setup(self, stage: Literal["fit", "test", "predict"]):
@@ -180,7 +181,7 @@ class ClsRegDataModule(pl.LightningDataModule):
     def setup_predict(self):
         self.predict_dataset = SingleSubjectPredictDataset(
             self.predict_samples,
-            transforms=self.test_transforms,
+            transforms=self.predict_transforms,
         )
 
     def train_dataloader(self):

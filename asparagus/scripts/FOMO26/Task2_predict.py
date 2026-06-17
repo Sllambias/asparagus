@@ -1,13 +1,12 @@
 import os
 import random
 from asparagus.modules.transforms.presets import CPU_seg_test_transforms
-from asparagus.paths import get_config_path
 from asparagus.pipeline.auto_configuration.checkpoint import load_checkpoint_state_dict
 from dotenv import load_dotenv
-from hydra.utils import instantiate
-from omegaconf import OmegaConf
-from lightning import Trainer
 from gardening_tools.functional.paths.write import save_prediction_from_logits
+from hydra.utils import instantiate
+from lightning import Trainer
+from omegaconf import OmegaConf
 
 load_dotenv()
 
