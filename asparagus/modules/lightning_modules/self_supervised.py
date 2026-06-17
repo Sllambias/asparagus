@@ -21,7 +21,7 @@ class SelfSupervisedModule(BaseModule):
     def __init__(
         self,
         model: nn.Module,
-        learning_rate: float,
+        learning_rate: float = 1e-4,
         log_images_every_n_epoch: int = 5,
         warmup_epochs: int = 10,
         cosine_period_ratio: float = 1,
@@ -36,6 +36,7 @@ class SelfSupervisedModule(BaseModule):
         weight_decay: float = 3e-5,
         nesterov: bool = True,
         momentum: float = 0.99,
+        weights: dict = None,
     ):
         super().__init__(
             model=model,
@@ -50,6 +51,7 @@ class SelfSupervisedModule(BaseModule):
             weight_decay=weight_decay,
             nesterov=nesterov,
             momentum=momentum,
+            weights=weights,
         )
 
         self.model = model
@@ -177,3 +179,9 @@ class SelfSupervisedModule(BaseModule):
             for key, value in metric_dict.items():
                 metrics[f"{stage}{metric_separator}{module_name}/{key}"] = value
         return metrics
+
+    def predict_step(self, batch, batch_idx):
+        x = batch["image"]
+        print(x.shape)
+        embeddings = self.model.encoder(x)[-1]
+        return embeddings

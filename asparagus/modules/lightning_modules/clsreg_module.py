@@ -6,7 +6,7 @@ import wandb
 from abc import abstractmethod
 from asparagus.functional.metrics.utils import format_multilabel_metrics
 from asparagus.modules.lightning_modules.base_module import BaseModule
-from gardening_tools.functional.paths.write import save_json
+from gardening_tools.functional.paths.write import save_json, save_txt_from_numpy
 from torchmetrics import MetricCollection
 from torchmetrics.classification import MulticlassAccuracy, MulticlassAUROC, MulticlassPrecision, MulticlassRecall
 from torchmetrics.regression import MeanAbsoluteError, MeanSquaredError
@@ -152,6 +152,11 @@ class ClsRegBase(BaseModule):
         outputs = self.model.forward(x)
         return outputs
 
+    def predict_step(self, batch, batch_idx):
+        x = batch["image"]
+        outputs = self.model.forward(x)
+        return outputs
+
     def on_test_epoch_end(self):
         avg_results = {}
         avg_results = self.test_metrics(
@@ -190,7 +195,8 @@ class ClassificationModule(ClsRegBase):
         )
 
     def on_before_batch_transfer(self, batch, dataloader_idx):
-        batch["CLSREG_label"] = batch["CLSREG_label"].view(-1).long()
+        if not self.trainer.predicting:
+            batch["CLSREG_label"] = batch["CLSREG_label"].view(-1).long()
         return batch
 
     def on_test_batch_end(self, outputs, batch, batch_idx, dataloader_idx=0):

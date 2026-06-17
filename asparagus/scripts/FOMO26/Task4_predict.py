@@ -1,21 +1,20 @@
+import hydra
 import os
 import random
 from asparagus.modules.transforms.presets import CPU_seg_test_transforms
 from asparagus.paths import get_config_path
 from asparagus.pipeline.auto_configuration.checkpoint import load_checkpoint_state_dict
+from asparagus.pipeline.auto_configuration.versioning import pathing
 from dotenv import load_dotenv
 from hydra.utils import instantiate
-from omegaconf import OmegaConf
+from omegaconf import DictConfig, OmegaConf
+from torch.utils.data import DataLoader, RandomSampler
 from lightning import Trainer
-from gardening_tools.functional.paths.write import save_prediction_from_logits
 
 load_dotenv()
 
 OmegaConf.register_new_resolver("random", lambda min, max: random.randint(min, max))
 OmegaConf.register_new_resolver("eval", eval)
-
-MODEL_DIR = None
-CHECKPOINT_NAME = None
 
 
 def main(
@@ -51,19 +50,14 @@ def main(
         model=model,
         weights=load_checkpoint_state_dict(os.path.join(checkpoint_dir, f"checkpoints/{checkpoint_name}.ckpt")),
         inference_patch_size=ckpt_cfg.training.patch_size,
+        test_output_path=output_path,
     )
 
     trainer = Trainer(accelerator=accelerator)
 
-    logits, properties = trainer.predict(
+    trainer.predict(
         model=model_module,
         datamodule=data_module,
-    )[0]
-
-    save_prediction_from_logits(
-        logits.numpy(),
-        output_path,
-        properties=properties,
     )
     print(f"Test predictions saved to {output_path}")
 
@@ -71,14 +65,18 @@ def main(
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="Predict script for FOMO26 Task 2: Meningioma Segmentation")
-    parser.add_argument("--flair", type=str, required=True)
-    parser.add_argument("--dwi", type=str, required=True)
-    parser.add_argument("--t2s", type=str, required=False, help="Path to T2* image (optional)")
-    parser.add_argument("--swi", type=str, required=False, help="Path to SWI image (optional)")
+    parser = argparse.ArgumentParser(description="Predict script for FOMO26 Task 4: Trigeminal Neuralgia Segmentation")
+    parser.add_argument("--t2", type=str, required=True)
     parser.add_argument("--output", type=str, required=True, help="Path to save predictions")
-    parser.add_argument("--input_channels", type=int, default=3, help="Number of input channels for the model")
-    parser.add_argument("--output_channels", type=int, default=2, help="Number of output channels for the model")
+    parser.add_argument("--input_channels", type=int, default=1, help="Number of input channels for the model")
+    parser.add_argument("--output_channels", type=int, default=3, help="Number of output channels for the model")
+    parser.add_argument("--checkpoint_dir", type=str, required=True, help="Path to the model checkpoint")
+    parser.add_argument(
+        "--checkpoint_name",
+        type=str,
+        default="best",
+        help="Name of the checkpoint file (without .pt extension)",
+    )
     parser.add_argument(
         "--accelerator",
         type=str,
@@ -87,22 +85,12 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    if args.t2s is not None:
-        data = [args.flair, args.dwi, args.t2s]
-    else:
-        data = [args.flair, args.dwi, args.swi]
-
-    assert MODEL_DIR is not None, "MODEL_DIR environment variable must be set to the path of the model checkpoint directory"
-    assert CHECKPOINT_NAME is not None, (
-        "CHECKPOINT_NAME environment variable must be set to the name of the checkpoint file (without .pt extension)"
-    )
-
     main(
-        data=data,
+        data=[args.t2],
         output_path=args.output,
         output_channels=args.output_channels,
         input_channels=args.input_channels,
-        checkpoint_dir=MODEL_DIR,
-        checkpoint_name=CHECKPOINT_NAME,
+        checkpoint_dir=args.checkpoint_dir,
+        checkpoint_name=args.checkpoint_name,
         accelerator=args.accelerator,
     )
