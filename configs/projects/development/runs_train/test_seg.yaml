@@ -2,7 +2,8 @@
 defaults:
   - /core/base@
   - /default_train_seg@
-  - /hardware/1gpu12cpu@hardware
+  - /hardware/cpu@hardware
+  - /model/unet_tiny@model
   - _self_
 
 task: 
@@ -10,15 +11,16 @@ root: base
 stem: default_train_seg
 
 training:
-  epochs: 1
+  epochs: 4
   batch_size: 2
   limit_train_batches: 5
   limit_val_batches: 5
   train_batches_per_epoch_per_device: 5
   val_batches_per_epoch_per_device: 5
   accumulate_grad_batches: 2
-  patch_size: [64,64,64]
+  patch_size: [32,32,32]
   check_val_every_n_epoch: 1
+  warmup_epochs: 2
 
 logger:
   wandb_logging: True

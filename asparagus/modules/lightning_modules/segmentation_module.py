@@ -246,12 +246,8 @@ class SegmentationModule(BaseModule):
             patch_size=self.inference_patch_size,
             overlap=0.5,
         )
-        logits = reverse_preprocessing(
-            array=logits,
-            image_properties=batch["properties"],
-        )
-        batch["logits"] = logits
-        return batch
+        src_logits = reverse_preprocessing(logits, batch["properties"])
+        return src_logits, batch["properties"]
 
     def compute_metrics_from_confusion_matrix(self, logits, label):
         metrics = {}
