@@ -57,8 +57,7 @@ class BaseLogger(Logger):
         os.makedirs(self.log_dir, exist_ok=True)
         self.log_file = os.path.join(
             self.log_dir,
-            "train_seg.log",
-            # self.name + ".log",
+            self.name + "_metrics.log",
         )
         with open(self.log_file, "w") as f:
             f.write(f"Starting model training \n {'log file:':20} {self.log_file} \n")
