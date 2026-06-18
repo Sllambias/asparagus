@@ -5,7 +5,6 @@ import random
 import re
 import subprocess
 import yaml
-from gardening_tools.functional.paths.read import load_json
 from asparagus.functional.scheduling import get_run_cmd_for_scheduler, get_scheduler
 from asparagus.functional.versioning import generate_unused_run_id
 from asparagus.modules.hydra.plugins.searchpath_plugins import (
@@ -15,6 +14,7 @@ from asparagus.modules.hydra.plugins.searchpath_plugins import (
 )
 from asparagus.paths import get_config_path, get_models_path
 from dotenv import load_dotenv
+from gardening_tools.functional.paths.read import load_json
 from hydra import compose
 from hydra.core.hydra_config import HydraConfig
 from hydra.core.plugins import Plugins
