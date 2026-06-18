@@ -5,7 +5,7 @@ import random
 import re
 import subprocess
 import yaml
-from asparagus.functional.loading import load_json
+from gardening_tools.functional.paths.read import load_json
 from asparagus.functional.scheduling import get_run_cmd_for_scheduler, get_scheduler
 from asparagus.functional.versioning import generate_unused_run_id
 from asparagus.modules.hydra.plugins.searchpath_plugins import (

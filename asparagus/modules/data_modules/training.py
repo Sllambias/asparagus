@@ -196,7 +196,7 @@ class ClsRegDataModule(pl.LightningDataModule):
 
 
 if __name__ == "__main__":
-    from asparagus.functional.loading import load_json
+    from gardening_tools.functional.paths.read import load_json
 
     dataset_json = load_json(
         "/Users/zcr545/Desktop/Projects/repos/asparagus_data/preprocessed_data/Task997_LauritSynSeg/dataset.json"
