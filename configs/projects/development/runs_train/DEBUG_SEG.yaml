@@ -12,7 +12,8 @@ stem: debug
 
 model:
   dimensions: 3D
-
+  ckpt_every_n_epoch: 1
+  
 training:
   patch_size: [32, 32, 32]
   batch_size: 2
