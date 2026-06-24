@@ -16,7 +16,7 @@ from gardening_tools.modules.transforms.spatial import Torch_Spatial
 from torchvision import transforms
 
 
-def none(ndim=3, deep_supervision=False):
+def none(*args, **kwargs):
     return None
 
 

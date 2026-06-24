@@ -2,7 +2,9 @@ _pretrain_net:
   _target_: asparagus.modules.networks.resenc_unet.${model.pretrain_net}
   dimensions: ${model.dimensions}
   use_skip_connections: ${model.use_skip_connections}
-
+  input_channels: 1
+  output_channels: 1
+  
 _seg_net:
   _target_: asparagus.modules.networks.resenc_unet.${model.seg_net}
   dimensions: ${model.dimensions}

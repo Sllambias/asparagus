@@ -3,7 +3,9 @@ _pretrain_net:
   patch_size: ${training.patch_size}
   patch_drop_rate: ${training.mask_ratio}
   patch_embed_size: ${model.patch_embed_size}
-
+  input_channels: 1
+  output_channels: 1
+  
 _seg_net:
   _target_: asparagus.modules.networks.primus.${model.seg_net}
   patch_size: ${training.patch_size}

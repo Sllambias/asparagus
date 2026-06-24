@@ -8,7 +8,6 @@ on:
 
 env:
   ASPARAGUS_MODELS: "${{ github.workspace }}/models"
-  #ASPARAGUS: "${{ github.workspace }}/tests/models"
   HYDRA_FULL_ERROR: 1
 
 jobs:
