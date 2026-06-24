@@ -6,9 +6,8 @@ import random
 import re
 import subprocess
 import yaml
-from gardening_tools.functional.paths.read import load_json
-from asparagus.functional.utils import find_run_dirs
 from asparagus.functional.scheduling import get_run_cmd_for_scheduler, get_scheduler
+from asparagus.functional.utils import find_run_dirs
 from asparagus.functional.versioning import generate_unused_run_id
 from asparagus.modules.hydra.plugins.searchpath_plugins import (
     EvalBoxesSearchpathPlugin,
@@ -17,6 +16,7 @@ from asparagus.modules.hydra.plugins.searchpath_plugins import (
 )
 from asparagus.paths import get_config_path, get_models_path
 from dotenv import load_dotenv
+from gardening_tools.functional.paths.read import load_json
 from hydra import compose
 from hydra.core.hydra_config import HydraConfig
 from hydra.core.plugins import Plugins
@@ -122,8 +122,8 @@ def main(cfg: DictConfig) -> None:
 def prepare_data(cfg: DictConfig) -> None:
     scheduler = get_scheduler(mode=cfg.scheduler)
     env_cmd = os.environ["ASPARAGUS_EVAL_BOX_ENV_CMD"]
-    for config_name in (cfg.get("segmentation_tasks") or []) + (cfg.get("classification_tasks") or []) + (
-        cfg.get("regression_tasks") or []
+    for config_name in (
+        (cfg.get("segmentation_tasks") or []) + (cfg.get("classification_tasks") or []) + (cfg.get("regression_tasks") or [])
     ):
         if config_name is None:
             continue
@@ -273,7 +273,7 @@ def _mean_std_n(values):
 
 def aggregate_over_folds(raw_results_for_type, task_type):
     """collapse folds. Group raw per-fold records by (config, dataset) and reduce each
-    metric to mean/std/n across that group's folds. """
+    metric to mean/std/n across that group's folds."""
     grouped = {}
     for inference_data in raw_results_for_type:
         for dataset, record in inference_data.items():
