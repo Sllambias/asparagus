@@ -3,6 +3,7 @@ import numpy as np
 import os
 import pathlib
 import shutil
+import subprocess
 from asparagus.paths import get_models_path
 
 
@@ -57,6 +58,33 @@ def prune_model_dirs(root_model_dir, dry_run=True):
                     if len(os.listdir(path)) == 0:
                         print("Removing empty dir: ", path)
                         pathlib.Path.rmdir(path)
+
+
+def _predictions_dirs_via_find(models_path):
+    """Every predictions directory under models_path is located with systems
+    find . Raises FileNotFoundError if find is not installed."""
+    result = subprocess.run(
+        ["find", models_path, "-type", "d", "-name", "predictions", "-print0"],
+        capture_output=True,
+        text=True,
+    )
+    return [p for p in result.stdout.split("\0") if p]
+
+
+def _predictions_dirs_via_glob(models_path):
+    """Pure-Python fallback for systems without find."""
+    return [p for p in glob.glob(os.path.join(models_path, "**", "predictions"), recursive=True) if os.path.isdir(p)]
+
+
+def find_run_dirs(models_path):
+    """Run directories under models_path that contain a predictions/ folder.
+    Used by asp_eval_box_collect_results to discover finished
+    runs quickly without a full Python tree walk. Uses ``find`` when available, else globs."""
+    try:
+        predictions_dirs = _predictions_dirs_via_find(models_path)
+    except FileNotFoundError:
+        predictions_dirs = _predictions_dirs_via_glob(models_path)
+    return [os.path.dirname(p) for p in predictions_dirs]
 
 
 if __name__ == "__main__":

@@ -25,7 +25,6 @@ from omegaconf import DictConfig, OmegaConf
 
 load_dotenv()
 
-
 OmegaConf.register_new_resolver("random", lambda min, max: random.randint(min, max))
 OmegaConf.register_new_resolver(
     "version",
@@ -124,7 +123,7 @@ def main(cfg: DictConfig) -> None:
         test_output_path=os.path.join(
             path_store.run_dir,
             "predictions",
-            cfg.test_task + "__" + cfg.data.test_split + "__" + "best.json",
+            cfg.test_task + "__" + cfg.data.test_split + "__" + cfg.test_checkpoint + ".json",
         ),
     )
 
@@ -155,10 +154,12 @@ def main(cfg: DictConfig) -> None:
 
     model_module.model.apply(set_params_to_zero)
 
+    test_ckpt_callback = best_ckpt_callback if cfg.test_checkpoint == "best" else last_ckpt_callback
+    assert test_ckpt_callback.best_model_path, f"No '{cfg.test_checkpoint}' checkpoint was saved to test from."
     trainer.test(
         model=model_module,
         datamodule=data_module,
-        ckpt_path=best_ckpt_callback.best_model_path,
+        ckpt_path=test_ckpt_callback.best_model_path,
     )
 
 
