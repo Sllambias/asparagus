@@ -7,7 +7,13 @@ from gardening_tools.functional.paths.scan import subfiles
 from typing import Union
 
 
-def generate_unused_run_id(model_dir: str = get_models_path(), string_match="run_id=") -> Union[None, int]:
+def generate_unused_run_id(
+    resume_training: bool, run_dir: str = None, model_dir: str = get_models_path(), string_match="run_id="
+) -> Union[None, int]:
+    if resume_training and os.path.isdir(run_dir):
+        previous_runs = detect_previous_runs_with_ckpt(run_dir=run_dir, ckpt="last")
+        if len(previous_runs) > 0:
+            return get_id_for_most_recent_ckpt(run_dir, previous_runs, string_match=string_match, ckpt="last")
     # get list of all run ids used by asparagus
     global_used_ids = [0]
     for dirpath, _, _ in os.walk(model_dir):
@@ -21,6 +27,27 @@ def generate_unused_run_id(model_dir: str = get_models_path(), string_match="run
         run_id = int(np.random.randint(1000, 999999))
 
     return run_id
+
+
+def get_id_for_most_recent_ckpt(run_dir, previous_runs, string_match="run_id=", ckpt: str = "last"):
+    ctime = 0
+    id = ""
+    for run in previous_runs:
+        run_ctime = os.path.getctime(os.path.join(run_dir, run, f"checkpoints/{ckpt}.ckpt"))
+        if ctime < run_ctime:
+            id = run
+            ctime = run_ctime
+
+    return id.replace(string_match, "")
+
+
+def detect_previous_runs_with_ckpt(run_dir, ckpt: str = "last"):
+    previous_runs = os.listdir(run_dir)
+    valid_runs = []
+    for run in previous_runs:
+        if os.path.isfile(os.path.join(run_dir, run, f"checkpoints/{ckpt}.ckpt")):
+            valid_runs.append(run)
+    return valid_runs
 
 
 def detect_wandb_id(run_dir) -> Union[None, str]:

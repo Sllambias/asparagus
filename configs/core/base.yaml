@@ -78,7 +78,9 @@ hf_model_id:
 hf_weight_format: asparagus.functional.huggingface.HuggingFaceWeightMapper
 
 plugins:
-run_id: ${version:}
+resume_training: True
+run_dir: ${oc.env:ASPARAGUS_MODELS}/${task}/${model.net}__${model.dimensions}/script=${hydra:job.name}/root=${root}__stem=${stem}/leaf=${hydra:job.config_name}__clargs=${hydra:job.override_dirname}/${data.train_split}__fold=${data.fold}
+run_id: ${version:${resume_training},${run_dir}}
 
 training:
   patch_size:
