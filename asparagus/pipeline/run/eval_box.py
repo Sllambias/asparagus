@@ -45,6 +45,8 @@ def main(cfg: DictConfig) -> None:
     hydra_cfg_runtime_choices = hydra_cfg.runtime.choices
     scheduler = get_scheduler(mode=cfg.scheduler)
     env_cmd = os.environ["ASPARAGUS_EVAL_BOX_ENV_CMD"]
+    # One place to choose best/last for the whole box (set test_checkpoint in the box config).
+    test_checkpoint = cfg.get("test_checkpoint", "best")
     print(OmegaConf.to_yaml(cfg), hydra_cfg, scheduler, env_cmd, sep="\n")
 
     for task in cfg.get("segmentation_tasks") or []:
@@ -52,7 +54,6 @@ def main(cfg: DictConfig) -> None:
             continue
 
         hardware_cfg = task.get("hardware", cfg.default_hardware)
-        test_checkpoint = task.get("test_checkpoint", cfg.get("test_checkpoint", "best"))
 
         asparagus_cmd = (
             f"asp_finetune_seg "
@@ -74,7 +75,6 @@ def main(cfg: DictConfig) -> None:
             continue
 
         hardware_cfg = task.get("hardware", cfg.default_hardware)
-        test_checkpoint = task.get("test_checkpoint", cfg.get("test_checkpoint", "best"))
 
         asparagus_cmd = (
             f"asp_finetune_cls "
@@ -96,7 +96,6 @@ def main(cfg: DictConfig) -> None:
             continue
 
         hardware_cfg = task.get("hardware", cfg.default_hardware)
-        test_checkpoint = task.get("test_checkpoint", cfg.get("test_checkpoint", "best"))
 
         asparagus_cmd = (
             f"asp_finetune_reg "
@@ -141,12 +140,7 @@ def prepare_data(cfg: DictConfig) -> None:
     version_base="1.2",
 )
 def collect_results(cfg: DictConfig) -> None:
-    parent_run_id = cfg.get("checkpoint_run_id")
-    parent_ckpt_name = cfg.load_checkpoint_name
     box_config_name = HydraConfig.get().job.config_name
-    # No checkpoint_run_id given -> "all models tuned with this box": report every source
-    # checkpoint, keyed by checkpoint_run_id. With one given, behaviour is unchanged.
-    multi_checkpoint = parent_run_id is None
 
     seg_cfgs, cls_cfgs, regr_cfgs = resolve_subconfigs_for_config(cfg)
     config_to_type = {}
@@ -162,61 +156,23 @@ def collect_results(cfg: DictConfig) -> None:
         "classification": "classification_results",
         "regression": "regression_results",
     }
-    results = {key: [] for key in results_key.values()}
+    results = collect_box_run_records(cfg, config_to_type, box_config_name, results_key)
 
-    for run_dir in find_run_dirs(get_models_path()):
-        predictions_dir = os.path.join(run_dir, "predictions")
-
-        metadata = get_run_metadata_from_hydra(run_dir)
-        if metadata is None:
-            continue
-        # Keep only runs finetuned from the checkpoint this box is evaluating. When no
-        # checkpoint_run_id was given, keep them all (grouped per checkpoint below).
-        if parent_run_id is not None and str(metadata.get("checkpoint_run_id")) != str(parent_run_id):
-            continue
-        if metadata.get("load_checkpoint_name") != parent_ckpt_name:
-            continue
-        # Keep only runs whose config belongs to this box; that also gives the task type.
-        config = metadata.get("config")
-        if config not in config_to_type:
-            continue
-
-        run_root = metadata.get("root")
-        if box_config_name and run_root is not None and run_root != box_config_name:
-            continue
-        task_type = config_to_type[config]
-
-        run_metadata = {"config": config, "fold": metadata.get("fold"), "runID": metadata.get("runID")}
-        if multi_checkpoint:
-            run_metadata["checkpoint_run_id"] = metadata.get("checkpoint_run_id")
-        inference_data = get_inference_data_for_dir(predictions_dir, task_type=task_type)
-        for dataset in inference_data.keys():
-            inference_data[dataset].update(run_metadata)
-        results[results_key[task_type]].append(inference_data)
-
-    # mean over folds -> mean over models -> L3 mean over datasets (+ weighted final per type).
-    # With no checkpoint_run_id, do all of this PER source checkpoint and key the results by
-    # checkpoint_run_id; with one given, keep the original flat single-checkpoint shape.
+    # mean over folds -> mean over models -> mean over datasets (+ weighted final per type),
+    # always grouped by source checkpoint_run_id (one checkpoint in the single-checkpoint case).
     weight_for_config = build_weight_map(cfg)
     aggregated, per_dataset, summary, final_scores = {}, {}, {}, {}
     for task_type, key in results_key.items():
-        if multi_checkpoint:
-            aggregated[task_type], per_dataset[task_type] = [], {}
-            summary[task_type], final_scores[task_type] = {}, {}
-            for ckpt, recs in group_records_by_checkpoint(results[key]).items():
-                agg = aggregate_over_folds(recs, task_type)
-                for entry in agg:
-                    entry["checkpoint"] = ckpt
-                aggregated[task_type].extend(agg)
-                per_dataset[task_type][ckpt] = mean_over_models(agg)
-                summary[task_type][ckpt] = summarise_per_task_type(per_dataset[task_type][ckpt])
-                final_scores[task_type][ckpt] = compute_final_score(agg, weight_for_config)
-        else:
-            agg = aggregate_over_folds(results[key], task_type)
-            aggregated[task_type] = agg
-            per_dataset[task_type] = mean_over_models(agg)
-            summary[task_type] = summarise_per_task_type(per_dataset[task_type])
-            final_scores[task_type] = compute_final_score(agg, weight_for_config)
+        aggregated[task_type], per_dataset[task_type] = [], {}
+        summary[task_type], final_scores[task_type] = {}, {}
+        for ckpt, recs in group_records_by_checkpoint(results[key]).items():
+            agg = aggregate_over_folds(recs, task_type)
+            for entry in agg:
+                entry["checkpoint"] = ckpt
+            aggregated[task_type].extend(agg)
+            per_dataset[task_type][ckpt] = mean_over_models(agg)
+            summary[task_type][ckpt] = summarise_per_task_type(per_dataset[task_type][ckpt])
+            final_scores[task_type][ckpt] = compute_final_score(agg, weight_for_config)
 
     output = {
         **results,
@@ -230,7 +186,44 @@ def collect_results(cfg: DictConfig) -> None:
     with open(output_path, "w") as outfile:
         yaml.dump(output, outfile, sort_keys=False)
 
-    print_collected_results(aggregated, summary, final_scores, multi_checkpoint)
+    print_collected_results(aggregated, summary, final_scores)
+
+
+def collect_box_run_records(cfg, config_to_type, box_config_name, results_key):
+    """Discover every prediction-bearing run belonging to this box and bucket its per-dataset
+    records by task type. A run is kept only if it was finetuned from the box's
+    checkpoint_run_id (when one is given) and load_checkpoint_name, uses one of the box's task
+    configs, and was launched under this box (root). Each record carries its source
+    checkpoint_run_id so the caller can always group by checkpoint."""
+    parent_run_id = cfg.get("checkpoint_run_id")
+    parent_ckpt_name = cfg.load_checkpoint_name
+    results = {key: [] for key in results_key.values()}
+    for run_dir in find_run_dirs(get_models_path()):
+        metadata = get_run_metadata_from_hydra(run_dir)
+        if metadata is None:
+            continue
+        if parent_run_id is not None and str(metadata.get("checkpoint_run_id")) != str(parent_run_id):
+            continue
+        if metadata.get("load_checkpoint_name") != parent_ckpt_name:
+            continue
+        config = metadata.get("config")
+        if config not in config_to_type:
+            continue
+        run_root = metadata.get("root")
+        if box_config_name and run_root is not None and run_root != box_config_name:
+            continue
+        task_type = config_to_type[config]
+        run_metadata = {
+            "config": config,
+            "fold": metadata.get("fold"),
+            "runID": metadata.get("runID"),
+            "checkpoint_run_id": metadata.get("checkpoint_run_id"),
+        }
+        inference_data = get_inference_data_for_dir(os.path.join(run_dir, "predictions"), task_type=task_type)
+        for dataset in inference_data:
+            inference_data[dataset].update(run_metadata)
+        results[results_key[task_type]].append(inference_data)
+    return results
 
 
 # Single scalar score per task type, derived from a task's mean metrics. Edit this mapping
@@ -354,9 +347,9 @@ def _short_config(config):
     return config.rsplit("/", 1)[-1] if config else str(config)
 
 
-def print_collected_results(aggregated, summary, final_scores, multi_checkpoint=False):
-    # Per-task table (raw metrics as mean±std over folds) for each task type. In all-models
-    # mode a leading `checkpoint` column is added; single-checkpoint output is unchanged.
+def print_collected_results(aggregated, summary, final_scores):
+    # Per-task table (raw metrics as mean±std over folds) per task type, with a leading
+    # `checkpoint` column (always grouped by source checkpoint).
     for task_type in ("segmentation", "classification", "regression"):
         rows = aggregated.get(task_type) or []
         if not rows:
@@ -372,7 +365,7 @@ def print_collected_results(aggregated, summary, final_scores, multi_checkpoint=
             stats = entry["metrics"].get(metric)
             return f"{stats['mean']} ± {stats['std']} (n={stats['n']})" if stats else "-"
 
-        lead_keys = (["checkpoint"] if multi_checkpoint else []) + ["task", "config"]
+        lead_keys = ["checkpoint", "task", "config"]
 
         def lead_val(entry, key):
             if key == "config":
@@ -387,32 +380,25 @@ def print_collected_results(aggregated, summary, final_scores, multi_checkpoint=
         print(f"\n=== {task_type}_results ===")
         print(header)
         print("-" * len(header))
-        ordered = sorted(rows, key=lambda e: tuple(lead_val(e, k) for k in lead_keys)) if multi_checkpoint else rows
+        ordered = sorted(rows, key=lambda e: tuple(lead_val(e, k) for k in lead_keys))
         for entry in ordered:
             lead = "  ".join(f"{lead_val(entry, k):<{lead_w[k]}}" for k in lead_keys)
             cells = "  ".join(f"{cell(entry, m):<{col_w[m]}}" for m in metric_names)
             print(f"{lead}  {cells}")
 
-    # Headline summary: one line per task type, or per (task type, checkpoint) in all-models mode.
+    # Headline summary: one line per (task type, checkpoint).
     print("\n=== EvalBox summary ===")
     for task_type in summary:
         summ = summary[task_type]
         if summ is None:
             continue
-        if multi_checkpoint:
-            for ckpt, stats in sorted(summ.items(), key=lambda kv: str(kv[0])):
-                if stats is None:
-                    continue
-                final = (final_scores.get(task_type) or {}).get(ckpt)
-                print(
-                    f"{task_type:>14} [ckpt {ckpt}]: mean score {stats['score']} ± {stats['std']}"
-                    f" over {stats['n_tasks']} task(s) | weighted final score {final}"
-                )
-        else:
-            final = final_scores.get(task_type)
+        for ckpt, stats in sorted(summ.items(), key=lambda kv: str(kv[0])):
+            if stats is None:
+                continue
+            final = (final_scores.get(task_type) or {}).get(ckpt)
             print(
-                f"{task_type:>14}: mean score {summ['score']} ± {summ['std']} over {summ['n_tasks']} task(s)"
-                f" | weighted final score {final}"
+                f"{task_type:>14} [ckpt {ckpt}]: mean score {stats['score']} ± {stats['std']}"
+                f" over {stats['n_tasks']} task(s) | weighted final score {final}"
             )
 
 
@@ -433,11 +419,11 @@ def resolve_subconfigs_for_config(config):
 def _infer_task_type(job_name):
     """Map a Hydra job name (e.g. 'finetune_seg', 'train_cls') to a task type."""
     name = (job_name or "").lower()
-    if "seg" in name:
+    if "_seg" in name:
         return "segmentation"
-    if "cls" in name:
+    if "_cls" in name:
         return "classification"
-    if "reg" in name:
+    if "_reg" in name:
         return "regression"
     return None
 
