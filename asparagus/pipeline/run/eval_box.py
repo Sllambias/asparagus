@@ -49,7 +49,7 @@ def main(cfg: DictConfig) -> None:
     test_checkpoint = cfg.get("test_checkpoint", "best")
     print(OmegaConf.to_yaml(cfg), hydra_cfg, scheduler, env_cmd, sep="\n")
 
-    for task in cfg.get("segmentation_tasks") or []:
+    for task in cfg.get("segmentation_tasks", []):
         if task is None:
             continue
 
@@ -70,7 +70,7 @@ def main(cfg: DictConfig) -> None:
         logging.info(f"Running eval box for segmentation task {task} with runcommand: {' '.join(run_cmd)}")
         subprocess.run(run_cmd, capture_output=True, text=True)
 
-    for task in cfg.get("classification_tasks") or []:
+    for task in cfg.get("classification_tasks", []):
         if task is None:
             continue
 
@@ -91,7 +91,7 @@ def main(cfg: DictConfig) -> None:
         logging.info(f"Running eval box for classification task {task} with runcommand: {' '.join(run_cmd)}")
         subprocess.run(run_cmd, capture_output=True, text=True)
 
-    for task in cfg.get("regression_tasks") or []:
+    for task in cfg.get("regression_tasks", []):
         if task is None:
             continue
 
@@ -122,7 +122,7 @@ def prepare_data(cfg: DictConfig) -> None:
     scheduler = get_scheduler(mode=cfg.scheduler)
     env_cmd = os.environ["ASPARAGUS_EVAL_BOX_ENV_CMD"]
     for config_name in (
-        (cfg.get("segmentation_tasks") or []) + (cfg.get("classification_tasks") or []) + (cfg.get("regression_tasks") or [])
+        cfg.get("segmentation_tasks", []) + cfg.get("classification_tasks", []) + cfg.get("regression_tasks", [])
     ):
         if config_name is None:
             continue
@@ -161,12 +161,13 @@ def collect_results(cfg: DictConfig) -> None:
     # mean over folds -> mean over models -> mean over datasets (+ weighted final per type),
     # always grouped by source checkpoint_run_id (one checkpoint in the single-checkpoint case).
     weight_for_config = build_weight_map(cfg)
+    score_metrics = {**DEFAULT_SCORE_METRICS, **{k: list(v) for k, v in (cfg.get("score_metrics") or {}).items()}}
     aggregated, per_dataset, summary, final_scores = {}, {}, {}, {}
     for task_type, key in results_key.items():
         aggregated[task_type], per_dataset[task_type] = [], {}
         summary[task_type], final_scores[task_type] = {}, {}
         for ckpt, recs in group_records_by_checkpoint(results[key]).items():
-            agg = aggregate_over_folds(recs, task_type)
+            agg = aggregate_over_folds(recs, score_metrics[task_type])
             for entry in agg:
                 entry["checkpoint"] = ckpt
             aggregated[task_type].extend(agg)
@@ -180,13 +181,14 @@ def collect_results(cfg: DictConfig) -> None:
         "per_dataset": per_dataset,
         "summary": summary,
         "final_scores": final_scores,
+        "weights": weight_for_config,
     }
 
     output_path = cfg.get("results_output_path", "results.yaml")
     with open(output_path, "w") as outfile:
         yaml.dump(output, outfile, sort_keys=False)
 
-    print_collected_results(aggregated, summary, final_scores)
+    print_collected_results(aggregated, summary, final_scores, weight_for_config)
 
 
 def collect_box_run_records(cfg, config_to_type, box_config_name, results_key):
@@ -202,16 +204,18 @@ def collect_box_run_records(cfg, config_to_type, box_config_name, results_key):
         metadata = get_run_metadata_from_hydra(run_dir)
         if metadata is None:
             continue
-        if parent_run_id is not None and str(metadata.get("checkpoint_run_id")) != str(parent_run_id):
-            continue
-        if metadata.get("load_checkpoint_name") != parent_ckpt_name:
-            continue
+
         config = metadata.get("config")
-        if config not in config_to_type:
-            continue
         run_root = metadata.get("root")
-        if box_config_name and run_root is not None and run_root != box_config_name:
+        # `parent_run_id is None` => keep every checkpoint (all-models mode); otherwise keep
+        # only runs finetuned from the requested checkpoint ("ran several, want one").
+        wrong_checkpoint = parent_run_id is not None and str(metadata.get("checkpoint_run_id")) != str(parent_run_id)
+        wrong_ckpt_name = metadata.get("load_checkpoint_name") != parent_ckpt_name
+        not_box_config = config not in config_to_type
+        wrong_root = bool(box_config_name) and run_root is not None and run_root != box_config_name
+        if wrong_checkpoint or wrong_ckpt_name or not_box_config or wrong_root:
             continue
+
         task_type = config_to_type[config]
         run_metadata = {
             "config": config,
@@ -226,24 +230,32 @@ def collect_box_run_records(cfg, config_to_type, box_config_name, results_key):
     return results
 
 
-# Single scalar score per task type, derived from a task's mean metrics. Edit this mapping
-# to change what each task type contributes to the summary / final score.
-def score_from_metric_means(task_type, metric_means):
-    if task_type == "segmentation":
-        return metric_means.get("dice")
-    if task_type == "classification":
-        vals = [v for v in (metric_means.get("Precision"), metric_means.get("Recall")) if v is not None]
-        return round(sum(vals) / len(vals), 4) if vals else None
-    if task_type == "regression":
-        return metric_means.get("MAE")
-    return None
+# Per task type, the metric(s) whose mean defines a task's single scalar score. Override per
+# box in the config via `score_metrics:` (e.g. classification: [AUROC]); listing several
+# metrics averages them. NOTE: a listed metric must be one the prediction-JSON parsers below
+# actually extract (seg: dice/volume_similarity, cls: Precision/Recall, reg: MAE/MSE) — an
+# unparsed metric is silently absent and scores None.
+DEFAULT_SCORE_METRICS = {
+    "segmentation": ["dice"],
+    "classification": ["Precision", "Recall"],
+    "regression": ["MAE"],
+}
+
+
+def score_from_metric_means(metric_means, metric_names):
+    """Single scalar score for a task: the mean of the configured metric(s), read straight
+    from the task's metric dict. Knows nothing about which task type / metric it is. Returns
+    None if none of the requested metrics are present."""
+    vals = [metric_means.get(m) for m in metric_names]
+    vals = [v for v in vals if v is not None]
+    return round(sum(vals) / len(vals), 4) if vals else None
 
 
 def build_weight_map(cfg):
     """Map each box task's config name to its `weight` (default 1.0) for the final score."""
     weight_for_config = {}
     for group in ("segmentation_tasks", "classification_tasks", "regression_tasks"):
-        for task in cfg.get(group) or []:
+        for task in cfg.get(group, []):
             if task is None:
                 continue
             name = task.get("task")
@@ -264,15 +276,16 @@ def _mean_std_n(values):
     return {"mean": mean, "std": std, "n": len(values)}
 
 
-def aggregate_over_folds(raw_results_for_type, task_type):
+def aggregate_over_folds(raw_results_for_type, metric_names):
     """collapse folds. Group raw per-fold records by (config, dataset) and reduce each
-    metric to mean/std/n across that group's folds."""
+    metric to mean/std/n across that group's folds. `metric_names` selects which metric(s)
+    form each record's primary score."""
     grouped = {}
     for inference_data in raw_results_for_type:
         for dataset, record in inference_data.items():
             key = (record.get("config"), dataset)
             metrics = record.get("metrics", {})
-            primary = score_from_metric_means(task_type, metrics)
+            primary = score_from_metric_means(metrics, metric_names)
             grouped.setdefault(key, {})
             for metric, value in metrics.items():
                 grouped[key].setdefault(metric, []).append(value)
@@ -347,9 +360,9 @@ def _short_config(config):
     return config.rsplit("/", 1)[-1] if config else str(config)
 
 
-def print_collected_results(aggregated, summary, final_scores):
-    # Per-task table (raw metrics as mean±std over folds) per task type, with a leading
-    # `checkpoint` column (always grouped by source checkpoint).
+def print_collected_results(aggregated, summary, final_scores, weight_for_config):
+    # Per-task table (raw metrics as mean±std over folds) per task type, with leading
+    # `checkpoint` / `task` / `config` / `weight` columns (always grouped by source checkpoint).
     for task_type in ("segmentation", "classification", "regression"):
         rows = aggregated.get(task_type) or []
         if not rows:
@@ -365,11 +378,13 @@ def print_collected_results(aggregated, summary, final_scores):
             stats = entry["metrics"].get(metric)
             return f"{stats['mean']} ± {stats['std']} (n={stats['n']})" if stats else "-"
 
-        lead_keys = ["checkpoint", "task", "config"]
+        lead_keys = ["checkpoint", "task", "config", "weight"]
 
         def lead_val(entry, key):
             if key == "config":
                 return _short_config(entry["config"])
+            if key == "weight":
+                return str(weight_for_config.get(entry["config"], 1.0))
             return str(entry.get(key))
 
         lead_w = {k: max([len(k)] + [len(lead_val(e, k)) for e in rows]) for k in lead_keys}
@@ -404,13 +419,13 @@ def print_collected_results(aggregated, summary, final_scores):
 
 def resolve_subconfigs_for_config(config):
     seg_tasks, cls_tasks, regr_tasks = [], [], []
-    for task in config.get("segmentation_tasks") or []:
+    for task in config.get("segmentation_tasks", []):
         if task is not None:
             seg_tasks.append(task.get("task"))
-    for task in config.get("classification_tasks") or []:
+    for task in config.get("classification_tasks", []):
         if task is not None:
             cls_tasks.append(task.get("task"))
-    for task in config.get("regression_tasks") or []:
+    for task in config.get("regression_tasks", []):
         if task is not None:
             regr_tasks.append(task.get("task"))
     return seg_tasks, cls_tasks, regr_tasks
