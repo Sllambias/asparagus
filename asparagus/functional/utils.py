@@ -59,6 +59,17 @@ def prune_model_dirs(root_model_dir, dry_run=True):
                         pathlib.Path.rmdir(path)
 
 
+def find_run_dirs(models_path):
+    """Run directories under ``models_path`` that contain a ``predictions/`` folder (each is
+    the parent of such a folder). Used by asp_eval_box_collect_results to discover finished
+    runs."""
+    run_dirs = []
+    for dirpath, dirnames, _ in os.walk(models_path):
+        if "predictions" in dirnames:
+            run_dirs.append(dirpath)
+    return run_dirs
+
+
 if __name__ == "__main__":
     import argparse
 
