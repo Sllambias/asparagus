@@ -21,8 +21,7 @@ class WritePredictionFromLogits(BasePredictionWriter):
 
         save_prediction_from_logits(
             logits,
-            os.path.join(self.output_dir, case_id),
+            os.path.join(self.output_dir, case_id + self.save_format),
             properties=properties,
-            save_format=self.save_format,
         )
         del data_dict

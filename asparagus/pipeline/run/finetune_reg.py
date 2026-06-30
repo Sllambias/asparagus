@@ -26,7 +26,11 @@ from omegaconf import DictConfig, OmegaConf
 load_dotenv()
 
 OmegaConf.register_new_resolver("random", lambda min, max: random.randint(min, max))
-OmegaConf.register_new_resolver("version", lambda: generate_unused_run_id(), use_cache=True)
+OmegaConf.register_new_resolver(
+    "version",
+    lambda resume_training, run_dir: generate_unused_run_id(resume_training=resume_training, run_dir=run_dir),
+    use_cache=True,
+)
 OmegaConf.register_new_resolver("eval", eval)
 Plugins.instance().register(FinetuneSearchpathPlugin)
 

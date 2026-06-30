@@ -38,8 +38,7 @@ class BaseLogger(Logger):
 
     @property
     def name(self):
-        return None
-        # return self._file_name
+        return self._file_name
 
     @property
     def root_dir(self):
@@ -57,11 +56,12 @@ class BaseLogger(Logger):
         os.makedirs(self.log_dir, exist_ok=True)
         self.log_file = os.path.join(
             self.log_dir,
-            self.name + "_metrics.log",
+            self.name + ".log",
         )
-        with open(self.log_file, "w") as f:
-            f.write(f"Starting model training \n {'log file:':20} {self.log_file} \n")
-            print(f"Starting model training \n {'log file:':20} {self.log_file} \n")
+        t = strftime("%Y_%m_%d_%H_%M_%S", localtime())
+        with open(self.log_file, "a+") as f:
+            f.write(f"{t} Starting model training \n {'log file:':20} {self.log_file} \n")
+            print(f"{t} Starting model training \n {'log file:':20} {self.log_file} \n")
 
     @rank_zero_only
     def log_hyperparams(self, params: Union[Dict[str, Any], Namespace]) -> None:  # type: ignore[override]

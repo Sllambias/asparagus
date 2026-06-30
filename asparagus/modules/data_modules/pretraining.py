@@ -1,7 +1,9 @@
 import lightning as pl
 import logging
 import torch.distributed as dist
+from asparagus.functional.collate import collate_return
 from asparagus.modules.datasets.PretrainDataset import PretrainDataset
+from asparagus.modules.datasets.TrainDataset import SingleSubjectPredictDataset
 from asparagus.modules.transforms.presets import pretrain_CPU_train_transforms, pretrain_CPU_val_transforms
 from lightning.fabric.utilities.distributed import DistributedSamplerWrapper
 from torch.utils.data import DataLoader, RandomSampler
@@ -16,8 +18,10 @@ class PretrainDataModule(pl.LightningDataModule):
         num_workers: int,
         train_split: list,
         val_split: list,
+        predict_samples: Optional[list] = [],
         train_transforms: Optional[Compose] = pretrain_CPU_train_transforms,
         val_transforms: Optional[Compose] = pretrain_CPU_val_transforms,
+        predict_transforms: Optional[Compose] = None,
         num_samples: Optional[int] = None,
     ):
         super().__init__()
@@ -28,6 +32,8 @@ class PretrainDataModule(pl.LightningDataModule):
         self.train_split = train_split
         self.val_split = val_split
         self.num_samples = num_samples
+        self.predict_transforms = predict_transforms
+        self.predict_samples = predict_samples
 
         logging.info(f"Using {self.num_workers} workers")
 
@@ -37,11 +43,17 @@ class PretrainDataModule(pl.LightningDataModule):
         elif stage == "test":
             raise NotImplementedError("Test stage not supported for PretrainModule.")
         elif stage == "predict":
-            raise NotImplementedError("Predict stage not supported for PretrainModule.")
+            self.setup_predict()
 
     def setup_fit(self):
         self.train_dataset = PretrainDataset(self.train_split, transforms=self.train_transforms)
         self.val_dataset = PretrainDataset(self.val_split, transforms=self.val_transforms)
+
+    def setup_predict(self):
+        self.predict_dataset = SingleSubjectPredictDataset(
+            self.predict_samples,
+            transforms=self.predict_transforms,
+        )
 
     def train_dataloader(self):
         sampler = RandomSampler(self.train_dataset, num_samples=999999, replacement=True)
@@ -72,6 +84,14 @@ class PretrainDataModule(pl.LightningDataModule):
             persistent_workers=True,
             drop_last=True,
             sampler=sampler,
+        )
+
+    def predict_dataloader(self):
+        return DataLoader(
+            self.predict_dataset,
+            num_workers=self.num_workers,
+            batch_size=1,
+            collate_fn=collate_return,
         )
 
 
