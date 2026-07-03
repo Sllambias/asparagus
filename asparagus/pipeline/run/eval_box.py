@@ -55,62 +55,69 @@ def main(cfg: DictConfig) -> None:
 
         hardware_cfg = task.get("hardware", cfg.default_hardware)
 
-        asparagus_cmd = (
-            f"asp_finetune_seg "
-            f"--config-name={task.get('task')} "
-            f"checkpoint_run_id={cfg.checkpoint_run_id} "
-            f"load_checkpoint_name={cfg.load_checkpoint_name} "
-            f"test_checkpoint={test_checkpoint} "
-            f"+model={hydra_cfg_runtime_choices.model} "
-            f"+hardware={hardware_cfg} "
-            f"root={hydra_cfg.job.config_name} "
-        )
+        for fold in resolve_folds(task, cfg):
+            asparagus_cmd = (
+                f"asp_finetune_seg "
+                f"--config-name={task.get('task')} "
+                f"checkpoint_run_id={cfg.checkpoint_run_id} "
+                f"load_checkpoint_name={cfg.load_checkpoint_name} "
+                f"test_checkpoint={test_checkpoint} "
+                f"+model={hydra_cfg_runtime_choices.model} "
+                f"+hardware={hardware_cfg} "
+                f"root={hydra_cfg.job.config_name} "
+            )
+            if fold is not None:
+                asparagus_cmd += f"data.fold={fold} "
 
-        run_cmd = get_run_cmd_for_scheduler(scheduler, resolve_hardware_config(hardware_cfg), asparagus_cmd, env_cmd)
-        logging.info(f"Running eval box for segmentation task {task} with runcommand: {' '.join(run_cmd)}")
-        subprocess.run(run_cmd, capture_output=True, text=True)
+            run_cmd = get_run_cmd_for_scheduler(scheduler, resolve_hardware_config(hardware_cfg), asparagus_cmd, env_cmd)
+            logging.info(f"Running eval box for segmentation task {task} with runcommand: {' '.join(run_cmd)}")
+            subprocess.run(run_cmd, capture_output=True, text=True)
 
     for task in cfg.get("classification_tasks", []):
         if task is None:
             continue
 
         hardware_cfg = task.get("hardware", cfg.default_hardware)
+        for fold in resolve_folds(task, cfg):
+            asparagus_cmd = (
+                f"asp_finetune_cls "
+                f"--config-name={task.get('task')} "
+                f"checkpoint_run_id={cfg.checkpoint_run_id} "
+                f"load_checkpoint_name={cfg.load_checkpoint_name} "
+                f"test_checkpoint={test_checkpoint} "
+                f"+model={hydra_cfg_runtime_choices.model} "
+                f"+hardware={hardware_cfg} "
+                f"root={hydra_cfg.job.config_name} "
+            )
+            if fold is not None:
+                asparagus_cmd += f"data.fold={fold} "
 
-        asparagus_cmd = (
-            f"asp_finetune_cls "
-            f"--config-name={task.get('task')} "
-            f"checkpoint_run_id={cfg.checkpoint_run_id} "
-            f"load_checkpoint_name={cfg.load_checkpoint_name} "
-            f"test_checkpoint={test_checkpoint} "
-            f"+model={hydra_cfg_runtime_choices.model} "
-            f"+hardware={hardware_cfg} "
-            f"root={hydra_cfg.job.config_name} "
-        )
-
-        run_cmd = get_run_cmd_for_scheduler(scheduler, resolve_hardware_config(hardware_cfg), asparagus_cmd, env_cmd)
-        logging.info(f"Running eval box for classification task {task} with runcommand: {' '.join(run_cmd)}")
-        subprocess.run(run_cmd, capture_output=True, text=True)
+            run_cmd = get_run_cmd_for_scheduler(scheduler, resolve_hardware_config(hardware_cfg), asparagus_cmd, env_cmd)
+            logging.info(f"Running eval box for classification task {task} with runcommand: {' '.join(run_cmd)}")
+            subprocess.run(run_cmd, capture_output=True, text=True)
 
     for task in cfg.get("regression_tasks", []):
         if task is None:
             continue
 
         hardware_cfg = task.get("hardware", cfg.default_hardware)
+        for fold in resolve_folds(task, cfg):
+            asparagus_cmd = (
+                f"asp_finetune_reg "
+                f"--config-name={task.get('task')} "
+                f"checkpoint_run_id={cfg.checkpoint_run_id} "
+                f"load_checkpoint_name={cfg.load_checkpoint_name} "
+                f"test_checkpoint={test_checkpoint} "
+                f"+model={hydra_cfg_runtime_choices.model} "
+                f"+hardware={hardware_cfg} "
+                f"root={hydra_cfg.job.config_name} "
+            )
+            if fold is not None:
+                asparagus_cmd += f"data.fold={fold} "
 
-        asparagus_cmd = (
-            f"asp_finetune_reg "
-            f"--config-name={task.get('task')} "
-            f"checkpoint_run_id={cfg.checkpoint_run_id} "
-            f"load_checkpoint_name={cfg.load_checkpoint_name} "
-            f"test_checkpoint={test_checkpoint} "
-            f"+model={hydra_cfg_runtime_choices.model} "
-            f"+hardware={hardware_cfg} "
-            f"root={hydra_cfg.job.config_name} "
-        )
-
-        run_cmd = get_run_cmd_for_scheduler(scheduler, resolve_hardware_config(hardware_cfg), asparagus_cmd, env_cmd)
-        logging.info(f"Running eval box for regression task {task} with runcommand: {' '.join(run_cmd)}")
-        subprocess.run(run_cmd, capture_output=True, text=True)
+            run_cmd = get_run_cmd_for_scheduler(scheduler, resolve_hardware_config(hardware_cfg), asparagus_cmd, env_cmd)
+            logging.info(f"Running eval box for regression task {task} with runcommand: {' '.join(run_cmd)}")
+            subprocess.run(run_cmd, capture_output=True, text=True)
 
 
 @hydra.main(
@@ -161,13 +168,12 @@ def collect_results(cfg: DictConfig) -> None:
     # mean over folds -> mean over models -> mean over datasets (+ weighted final per type),
     # always grouped by source checkpoint_run_id (one checkpoint in the single-checkpoint case).
     weight_for_config = build_weight_map(cfg)
-    score_metrics = {**DEFAULT_SCORE_METRICS, **{k: list(v) for k, v in (cfg.get("score_metrics") or {}).items()}}
     aggregated, per_dataset, summary, final_scores = {}, {}, {}, {}
     for task_type, key in results_key.items():
         aggregated[task_type], per_dataset[task_type] = [], {}
         summary[task_type], final_scores[task_type] = {}, {}
         for ckpt, recs in group_records_by_checkpoint(results[key]).items():
-            agg = aggregate_over_folds(recs, score_metrics[task_type])
+            agg = aggregate_over_folds(recs)
             for entry in agg:
                 entry["checkpoint"] = ckpt
             aggregated[task_type].extend(agg)
@@ -230,27 +236,6 @@ def collect_box_run_records(cfg, config_to_type, box_config_name, results_key):
     return results
 
 
-# Per task type, the metric(s) whose mean defines a task's single scalar score. Override per
-# box in the config via `score_metrics:` (e.g. classification: [AUROC]); listing several
-# metrics averages them. NOTE: a listed metric must be one the prediction-JSON parsers below
-# actually extract (seg: dice/volume_similarity, cls: Precision/Recall, reg: MAE/MSE) — an
-# unparsed metric is silently absent and scores None.
-DEFAULT_SCORE_METRICS = {
-    "segmentation": ["dice"],
-    "classification": ["Precision", "Recall"],
-    "regression": ["MAE"],
-}
-
-
-def score_from_metric_means(metric_means, metric_names):
-    """Single scalar score for a task: the mean of the configured metric(s), read straight
-    from the task's metric dict. Knows nothing about which task type / metric it is. Returns
-    None if none of the requested metrics are present."""
-    vals = [metric_means.get(m) for m in metric_names]
-    vals = [v for v in vals if v is not None]
-    return round(sum(vals) / len(vals), 4) if vals else None
-
-
 def build_weight_map(cfg):
     """Map each box task's config name to its `weight` (default 1.0) for the final score."""
     weight_for_config = {}
@@ -265,10 +250,7 @@ def build_weight_map(cfg):
     return weight_for_config
 
 
-PRIMARY_KEY = "primary"
-
-
-def _mean_std_n(values):
+def mean_std_n(values):
     """Mean, sample std (ddof=1), and count for a list of numbers. std is 0.0 for n < 2,
     where the sample std is undefined."""
     mean = round(float(np.mean(values)), 4)
@@ -276,31 +258,29 @@ def _mean_std_n(values):
     return {"mean": mean, "std": std, "n": len(values)}
 
 
-def aggregate_over_folds(raw_results_for_type, metric_names):
+def aggregate_over_folds(raw_results_for_type):
     """collapse folds. Group raw per-fold records by (config, dataset) and reduce each
-    metric to mean/std/n across that group's folds. `metric_names` selects which metric(s)
-    form each record's primary score."""
+    metric to mean/std/n across that group's folds. The metrics are whatever the
+    prediction JSONs reported (no hardcoded list); the task's headline `score` is the
+    mean of the first reported metric (seg: dice, cls: Precision, reg: MAE), never an
+    average across different metrics."""
     grouped = {}
     for inference_data in raw_results_for_type:
         for dataset, record in inference_data.items():
             key = (record.get("config"), dataset)
-            metrics = record.get("metrics", {})
-            primary = score_from_metric_means(metrics, metric_names)
-            grouped.setdefault(key, {})
-            for metric, value in metrics.items():
-                grouped[key].setdefault(metric, []).append(value)
-            if primary is not None:
-                grouped[key].setdefault(PRIMARY_KEY, []).append(primary)
+            for metric, value in record["metrics"].items():
+                grouped.setdefault(key, {}).setdefault(metric, []).append(value)
 
     aggregated = []
     for (config, dataset), metric_values in sorted(grouped.items(), key=lambda kv: (str(kv[0][0]), str(kv[0][1]))):
-        metric_stats = {metric: _mean_std_n(values) for metric, values in metric_values.items()}
+        metric_stats = {metric: mean_std_n(values) for metric, values in metric_values.items()}
+        headline = next(iter(metric_stats), None)
         aggregated.append(
             {
                 "task": dataset,
                 "config": config,
                 "metrics": metric_stats,
-                "score": metric_stats.get(PRIMARY_KEY, {}).get("mean"),
+                "score": metric_stats[headline]["mean"] if headline else None,
             }
         )
     return aggregated
@@ -318,17 +298,18 @@ def mean_over_models(aggregated_for_type):
 
     per_dataset = {}
     for dataset, metric_means in sorted(grouped.items()):
-        per_dataset[dataset] = {metric: _mean_std_n(values) for metric, values in metric_means.items()}
+        per_dataset[dataset] = {metric: mean_std_n(values) for metric, values in metric_means.items()}
     return per_dataset
 
 
 def summarise_per_task_type(per_dataset_for_type):
-    """collapse datasets. Average each dataset's primary score across all datasets of
-    the type (std/n across datasets). Returns None if no dataset has a primary score."""
-    primary_means = [stats[PRIMARY_KEY]["mean"] for stats in per_dataset_for_type.values() if PRIMARY_KEY in stats]
-    if not primary_means:
+    """collapse datasets. Average each dataset's headline score (the mean of its first
+    reported metric) across all datasets of the type (std/n across datasets). Returns
+    None if there are no datasets."""
+    headline_means = [next(iter(stats.values()))["mean"] for stats in per_dataset_for_type.values() if stats]
+    if not headline_means:
         return None
-    summary = _mean_std_n(primary_means)
+    summary = mean_std_n(headline_means)
     return {"score": summary["mean"], "std": summary["std"], "n_tasks": summary["n"]}
 
 
@@ -355,7 +336,7 @@ def group_records_by_checkpoint(raw_results_for_type):
     return grouped
 
 
-def _short_config(config):
+def short_config(config):
     """Last path segment of a config name, for compact table rows."""
     return config.rsplit("/", 1)[-1] if config else str(config)
 
@@ -370,7 +351,7 @@ def print_collected_results(aggregated, summary, final_scores, weight_for_config
         metric_names = []
         for entry in rows:
             for metric in entry["metrics"]:
-                if metric != PRIMARY_KEY and metric not in metric_names:
+                if metric not in metric_names:
                     metric_names.append(metric)
         labels = {m: f"{m} (mean±std, n)" for m in metric_names}
 
@@ -382,7 +363,7 @@ def print_collected_results(aggregated, summary, final_scores, weight_for_config
 
         def lead_val(entry, key):
             if key == "config":
-                return _short_config(entry["config"])
+                return short_config(entry["config"])
             if key == "weight":
                 return str(weight_for_config.get(entry["config"], 1.0))
             return str(entry.get(key))
@@ -431,7 +412,19 @@ def resolve_subconfigs_for_config(config):
     return seg_tasks, cls_tasks, regr_tasks
 
 
-def _infer_task_type(job_name):
+def resolve_folds(task, cfg):
+    """Folds to dispatch as separate jobs for a task. Prefer the task's own `folds`
+    list, fall back to a box-level `folds`, and default to a single job (`[None]`)
+    that runs the task config's own `data.fold`. Each returned fold is dispatched as
+    its own scheduler job with `data.fold=<f>`; collect_results aggregates them back
+    over folds per (config, dataset)."""
+    folds = task.get("folds", cfg.get("folds"))
+    if folds is None:
+        return [None]
+    return list(folds)
+
+
+def infer_task_type(job_name):
     """Map a Hydra job name (e.g. 'finetune_seg', 'train_cls') to a task type."""
     name = (job_name or "").lower()
     if "_seg" in name:
@@ -443,50 +436,38 @@ def _infer_task_type(job_name):
     return None
 
 
-def _resolved_value(d, *keys, default=None):
-    """Read nested keys from a plain dict, treating unresolved OmegaConf
-    interpolations (e.g. '${task}') as missing."""
-    value = d
-    for key in keys:
-        if isinstance(value, dict) and key in value:
-            value = value[key]
-        else:
-            return default
-    if isinstance(value, str) and value.startswith("${"):
-        return default
-    return value
-
-
 def get_run_metadata_from_hydra(run_dir):
     """Recover a run's metadata from the files Hydra writes for every run:
-    ``hydra/config.yaml`` (resolved scalar config values) and ``hydra/hydra.yaml``
-    (job name / config name and the resolved output dir). This avoids depending on the
-    run-dir naming convention. ``run_id`` is the only path-derived field and is taken
-    from Hydra's own resolved ``runtime.output_dir``. Returns None if files are missing.
-    """
+    ``hydra/config.yaml`` (the resolved job config) and ``hydra/hydra.yaml`` (job name /
+    config name and output dir). Loaded with OmegaConf so interpolations resolve against
+    their own config; keys that are missing or whose interpolation can't be resolved fall
+    back to the default instead of raising. ``runID`` is parsed from Hydra's resolved
+    ``runtime.output_dir`` (falling back to the run-dir path). Returns None if files are missing."""
     config_path = os.path.join(run_dir, "hydra", "config.yaml")
     hydra_path = os.path.join(run_dir, "hydra", "hydra.yaml")
     if not (os.path.isfile(config_path) and os.path.isfile(hydra_path)):
         return None
-    with open(config_path) as f:
-        cfg = yaml.safe_load(f)
-    with open(hydra_path) as f:
-        hydra_cfg = yaml.safe_load(f).get("hydra", {})
 
-    output_dir = _resolved_value(hydra_cfg, "runtime", "output_dir", default=run_dir)
-    run_id_match = re.search(r"run_id=(\d+)", output_dir or "")
+    cfg = OmegaConf.load(config_path)
+    hydra_cfg = OmegaConf.load(hydra_path)
+
+    def pick(conf, key, default=None):
+        return OmegaConf.select(conf, key, default=default, throw_on_resolution_failure=False)
+
+    output_dir = pick(hydra_cfg, "hydra.runtime.output_dir") or run_dir
+    run_id_match = re.search(r"run_id=(\d+)", str(output_dir))
 
     return {
-        "config": _resolved_value(hydra_cfg, "job", "config_name"),
-        "task": _resolved_value(cfg, "task"),
-        "task_type": _infer_task_type(_resolved_value(hydra_cfg, "job", "name", default="")),
-        "fold": _resolved_value(cfg, "data", "fold"),
+        "config": pick(hydra_cfg, "hydra.job.config_name"),
+        "task": pick(cfg, "task"),
+        "task_type": infer_task_type(pick(hydra_cfg, "hydra.job.name", default="")),
+        "fold": pick(cfg, "data.fold"),
         "runID": int(run_id_match.group(1)) if run_id_match else None,
-        "train_split": _resolved_value(cfg, "data", "train_split"),
-        "test_split": _resolved_value(cfg, "data", "test_split"),
-        "checkpoint_run_id": _resolved_value(cfg, "checkpoint_run_id"),
-        "load_checkpoint_name": _resolved_value(cfg, "load_checkpoint_name"),
-        "root": _resolved_value(cfg, "root"),
+        "train_split": pick(cfg, "data.train_split"),
+        "test_split": pick(cfg, "data.test_split"),
+        "checkpoint_run_id": pick(cfg, "checkpoint_run_id"),
+        "load_checkpoint_name": pick(cfg, "load_checkpoint_name"),
+        "root": pick(cfg, "root"),
     }
 
 
