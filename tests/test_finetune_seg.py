@@ -11,6 +11,7 @@ from asparagus.modules.lightning_modules import SegmentationModule
 from asparagus.modules.networks.primus import primus_debug
 from asparagus.modules.networks.resenc_unet import resenc_unet_debug
 from asparagus.modules.networks.unet import unet_tiny
+from asparagus.modules.transforms.presets import GPU_all_train_transforms
 
 
 def make_seg_data_module(files):
@@ -43,10 +44,15 @@ def test_finetune_seg_primus_fit(seg_files, make_trainer):
 
 def test_finetune_seg_resenc_unet_fit(seg_files, make_trainer):
     """SegmentationModule fits with a tiny ResidualEncoderUNet on 3D synthetic data."""
+    transforms = GPU_all_train_transforms(
+        ndim=3,
+        deep_supervision=True,
+    )
     model = resenc_unet_debug(
         dimensions="3D",
         input_channels=1,
         output_channels=2,
+        deep_supervision=True,
     )
     module = SegmentationModule(
         model=model,
@@ -54,6 +60,8 @@ def test_finetune_seg_resenc_unet_fit(seg_files, make_trainer):
         warmup_epochs=0,
         weights=None,
         inference_patch_size=[32, 32, 32],
+        deep_supervision=True,
+        train_transforms=transforms,
     )
     make_trainer().fit(module, datamodule=make_seg_data_module(seg_files))
 
