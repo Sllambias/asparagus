@@ -61,7 +61,7 @@ class DINOv2Loss(nn.Module):
             end_value=self.teacher_temp_max,
         )
 
-    def forward(self, input_dict, global_step: int = 0):
+    def forward(self, input_dict, batch_size, global_step: int = 0):
         """
         input_dict: {
             "teacher_cls_out": Tensor,
@@ -70,7 +70,6 @@ class DINOv2Loss(nn.Module):
             "student_mask_glob_patches": Tensor (optional),
             "student_glob_cls_token": Tensor (optional),
             "mask": Tensor (optional, for patch loss),
-            "n_local_views": int (optional, number of local views)
         }
         Computes the DINOV2 loss for 3D data with dynamic teacher temperature
         """
@@ -108,13 +107,11 @@ class DINOv2Loss(nn.Module):
             n_local_views = n_local_views.item()
 
         # DINO loss - proper chunking based on views
-        n_views = n_local_views + 2  # 2 global + n local views
         dino_loss = self.dino_loss_fn(
-            teacher_out=teacher_outputs.chunk(2),  # 2 global teacher views
-            student_out=student_outputs.chunk(n_views),  # All student views
+            teacher_out=teacher_outputs.chunk(teacher_outputs.size(0) // batch_size),  # 2 global teacher views
+            student_out=student_outputs.chunk(student_outputs.size(0) // batch_size),  # All student views
             teacher_temp=teacher_temp,
         )
-
         # Patch-level iBOT loss
         if self.ibot_loss_fn is not None:
             if teacher_patches is None or student_patches is None or mask is None:

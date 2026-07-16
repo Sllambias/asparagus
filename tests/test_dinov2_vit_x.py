@@ -50,7 +50,44 @@ class DINOv2LinearHead(L.LightningModule):
         return torch.optim.SGD(self.head.parameters(), lr=0.1)
 
 
-def test_dinov2_pretrain_vit_x(pretrain_files, make_trainer):
+def test_2d_dinov2_pretrain_vit_x(pretrain_files_2d, make_trainer):
+    """DINOv2Module fits on synthetic pretrain data using a tiny vit_x backbone.
+
+    Uses img_size=(32,32) / patch_size=(8,8) which is
+    small enough to run on CPU in ~seconds while exercising the full pipeline:
+    DINOv2Augmentation → PretrainDataModule → DINOv2Module (DINO + iBOT + KoLeo
+    losses, layer-wise LR, teacher EMA update).
+    """
+    model = vit_x(img_size=(32, 32), patch_size=(8, 8))
+
+    # DINOv2Augmentation is used as a CPU transform: converts each raw image
+    # dict into {"image": [global_view1, global_view2], "local_views": [lv1, lv2]}.
+    # PyTorch's default collate then stacks per-sample lists into batched tensors.
+    augmentation = DINOv2Augmentation(
+        global_view_size=(32, 32),
+        global_view_scale=[0.5, 1.0],
+        local_view_size=(32, 32),
+        local_view_scale=[0.1, 0.5],
+        num_local_views=4,
+    )
+
+    data_module = PretrainDataModule(
+        batch_size=4,
+        num_workers=1,
+        train_split=pretrain_files_2d["train"],
+        val_split=pretrain_files_2d["val"],
+        train_transforms=augmentation,
+        val_transforms=None,
+    )
+
+    module = DINOv2Module(model=model, learning_rate=1e-3, teacher_temp_warmup_steps=0, warmup_epochs=0)
+
+    # limit_val_batches=0: DINOv2Module.validation_step raises NotImplementedError
+    # by design ("set val_steps_per_epoch to 0").
+    make_trainer(limit_val_batches=0).fit(module, datamodule=data_module)
+
+
+def test_3d_dinov2_pretrain_vit_x(pretrain_files, make_trainer):
     """DINOv2Module fits on synthetic pretrain data using a tiny vit_x backbone.
 
     Uses img_size=(32,32,32) / patch_size=(8,8,8) → 4³=64 patches, which is
@@ -87,7 +124,7 @@ def test_dinov2_pretrain_vit_x(pretrain_files, make_trainer):
     make_trainer(limit_val_batches=0).fit(module, datamodule=data_module)
 
 
-def test_dinov2_cls_vit_x(cls_probe_files, make_trainer):
+def test_3d_dinov2_cls_vit_x(cls_probe_files, make_trainer):
     """Frozen vit_x backbone + linear head classifies on synthetic cls data.
 
     vit_x.encode() extracts (B, 192) CLS-token features from 32³ volumes.
@@ -109,7 +146,7 @@ def test_dinov2_cls_vit_x(cls_probe_files, make_trainer):
     make_trainer().fit(module, datamodule=data_module)
 
 
-def test_dinov2_vit_x_forward_structure():
+def test_3d_dinov2_vit_x_forward_structure():
     """vit_x output dict matches the official DinoV2 interface.
 
     Checks:
