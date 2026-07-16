@@ -5,65 +5,20 @@
 <head>
     <script>
         /* const base_url = "https://Sllambias.github.io/asparagus/"; */
-        const base_url = (new URL("../..", window.location)).href.replace(/\/+$/, ""); /* for search plugin notably */
-        /* const root_relative_url = "../.."; */
+        const base_url = (new URL("/asparagus/.", window.location)).href.replace(/\/+$/, ""); /* for search plugin notably */
+        /* const root_relative_url = "/asparagus/."; */
     </script>
-    <script integrity="sha384-m6cZ+Whl1ci89lidlu8DH4C+sZLNOYBvImtjUIhUK+iaNffXhqtbYgBVuuPfRsa0" src="../../js/dark.js"></script>
+    <script integrity="sha384-m6cZ+Whl1ci89lidlu8DH4C+sZLNOYBvImtjUIhUK+iaNffXhqtbYgBVuuPfRsa0" src="/asparagus/js/dark.js"></script>
 
 
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1" name="viewport" />
 
     
-    
+    <link href="/asparagus/assets/imgs/favicon.ico" rel="icon" />
 
-
-<title>Environment Setup</title>
-
-
-
-
-
-
-
-
-
-<link rel="canonical" href="https://Sllambias.github.io/asparagus/getting-started/environment_variables/">
-
-
-<!-- Open Graph (Facebook, LinkedIn) -->
-
-<meta property="og:title" content="Environment Setup">
-
-
-
-
-
-<meta property="og:url" content="https://Sllambias.github.io/asparagus/getting-started/environment_variables/">
-
-
-
-
-
-
-<!-- Twitter Card -->
-
-<meta name="twitter:title" content="Environment Setup">
-
-
-
-
-
-
-<!-- JSON-LD Structured Data -->
-
-
-
-    
-    <link href="../../assets/imgs/favicon.ico" rel="icon" />
-
-    <link href="../../css/base.css" rel="stylesheet" />
-    <link href="../../css/geist.css" rel="stylesheet" />
+    <link href="/asparagus/css/base.css" rel="stylesheet" />
+    <link href="/asparagus/css/geist.css" rel="stylesheet" />
 
     
 
@@ -72,12 +27,12 @@
             --theme-accent: oklch(62.3% 0.214 259.815);
         }
     </style>
-    <link href="../../assets/css/copy-code-button.css" rel="stylesheet" />
+    <link href="/asparagus/assets/css/copy-code-button.css" rel="stylesheet" />
 
     
 
     <script integrity="sha384-V2jkXRy811qODUbfkLlkVJYBbf4h6XHAEjcU6ReASBPrJvTrlYh4GrI4t6GCju6n"
-        src="../../js/callbacks.js"></script>
+        src="/asparagus/js/callbacks.js"></script>
 
     
 
@@ -140,7 +95,7 @@
                 <span class="size-8 flex flex-row justify-center items-center">
                     
 
-<img class="size-5" src="../../assets/imgs/android-chrome-512x512.png" alt="icon">
+<img class="size-5" src="/asparagus/assets/imgs/android-chrome-512x512.png" alt="icon">
 
 
                 </span>
@@ -279,7 +234,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../.."
+        data-size="default" href="/asparagus/."
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -312,7 +267,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../install/"
+        data-size="default" href="/asparagus/getting-started/install/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -330,8 +285,8 @@
             
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
-    <a data-slot="sidebar-menu-button" data-active="true" data-sidebar="menu-button"
-        data-size="default" href="./"
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/asparagus/getting-started/environment_variables/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -350,7 +305,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../environment_on_gefion/"
+        data-size="default" href="/asparagus/getting-started/environment_on_gefion/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -382,7 +337,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../../data-pipeline/preprocessing/"
+        data-size="default" href="/asparagus/data-pipeline/preprocessing/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -401,7 +356,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../../data-pipeline/data_structure/"
+        data-size="default" href="/asparagus/data-pipeline/data_structure/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -433,7 +388,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../../training-workflows/pretraining/"
+        data-size="default" href="/asparagus/training-workflows/pretraining/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -452,7 +407,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../../training-workflows/segmentation/"
+        data-size="default" href="/asparagus/training-workflows/segmentation/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -471,7 +426,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../../training-workflows/classification/"
+        data-size="default" href="/asparagus/training-workflows/classification/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -490,7 +445,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../../training-workflows/regression/"
+        data-size="default" href="/asparagus/training-workflows/regression/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -509,7 +464,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../../training-workflows/cross_dataset/"
+        data-size="default" href="/asparagus/training-workflows/cross_dataset/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -528,7 +483,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../../training-workflows/configs/"
+        data-size="default" href="/asparagus/training-workflows/configs/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -560,7 +515,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../../evaluation/evalbox/"
+        data-size="default" href="/asparagus/evaluation/evalbox/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -592,7 +547,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../../advanced/common_issues/"
+        data-size="default" href="/asparagus/advanced/common_issues/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -611,7 +566,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../../advanced/hacking_asparagus/"
+        data-size="default" href="/asparagus/advanced/hacking_asparagus/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -630,7 +585,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../../advanced/training_times/"
+        data-size="default" href="/asparagus/advanced/training_times/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -662,7 +617,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../../project/about/"
+        data-size="default" href="/asparagus/project/about/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -681,7 +636,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../../project/contributing/"
+        data-size="default" href="/asparagus/project/contributing/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -717,139 +672,22 @@
                             <div class="flex min-w-0 flex-1 flex-col">
                                 <div class="h-(--top-spacing) shrink-0"></div>
                                 
-                                
-                                <article class="w-full" view-transition-name="page">
-  <div class="flex flex-col gap-2">
-    <div class="flex flex-col gap-2">
-      <div id="page-header" class="flex items-start justify-between">
-        <h1 class="scroll-m-20 text-4xl font-semibold tracking-tight sm:text-3xl xl:text-4xl">
-          Environment Setup
-        </h1>
-
-        <div class="flex items-center gap-2 pt-1.5">
-          <button
-    onclick="fetch(`https://Sllambias.github.io/asparagus/getting-started/environment_variables.md`).then((r) => r.blob()).then((blob) => navigator.clipboard.write([new ClipboardItem({ 'text/plain': blob })]))"
-    data-slot="button" class="secondary cursor-pointer">
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tabler-icon tabler-icon-copy ">
-        <path
-            d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z">
-        </path>
-        <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1"></path>
+<div class='h-full flex flex-row items-center justify-center'>
+    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' class='w-1/2'>
+        <path d='M0 0h24v24H0z' fill='none' />
+        <g fill='none' fill-rule='evenodd' clip-rule='evenodd'>
+            <path fill='var(--color-muted)'
+                d='M12.276 15.59c-.277-.662-2.117-.054-2.874 1.706a5.39 5.39 0 0 0 .964 5.877a2.99 2.99 0 0 0 4.592-1.473a7.12 7.12 0 0 0-.94-5.43c-.414-.458-1.353-.988-1.742-.68m-.136.496a2.17 2.17 0 0 0-1.713 1.603a4.5 4.5 0 0 0 .727 4.404a1.69 1.69 0 0 0 2.567-.83c.33-.883.375-4.492-1.263-4.906a.43.43 0 0 1-.318-.271' />
+            <path fill='var(--color-muted)'
+                d='M13.019.337c-.2-.458-1.431-.39-2.078-.146a9.2 9.2 0 0 0-3.608 4.108c-3.192 5.907-3.78 9.218 2.746 9.734c2.484.177 4.98-.078 7.377-.754a2.44 2.44 0 0 0 1.705-2.763C18.929 8.668 14.624-.528 13.019.336m-.2.536a.4.4 0 0 1-.276.028C9.386.25 6.273 9.22 6.32 10.718c.082 2.829 8.758 2.105 10.629 1.342c.69-.276 1.014-.596.93-1.41a25 25 0 0 0-1.657-4.49C13.502.143 13.062 1.527 12.82.875z' />
+            <path fill='var(--color-muted)'
+                d='M12.46 9.179c-.25-.702-2.486-.172-1.914 1.533a1.381 1.381 0 0 0 2.567.141c.406-.975-.238-1.666-.652-1.674zm-.121-1.13c1.177-5.432-2-8.29-.83-.03a.415.415 0 1 0 .83.03' />
+            <path fill='var(--color-muted)'
+                d='M19.917 21.432c.243 2.04.23 2.62.754 2.565c.525-.056.33-.415.276-2.708c.83-.133 1.758-.108 1.692-.694c-.067-.585-.813-.356-1.71-.298c-.042-2.263-.034-2.21-.147-4.24c-.166-2.507-5.338 3.336-4.68 4.745c.45.926 2.782.744 3.815.63m-.122-1.077c-.11-1.105-.149-1.735-.237-2.926a10 10 0 0 0-1.79 2.27c-.46.896-.49.515.276.595q.873.09 1.751.053zM5.35 21.07c.222 1.882.206 2.763.772 2.71s.326-.477.277-2.781c.878-.07 1.76-.022 1.693-.62c-.058-.513-.552-.353-1.713-.367c-.038-2.183-.036-2.166-.143-4.17a.666.666 0 0 0-1.028-.513A19.2 19.2 0 0 0 1.38 20.34a.67.67 0 0 0 .627.845s1.724-.027 3.343-.116m-.117-1.077c-.097-1.01-.12-1.382-.213-2.647a30 30 0 0 0-1.934 2.583c.602.022 1.38.047 2.147.064' />
+        </g>
     </svg>
-    <span class="max-md:hidden">Copy Page</span>
-</button>
-          
-          <a data-slot="button" id="previous-button"
-            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-secondary text-secondary-foreground hover:bg-secondary/80 extend-touch-target size-8 shadow-none md:size-7"
-            href="../install/">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-              class="tabler-icon tabler-icon-arrow-left">
-              <path d="M5 12l14 0"></path>
-              <path d="M5 12l6 6"></path>
-              <path d="M5 12l6 -6"></path>
-            </svg>
-            <span class="sr-only">Previous</span>
-          </a>
-          
-          
-          <a data-slot="button" id="next-button"
-            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-secondary text-secondary-foreground hover:bg-secondary/80 extend-touch-target size-8 shadow-none md:size-7"
-            href="../environment_on_gefion/">
-            <span class="sr-only">Next</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-              class="tabler-icon tabler-icon-arrow-right">
-              <path d="M5 12l14 0"></path>
-              <path d="M13 18l6 -6"></path>
-              <path d="M13 6l6 6"></path>
-            </svg>
-          </a>
-          
-        </div>
-      </div>
-      
-    </div>
-    <div class="flex justify-end items-center">
-      
-      
-    </div>
-  </div>
-  <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
-    <h2 id="environment-variables">Environment Variables</h2>
-<p>All environment variables should be put in a <code>.env</code> file in the project root which will be loaded automatically. Alternatively they can be set manually using <code>export VAR=VALUE</code> at the start of each session.</p>
-<h3 id="required-environment-variables">Required Environment Variables:</h3>
-<pre><code class="language-bash">ASPARAGUS_CONFIGS=/PATH/TO/CONFIG/DIR
-ASPARAGUS_DATA=/PATH/TO/ASPARAGUS/DATA
-ASPARAGUS_MODELS=/PATH/TO/ASPARAGUS/MODELS
-ASPARAGUS_RESULTS=/PATH/TO/ASPARAGUS/RESULTS
-ASPARAGUS_RAW_LABELS=/PATH/TO/ASPARAGUS/RAW_LABELS
-ASPARAGUS_SOURCE=/PATH/TO/RAW/DATASETS
-</code></pre>
-<ul>
-<li><code>ASPARAGUS_CONFIGS</code> points to the directory containing the default configs found in asparagus/configs. This variable is used in the training and inference scripts.</li>
-<li><code>ASPARAGUS_DATA</code> points to the directory containing preprocessed data. Preprocessing scripts must save processed data here. Data is stored as tensors: pretraining data as <code>[C, H, W, D]</code>, segmentation data as <code>[C+1, H, W, D]</code> (label is always the last channel), and classification/regression data as a list <code>[tensor, label]</code>. The 2D equivalents omit the D dimension.</li>
-<li><code>ASPARAGUS_MODELS</code> points to the directory containing model checkpoints, test outputs (results only), logs and metadata.</li>
-<li><code>ASPARAGUS_RESULTS</code> points to the directory containing predict outputs (output files and results).</li>
-<li><code>ASPARAGUS_RAW_LABELS</code> points to the directory where preprocessing scripts save <em>formatted but unpreprocessed</em> labels. <em>Formatting</em> (e.g. remapping label values) should be applied; <em>preprocessing</em> (e.g. resampling to a target spacing) should not. These unmodified labels are used when computing final test metrics.</li>
-<li><code>ASPARAGUS_SOURCE</code> points to the directory containing raw, unprocessed datasets. Preprocessing scripts use this variable to locate source data via <code>get_source_path()</code> from <code>asparagus_preprocessing.paths</code>, keeping scripts portable across users and environments.</li>
-</ul>
-<h3 id="optional-environment-variables">Optional Environment Variables</h3>
-<p>(supports multiple colon-separated (":") paths):</p>
-<pre><code class="language-bash">ASPARAGUS_PRETRAIN_CONFIGS=/PATH1/TO/ADDITIONAL/PRETRAIN/CONFIG/DIR:PATH2/TO/ADDITIONAL/PRETRAIN/CONFIG/DIR:PATH3...
-ASPARAGUS_TRAIN_CONFIGS=/PATH1/TO/ADDITIONAL/TRAIN/CONFIG/DIR:PATH2/TO/ADDITIONAL/TRAIN/CONFIG/DIR:PATH3...
-ASPARAGUS_FINETUNE_CONFIGS=/PATH1/TO/ADDITIONAL/FINETUNE/CONFIG/DIR:PATH2/TO/ADDITIONAL/FINETUNECONFIG/DIR:PATH3...
-ASPARAGUS_EVAL_BOX_CONFIGS=/PATH1/TO/ADDITIONAL/EVAL_BOX/CONFIG/DIR:PATH2/TO/ADDITIONAL/EVAL_BOX/CONFIG/DIR:PATH3...
-ASPARAGUS_EVAL_BOX_ENV_CMD=&quot;source /PATH/TO/conda.sh &amp;&amp; conda activate MY_ENV&quot;
-</code></pre>
-<ul>
-<li><code>ASPARAGUS_PRETRAIN_CONFIGS</code> points to all directories containing pretraining configs. When <code>asp_pretrain --config-name MyFancyPretrainConfig</code>is called all the given <code>ASPARAGUS_PRETRAIN_CONFIGS</code> directories are scanned for MyFancyPretrainConfig.yaml.</li>
-<li><code>ASPARAGUS_TRAIN_CONFIGS</code> points to all directories containing training from scratch configs. When <code>asp_train_[cls,reg,seg] --config-name MyLovelyTrainConfig</code>is called all the given <code>ASPARAGUS_PRETRAIN_CONFIGS</code> directories are scanned for MyLovelyTrainingConfig.yaml.</li>
-<li><code>ASPARAGUS_FINETUNE_CONFIGS</code> points to all directories containing finetuning configs. When <code>asp_finetune_[cls,reg,seg] --config-name MyAwesomeFinetuneConfig</code>is called all the given <code>ASPARAGUS_PRETRAIN_CONFIGS</code> directories are scanned for MyAwesomeFinetuneConfig.yaml.</li>
-<li><code>ASPARAGUS_EVAL_BOX_CONFIGS</code> points to all directories containing EvalBox configs. When <code>asp_eval_box_[run,prepare_data,collect_results] --config-name MyEvalBoxConfig</code> is called all the given <code>ASPARAGUS_EVAL_BOX_CONFIGS</code> directories are scanned for MyEvalBoxConfig.yaml.</li>
-<li><code>ASPARAGUS_EVAL_BOX_ENV_CMD</code> is a shell command injected into every dispatched scheduler job and executed on the compute node. It is required by <code>asp_eval_box_run</code> and <code>asp_eval_box_prepare_data</code> (not by <code>asp_eval_box_collect_results</code>). It runs before the actual <code>asp_finetune_[cls,reg,seg]</code> / <code>asp_process</code> command in order to set up the environment the job needs.</li>
-</ul>
-  </div>
-  
-  <script>
-    document.querySelectorAll('article h2, article h3').forEach((header) => {
-      toc.observer.observe(header);
-    });
-  </script>
-</article>
-                                <div class="mx-auto flex flex-wrap h-16 w-full max-w-2xl items-center gap-2 px-4 md:px-0">
-    
-    <a data-slot="button"
-        class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-secondary text-secondary-foreground hover:bg-secondary/80 h-8 rounded-md gap-1.5 px-3 has-[&gt;svg]:px-2.5 shadow-none"
-        href="../install/">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-            class="tabler-icon tabler-icon-arrow-left ">
-            <path d="M5 12l14 0"></path>
-            <path d="M5 12l6 6"></path>
-            <path d="M5 12l6 -6"></path>
-        </svg>
-        <span class="max-[500px]:hidden">Installation</span>
-    </a>
-    
-    
-    <a data-slot="button"
-        class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-secondary text-secondary-foreground hover:bg-secondary/80 h-8 rounded-md gap-1.5 px-3 has-[&gt;svg]:px-2.5 ml-auto shadow-none"
-        href="../environment_on_gefion/">
-        <span class="max-[500px]:hidden">HPC Configuration</span>
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-            class="tabler-icon tabler-icon-arrow-right ">
-            <path d="M5 12l14 0"></path>
-            <path d="M13 18l6 -6"></path>
-            <path d="M13 6l6 6"></path>
-        </svg>
-    </a>
-    
 </div>
-                                
-                                
+
                             </div>
                             
                             <dialog id="bottom-sidebar" onclick="onBottomSidebarDialogClick(event)" class="bg-transparent"
@@ -868,7 +706,7 @@ ASPARAGUS_EVAL_BOX_ENV_CMD=&quot;source /PATH/TO/conda.sh &amp;&amp; conda activ
                 <div class="text-muted-foreground text-sm font-medium">Menu</div>
                 <div class="flex flex-col gap-3">
                     
-                    <a class="text-2xl font-medium" href="../..">
+                    <a class="text-2xl font-medium" href="/asparagus/.">
                         
                         Home
                         
@@ -886,19 +724,19 @@ ASPARAGUS_EVAL_BOX_ENV_CMD=&quot;source /PATH/TO/conda.sh &amp;&amp; conda activ
                     
                     <div class="flex flex-col gap-3">
                         
-                        <a class="text-2xl font-medium" href="../install/">
+                        <a class="text-2xl font-medium" href="/asparagus/getting-started/install/">
                             
                             Installation
                             
                         </a>
                         
-                        <a class="text-2xl font-medium" href="./">
+                        <a class="text-2xl font-medium" href="/asparagus/getting-started/environment_variables/">
                             
                             Environment Setup
                             
                         </a>
                         
-                        <a class="text-2xl font-medium" href="../environment_on_gefion/">
+                        <a class="text-2xl font-medium" href="/asparagus/getting-started/environment_on_gefion/">
                             
                             HPC Configuration
                             
@@ -913,13 +751,13 @@ ASPARAGUS_EVAL_BOX_ENV_CMD=&quot;source /PATH/TO/conda.sh &amp;&amp; conda activ
                     
                     <div class="flex flex-col gap-3">
                         
-                        <a class="text-2xl font-medium" href="../../data-pipeline/preprocessing/">
+                        <a class="text-2xl font-medium" href="/asparagus/data-pipeline/preprocessing/">
                             
                             Preprocessing
                             
                         </a>
                         
-                        <a class="text-2xl font-medium" href="../../data-pipeline/data_structure/">
+                        <a class="text-2xl font-medium" href="/asparagus/data-pipeline/data_structure/">
                             
                             Data Structure
                             
@@ -934,37 +772,37 @@ ASPARAGUS_EVAL_BOX_ENV_CMD=&quot;source /PATH/TO/conda.sh &amp;&amp; conda activ
                     
                     <div class="flex flex-col gap-3">
                         
-                        <a class="text-2xl font-medium" href="../../training-workflows/pretraining/">
+                        <a class="text-2xl font-medium" href="/asparagus/training-workflows/pretraining/">
                             
                             Pretraining (SSL)
                             
                         </a>
                         
-                        <a class="text-2xl font-medium" href="../../training-workflows/segmentation/">
+                        <a class="text-2xl font-medium" href="/asparagus/training-workflows/segmentation/">
                             
                             Segmentation
                             
                         </a>
                         
-                        <a class="text-2xl font-medium" href="../../training-workflows/classification/">
+                        <a class="text-2xl font-medium" href="/asparagus/training-workflows/classification/">
                             
                             Classification
                             
                         </a>
                         
-                        <a class="text-2xl font-medium" href="../../training-workflows/regression/">
+                        <a class="text-2xl font-medium" href="/asparagus/training-workflows/regression/">
                             
                             Regression
                             
                         </a>
                         
-                        <a class="text-2xl font-medium" href="../../training-workflows/cross_dataset/">
+                        <a class="text-2xl font-medium" href="/asparagus/training-workflows/cross_dataset/">
                             
                             Cross-Dataset Evaluation
                             
                         </a>
                         
-                        <a class="text-2xl font-medium" href="../../training-workflows/configs/">
+                        <a class="text-2xl font-medium" href="/asparagus/training-workflows/configs/">
                             
                             Config Reference
                             
@@ -979,7 +817,7 @@ ASPARAGUS_EVAL_BOX_ENV_CMD=&quot;source /PATH/TO/conda.sh &amp;&amp; conda activ
                     
                     <div class="flex flex-col gap-3">
                         
-                        <a class="text-2xl font-medium" href="../../evaluation/evalbox/">
+                        <a class="text-2xl font-medium" href="/asparagus/evaluation/evalbox/">
                             
                             The EvalBox
                             
@@ -994,19 +832,19 @@ ASPARAGUS_EVAL_BOX_ENV_CMD=&quot;source /PATH/TO/conda.sh &amp;&amp; conda activ
                     
                     <div class="flex flex-col gap-3">
                         
-                        <a class="text-2xl font-medium" href="../../advanced/common_issues/">
+                        <a class="text-2xl font-medium" href="/asparagus/advanced/common_issues/">
                             
                             Common Issues
                             
                         </a>
                         
-                        <a class="text-2xl font-medium" href="../../advanced/hacking_asparagus/">
+                        <a class="text-2xl font-medium" href="/asparagus/advanced/hacking_asparagus/">
                             
                             Hacking Asparagus
                             
                         </a>
                         
-                        <a class="text-2xl font-medium" href="../../advanced/training_times/">
+                        <a class="text-2xl font-medium" href="/asparagus/advanced/training_times/">
                             
                             Training Benchmarks
                             
@@ -1021,13 +859,13 @@ ASPARAGUS_EVAL_BOX_ENV_CMD=&quot;source /PATH/TO/conda.sh &amp;&amp; conda activ
                     
                     <div class="flex flex-col gap-3">
                         
-                        <a class="text-2xl font-medium" href="../../project/about/">
+                        <a class="text-2xl font-medium" href="/asparagus/project/about/">
                             
                             About Us
                             
                         </a>
                         
-                        <a class="text-2xl font-medium" href="../../project/contributing/">
+                        <a class="text-2xl font-medium" href="/asparagus/project/contributing/">
                             
                             Contributing
                             
@@ -1048,38 +886,6 @@ ASPARAGUS_EVAL_BOX_ENV_CMD=&quot;source /PATH/TO/conda.sh &amp;&amp; conda activ
                                 class="sticky top-[calc(var(--header-height)+1px)] ml-auto hidden h-[calc(100svh-var(--header-height)-var(--footer-height))] w-72 flex-col gap-4 overflow-hidden overscroll-none pb-8 xl:flex">
                                 <div class="h-(--top-spacing) shrink-0"></div>
                                 
-                                
-                                <div id="toc" view-transition-name="toc" class="no-scrollbar overflow-y-auto px-8">
-    <div class="flex flex-col gap-2 p-4 pt-0 text-sm">
-        <p class="text-muted-foreground bg-background sticky top-0 h-6 text-xs">On This Page</p>
-        
-        
-        
-        
-        <a href="#required-environment-variables"
-            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2" onClick="deferSetActiveTocLink('#required-environment-variables');">
-            Required Environment Variables:
-        </a>
-        
-
-        
-        <a href="#optional-environment-variables"
-            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2" onClick="deferSetActiveTocLink('#optional-environment-variables');">
-            Optional Environment Variables
-        </a>
-        
-
-        
-        
-        
-        
-
-    </div>
-    <div class="h-12"></div>
-
-</div>
                                 
                                 
                             </div>
@@ -1104,21 +910,21 @@ ASPARAGUS_EVAL_BOX_ENV_CMD=&quot;source /PATH/TO/conda.sh &amp;&amp; conda activ
     </div>
      
 
-<script src="../../assets/js/copy-code-button.js"></script>
+<script src="/asparagus/assets/js/copy-code-button.js"></script>
 
      
 
-<script src="../../search/main.js"></script>
+<script src="/asparagus/search/main.js"></script>
 
 
     
 
     <script integrity="sha384-JLNLRFGzvOp0up707XKgSnAjjt1w5BF/+lbeLQvlf6mNwf0m89IXFdpNAk4t6Hcs"
-        src="../../js/copy-button.js"></script>
+        src="/asparagus/js/copy-button.js"></script>
     <script integrity="sha384-JBx6cBEiyhK1KPwZgBHiI6GDaAmvlOxMQFyWAZTEpW5Ifo5XQ2LBcJ61GVOumwF1"
-        src="../../js/sidebar.js"></script>
+        src="/asparagus/js/sidebar.js"></script>
     <script integrity="sha384-fNURFMRt0p/HqXnQnV4+CT9dX1GiU5F0fC3pFbg7gfoANytoUMErSW7suWSBkSuF"
-        src="../../js/slider.js"></script>
+        src="/asparagus/js/slider.js"></script>
     <script>updatePygmentsStylesheet();</script>
     
     <script>fetchStargazers("https://github.com/Sllambias/asparagus");</script>
