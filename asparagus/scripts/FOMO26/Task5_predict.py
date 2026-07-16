@@ -1,9 +1,9 @@
 import numpy as np
 import os
+from asparagus.functional.hydra import fast_instantiate
 from asparagus.modules.transforms.presets import CPU_clsreg_val_test_transforms_crop
 from asparagus.pipeline.auto_configuration.checkpoint import load_checkpoint_state_dict
 from dotenv import load_dotenv
-from hydra.utils import instantiate
 from lightning import Trainer
 from omegaconf import OmegaConf
 from torch.nn.functional import softmax
@@ -27,7 +27,7 @@ def main(
     ckpt_cfg = OmegaConf.load(os.path.join(checkpoint_dir, "hydra/config.yaml"))
     output_path = output_path
 
-    data_module = instantiate(
+    data_module = fast_instantiate(
         ckpt_cfg.lightning._data_module,
         batch_size=1,
         train_split=None,
@@ -37,13 +37,13 @@ def main(
         num_workers=0,
     )
 
-    model = instantiate(
+    model = fast_instantiate(
         ckpt_cfg.model._cls_net,
         input_channels=input_channels,
         output_channels=output_channels,
     )
 
-    model_module = instantiate(
+    model_module = fast_instantiate(
         ckpt_cfg.lightning._lightning_module,
         model=model,
         weights=load_checkpoint_state_dict(os.path.join(checkpoint_dir, f"checkpoints/{checkpoint_name}.ckpt")),

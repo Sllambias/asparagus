@@ -2,6 +2,7 @@ import hydra
 import lightning as pl
 import os
 import random
+from asparagus.functional.hydra import fast_instantiate
 from asparagus.functional.versioning import generate_unused_run_id
 from asparagus.modules.hydra.plugins.searchpath_plugins import FinetuneSearchpathPlugin
 from asparagus.modules.lightning_modules.linear_probe_module import LinearProbeModule
@@ -15,7 +16,6 @@ from asparagus.pipeline.auto_configuration.logging import logging
 from dotenv import load_dotenv
 from hydra.core.hydra_config import HydraConfig
 from hydra.core.plugins import Plugins
-from hydra.utils import instantiate
 from lightning.pytorch.callbacks import (
     LearningRateMonitor,
     TQDMProgressBar,
@@ -62,22 +62,22 @@ def main(cfg: DictConfig) -> None:
     progressbar_callback = TQDMProgressBar(refresh_rate=cfg.logger.log_every_n_steps)
     lr_monitor_callback = LearningRateMonitor(logging_interval="epoch", log_momentum=True)
 
-    cpu_tr_transforms = instantiate(
+    cpu_tr_transforms = fast_instantiate(
         cfg.transforms._cpu_tr_transforms,
         target_size=cfg.training.target_size,
     )
-    cpu_val_transforms = instantiate(
+    cpu_val_transforms = fast_instantiate(
         cfg.transforms._cpu_val_transforms,
         target_size=cfg.training.target_size,
     )
 
     gpu_tr_transforms = (
-        instantiate(cfg.transforms._gpu_tr_transforms, ndim=len(cfg.training.target_size))
+        fast_instantiate(cfg.transforms._gpu_tr_transforms, ndim=len(cfg.training.target_size))
         if cfg.transforms._gpu_tr_transforms is not None
         else None
     )
 
-    data_module = instantiate(
+    data_module = fast_instantiate(
         cfg.lightning._data_module,
         train_split=file_store.splits["train"],
         val_split=file_store.splits["val"],
@@ -88,7 +88,7 @@ def main(cfg: DictConfig) -> None:
         use_random_datasampler=False,
     )
 
-    model = instantiate(
+    model = fast_instantiate(
         cfg.model._cls_net,
         input_channels=file_store.dataset_json["metadata"]["n_modalities"],
         output_channels=file_store.dataset_json["metadata"]["n_classes"],
@@ -99,7 +99,7 @@ def main(cfg: DictConfig) -> None:
     if weights is None:
         print("No checkpoint provided — using randomly initialized backbone.")
 
-    trainer = instantiate(
+    trainer = fast_instantiate(
         cfg.lightning._trainer,
         callbacks=[
             progressbar_callback,

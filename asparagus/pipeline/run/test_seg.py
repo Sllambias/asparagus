@@ -1,12 +1,12 @@
 import hydra
 import os
 import random
+from asparagus.functional.hydra import fast_instantiate
 from asparagus.modules.transforms.presets import CPU_seg_test_transforms
 from asparagus.paths import get_config_path
 from asparagus.pipeline.auto_configuration.checkpoint import load_checkpoint_state_dict
 from asparagus.pipeline.auto_configuration.experiment_setup import prepare_inference
 from dotenv import load_dotenv
-from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 
 load_dotenv()
@@ -30,7 +30,7 @@ def main(cfg: DictConfig) -> None:
         cfg.test_task + "__" + cfg.test_split + "__" + cfg.load_checkpoint_name.replace(".ckpt", ".json"),
     )
 
-    data_module = instantiate(
+    data_module = fast_instantiate(
         ckpt_cfg.lightning._data_module,
         batch_size=1,
         train_split=None,
@@ -40,13 +40,13 @@ def main(cfg: DictConfig) -> None:
         num_workers=cfg.hardware.num_workers,
     )
 
-    model = instantiate(
+    model = fast_instantiate(
         ckpt_cfg.model._seg_net,
         input_channels=file_store.dataset_json["dataset_config"]["n_modalities"],
         output_channels=file_store.dataset_json["dataset_config"]["n_classes"],
     )
 
-    model_module = instantiate(
+    model_module = fast_instantiate(
         ckpt_cfg.lightning._lightning_module,
         model=model,
         weights=load_checkpoint_state_dict(path_store.ckpt_path),
@@ -54,7 +54,7 @@ def main(cfg: DictConfig) -> None:
         test_output_path=output_path,
     )
 
-    trainer = instantiate(
+    trainer = fast_instantiate(
         ckpt_cfg.lightning._trainer,
         callbacks=None,
         log_every_n_steps=250,

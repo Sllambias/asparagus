@@ -1,9 +1,9 @@
 import logging
 import os
+from asparagus.functional.hydra import fast_instantiate
 from asparagus.modules.dataclasses import DataFiles
 from asparagus.pipeline.auto_configuration.versioning import pathing, versioning
 from gardening_tools.functional.paths.read import load_json
-from hydra.utils import instantiate
 
 
 def prepare_standard_experiment(cfg):
@@ -49,8 +49,8 @@ def prepare_online_segmentation(cfg):
 
     num_classes = dataset_json["metadata"]["n_classes"]
     num_modalities = dataset_json["metadata"]["n_modalities"]
-    cpu_transforms = instantiate(cfg.plugins.seg._cpu_transforms)
-    seg_data_module = instantiate(
+    cpu_transforms = fast_instantiate(cfg.plugins.seg._cpu_transforms)
+    seg_data_module = fast_instantiate(
         cfg.plugins.seg._data_module,
         train_split=splits["train"],
         val_split=splits["val"],
@@ -58,13 +58,13 @@ def prepare_online_segmentation(cfg):
         val_transforms=cpu_transforms,
     )
 
-    model = instantiate(
+    model = fast_instantiate(
         cfg.model._plugin_seg_net,
         input_channels=num_modalities,
         output_channels=num_classes,
     )
 
-    plugin = instantiate(
+    plugin = fast_instantiate(
         cfg.plugins.seg._plugin,
         model=model,
         data_module=seg_data_module,

@@ -1,6 +1,7 @@
 import hydra
 import lightning as pl
 import random
+from asparagus.functional.hydra import fast_instantiate
 from asparagus.functional.versioning import generate_unused_run_id
 from asparagus.modules.hydra.plugins.searchpath_plugins import PretrainSearchpathPlugin
 from asparagus.paths import get_config_path
@@ -9,7 +10,6 @@ from asparagus.pipeline.auto_configuration.logging import logging
 from dotenv import load_dotenv
 from hydra.core.hydra_config import HydraConfig
 from hydra.core.plugins import Plugins
-from hydra.utils import instantiate
 from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint, TQDMProgressBar
 from omegaconf import DictConfig, OmegaConf
 
@@ -68,33 +68,33 @@ def main(cfg: DictConfig) -> None:
     ] + plugins
 
     if cfg.profiler.enabled:
-        callbacks.append(instantiate(cfg.profiler._callback))
+        callbacks.append(fast_instantiate(cfg.profiler._callback))
 
-    cpu_tr_transforms = instantiate(
+    cpu_tr_transforms = fast_instantiate(
         cfg.transforms._cpu_tr_transforms,
         patch_size=cfg.training.patch_size,
     )
-    cpu_val_transforms = instantiate(
+    cpu_val_transforms = fast_instantiate(
         cfg.transforms._cpu_val_transforms,
         patch_size=cfg.training.patch_size,
     )
-    gpu_tr_transforms = instantiate(
+    gpu_tr_transforms = fast_instantiate(
         cfg.transforms._gpu_tr_transforms,
         cfg.transforms.masking,
         ndim=len(cfg.training.patch_size),
         mask_ratio=cfg.training.mask_ratio,
     )
-    gpu_val_transforms = instantiate(
+    gpu_val_transforms = fast_instantiate(
         cfg.transforms._gpu_val_transforms,
         cfg.transforms.masking,
         mask_ratio=cfg.training.mask_ratio,
     )
 
-    model = instantiate(
+    model = fast_instantiate(
         cfg.model._pretrain_net,
     )
 
-    data_module = instantiate(
+    data_module = fast_instantiate(
         cfg.lightning._data_module,
         train_split=file_store.splits["train"],
         val_split=file_store.splits["val"],
@@ -102,7 +102,7 @@ def main(cfg: DictConfig) -> None:
         val_transforms=cpu_val_transforms,
     )
 
-    model_module = instantiate(
+    model_module = fast_instantiate(
         cfg.lightning._lightning_module,
         model=model,
         learning_rate=cfg.model.pretrain_lr,
@@ -116,7 +116,7 @@ def main(cfg: DictConfig) -> None:
         log_images_every_n_epoch=cfg.logger.log_images_every_n_epoch,
     )
 
-    trainer = instantiate(
+    trainer = fast_instantiate(
         cfg.lightning._trainer,
         callbacks=callbacks,
         log_every_n_steps=cfg.logger.log_every_n_steps,

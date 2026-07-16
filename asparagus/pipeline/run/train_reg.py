@@ -2,6 +2,7 @@ import hydra
 import lightning as pl
 import os
 import random
+from asparagus.functional.hydra import fast_instantiate
 from asparagus.functional.versioning import generate_unused_run_id
 from asparagus.modules.hydra.plugins.searchpath_plugins import TrainSearchpathPlugin
 from asparagus.modules.transforms.presets import CPU_clsreg_val_test_transforms_crop
@@ -14,7 +15,6 @@ from dotenv import load_dotenv
 from gardening_tools.modules.networks.components.weight_init import set_params_to_zero
 from hydra.core.hydra_config import HydraConfig
 from hydra.core.plugins import Plugins
-from hydra.utils import instantiate
 from lightning.pytorch.callbacks import (
     LearningRateMonitor,
     ModelCheckpoint,
@@ -80,19 +80,19 @@ def main(cfg: DictConfig) -> None:
     lr_monitor_callback = LearningRateMonitor(logging_interval="epoch", log_momentum=True)
     profilers = None
 
-    cpu_tr_transforms = instantiate(
+    cpu_tr_transforms = fast_instantiate(
         cfg.transforms._cpu_tr_transforms,
         target_size=cfg.training.target_size,
         normalize=cfg.transforms.normalize,
     )
-    cpu_val_transforms = instantiate(
+    cpu_val_transforms = fast_instantiate(
         cfg.transforms._cpu_val_transforms,
         target_size=cfg.training.target_size,
         normalize=cfg.transforms.normalize,
     )
-    gpu_tr_transforms = instantiate(cfg.transforms._gpu_tr_transforms, ndim=len(cfg.training.target_size))
+    gpu_tr_transforms = fast_instantiate(cfg.transforms._gpu_tr_transforms, ndim=len(cfg.training.target_size))
 
-    data_module = instantiate(
+    data_module = fast_instantiate(
         cfg.lightning._data_module,
         train_split=file_store.splits["train"],
         val_split=file_store.splits["val"],
@@ -102,13 +102,13 @@ def main(cfg: DictConfig) -> None:
         test_transforms=CPU_clsreg_val_test_transforms_crop(target_size=cfg.training.target_size),
     )
 
-    model = instantiate(
+    model = fast_instantiate(
         cfg.model._cls_net,
         input_channels=file_store.dataset_json["dataset_config"]["n_modalities"],
         output_channels=file_store.dataset_json["dataset_config"]["n_classes"],
     )
 
-    model_module = instantiate(
+    model_module = fast_instantiate(
         cfg.lightning._lightning_module,
         model=model,
         decoder_warmup_epochs=cfg.training.decoder_warmup_epochs,
@@ -126,7 +126,7 @@ def main(cfg: DictConfig) -> None:
         ),
     )
 
-    trainer = instantiate(
+    trainer = fast_instantiate(
         cfg.lightning._trainer,
         callbacks=[
             last_ckpt_callback,
