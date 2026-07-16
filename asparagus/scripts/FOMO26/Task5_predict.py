@@ -1,9 +1,9 @@
 import numpy as np
 import os
+from asparagus.functional.hydra import fast_instantiate
 from asparagus.modules.transforms.presets import CPU_clsreg_val_test_transforms_crop
 from asparagus.pipeline.auto_configuration.checkpoint import load_checkpoint_state_dict
 from dotenv import load_dotenv
-from asparagus.functional.hydra import fast_instantiate
 from lightning import Trainer
 from omegaconf import OmegaConf
 from torch.nn.functional import softmax

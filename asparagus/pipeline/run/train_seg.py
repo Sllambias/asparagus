@@ -2,6 +2,7 @@ import hydra
 import lightning as pl
 import os
 import random
+from asparagus.functional.hydra import fast_instantiate
 from asparagus.functional.versioning import generate_unused_run_id
 from asparagus.modules.hydra.plugins.searchpath_plugins import TrainSearchpathPlugin
 from asparagus.modules.transforms.presets import CPU_seg_test_transforms
@@ -14,7 +15,6 @@ from dotenv import load_dotenv
 from gardening_tools.modules.networks.components.weight_init import set_params_to_zero
 from hydra.core.hydra_config import HydraConfig
 from hydra.core.plugins import Plugins
-from asparagus.functional.hydra import fast_instantiate
 from lightning.pytorch.callbacks import (
     LearningRateMonitor,
     ModelCheckpoint,

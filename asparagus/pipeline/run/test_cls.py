@@ -1,12 +1,12 @@
 import hydra
 import os
 import random
+from asparagus.functional.hydra import fast_instantiate
 from asparagus.modules.transforms.presets import CPU_clsreg_val_test_transforms_crop
 from asparagus.paths import get_config_path
 from asparagus.pipeline.auto_configuration.checkpoint import load_checkpoint_state_dict
 from asparagus.pipeline.auto_configuration.experiment_setup import prepare_inference
 from dotenv import load_dotenv
-from asparagus.functional.hydra import fast_instantiate
 from omegaconf import DictConfig, OmegaConf
 
 load_dotenv()

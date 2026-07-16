@@ -1,9 +1,9 @@
 import os
+from asparagus.functional.hydra import fast_instantiate
 from asparagus.modules.transforms.presets import CPU_seg_test_transforms
 from asparagus.pipeline.auto_configuration.checkpoint import load_checkpoint_state_dict
 from dotenv import load_dotenv
 from gardening_tools.functional.paths.write import save_prediction_from_logits
-from asparagus.functional.hydra import fast_instantiate
 from lightning import Trainer
 from omegaconf import OmegaConf
 

@@ -2,6 +2,7 @@ import hydra
 import lightning as pl
 import os
 import random
+from asparagus.functional.hydra import fast_instantiate
 from asparagus.functional.versioning import generate_unused_run_id
 from asparagus.modules.hydra.plugins.searchpath_plugins import FinetuneSearchpathPlugin
 from asparagus.modules.lightning_modules.linear_probe_module import LinearProbeModule
@@ -15,7 +16,6 @@ from asparagus.pipeline.auto_configuration.logging import logging
 from dotenv import load_dotenv
 from hydra.core.hydra_config import HydraConfig
 from hydra.core.plugins import Plugins
-from asparagus.functional.hydra import fast_instantiate
 from lightning.pytorch.callbacks import (
     LearningRateMonitor,
     TQDMProgressBar,
