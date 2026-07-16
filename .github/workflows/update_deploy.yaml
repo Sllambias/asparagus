@@ -30,7 +30,7 @@ jobs:
 
       - name: Update deployment main
         run: |
-          git merge --squash -X theirs origin/main
+          git merge --squash -X theirs origin/main --allow-unrelated-histories
           git restore --staged README.md
           git commit -m "deploy changes"
           git push 
