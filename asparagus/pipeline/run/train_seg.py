@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 from gardening_tools.modules.networks.components.weight_init import set_params_to_zero
 from hydra.core.hydra_config import HydraConfig
 from hydra.core.plugins import Plugins
-from hydra.utils import instantiate
+from asparagus.functional.hydra import fast_instantiate
 from lightning.pytorch.callbacks import (
     LearningRateMonitor,
     ModelCheckpoint,
@@ -79,21 +79,21 @@ def main(cfg: DictConfig) -> None:
     lr_monitor_callback = LearningRateMonitor(logging_interval="epoch", log_momentum=True)
     profilers = None
 
-    cpu_tr_transforms = instantiate(
+    cpu_tr_transforms = fast_instantiate(
         cfg.transforms._cpu_tr_transforms,
         patch_size=cfg.training.patch_size,
     )
-    cpu_val_transforms = instantiate(
+    cpu_val_transforms = fast_instantiate(
         cfg.transforms._cpu_val_transforms,
         patch_size=cfg.training.patch_size,
     )
-    gpu_tr_transforms = instantiate(
+    gpu_tr_transforms = fast_instantiate(
         cfg.transforms._gpu_tr_transforms,
         ndim=len(cfg.training.patch_size),
         deep_supervision=cfg.model.deep_supervision,
     )
 
-    data_module = instantiate(
+    data_module = fast_instantiate(
         cfg.lightning._data_module,
         train_split=file_store.splits["train"],
         val_split=file_store.splits["val"],
@@ -103,13 +103,13 @@ def main(cfg: DictConfig) -> None:
         test_transforms=CPU_seg_test_transforms(patch_size=cfg.training.patch_size),
     )
 
-    model = instantiate(
+    model = fast_instantiate(
         cfg.model._seg_net,
         input_channels=file_store.dataset_json["dataset_config"]["n_modalities"],
         output_channels=file_store.dataset_json["dataset_config"]["n_classes"],
     )
 
-    model_module = instantiate(
+    model_module = fast_instantiate(
         cfg.lightning._lightning_module,
         model=model,
         warmup_epochs=cfg.training.warmup_epochs,
@@ -128,7 +128,7 @@ def main(cfg: DictConfig) -> None:
         ),
     )
 
-    trainer = instantiate(
+    trainer = fast_instantiate(
         cfg.lightning._trainer,
         callbacks=[
             last_ckpt_callback,
