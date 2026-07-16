@@ -1,0 +1,64 @@
+# @package _global_
+defaults:
+  - /core/base@
+  - /default_pretrain@
+  - /hardware/cpu@hardware
+  - /model/dinov2_test@model
+  - _self_
+
+task: PT000_LauritSSL_PNG
+root: base
+stem: debug
+
+transforms:
+  cpu_tr_transforms: dinov2
+  cpu_val_transforms: dinov2
+  gpu_tr_transforms: none
+  gpu_val_transforms: none
+  _cpu_tr_transforms:
+    global_view_size: ${training.global_crop_size}
+    local_view_size: ${training.local_crop_size}
+  _cpu_val_transforms:
+    global_view_size: ${training.global_crop_size}
+    local_view_size: ${training.local_crop_size}
+    
+model:
+  dimensions: 2D
+  img_size: [128, 128]
+  hidden_size: 192
+  ibot_separate_head: False
+  projection_dim: 420
+
+data:
+  train_split: split_80_10_10
+  
+training:
+  min_lr: 1e-6
+  patch_size: [16,16]
+  global_crop_size: [64,64]
+  local_crop_size: [32,32]
+  batch_size: 2
+  steps: 500
+  steps_per_epoch: 25
+  val_steps_per_epoch: 0
+  max_epochs: ${eval:"${training.steps} / ${training.steps_per_epoch}"}
+  warmup_epochs: ${eval:"${training.steps} // (${training.max_epochs} * 10)"}
+  teacher_temp_warmup_epochs: 30
+  teacher_temp_warmup_steps: ${eval:"(${training.teacher_temp_warmup_epochs} / ${training.max_epochs}) * ${training.steps}"}
+  gradient_clip_val: 3.0
+
+lightning:
+  lightning_module: DINOv2Module
+  _lightning_module:
+    teacher_temp_warmup_steps: ${training.teacher_temp_warmup_steps}
+    gradient_clip_val: ${training.gradient_clip_val}
+    min_lr: ${training.min_lr}
+
+logger:
+  progress_bar: True
+  profile: False
+  wandb_log_model: False
+  wandb_logging: False
+  mlflow_logging: False
+  log_every_n_steps: 1
+  log_images_every_n_epoch: 1

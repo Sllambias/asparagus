@@ -92,8 +92,6 @@ def main(cfg: DictConfig) -> None:
 
     model = instantiate(
         cfg.model._pretrain_net,
-        input_channels=1,
-        output_channels=1,
     )
 
     data_module = instantiate(

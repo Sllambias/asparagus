@@ -1,0 +1,13 @@
+defaults:
+  - core/ultradino@
+
+dimensions: 3D
+
+pretrain_net: vit_x
+
+seg_net: vit_x
+cls_net: vit_x
+
+plugin_seg_net: 
+plugin_seg_train_n_last_params: 20
+

@@ -235,27 +235,3 @@ class ClsRegDataModule(pl.LightningDataModule):
             batch_size=1,
             collate_fn=collate_return,
         )
-
-
-if __name__ == "__main__":
-    from asparagus.functional.loading import load_json
-
-    dataset_json = load_json(
-        "/Users/zcr545/Desktop/Projects/repos/asparagus_data/preprocessed_data/Task997_LauritSynSeg/dataset.json"
-    )
-    splits = load_json(
-        "/Users/zcr545/Desktop/Projects/repos/asparagus_data/preprocessed_data/Task997_LauritSynSeg/split_80_20.json"
-    )[0]
-    train_split = splits["train"]
-    val_split = splits["val"]
-    data_module = SegDataModule(
-        train_split=train_split,
-        val_split=val_split,
-        batch_size=2,
-        num_workers=6,
-    )
-    data_module.setup("fit")
-    data_module_iterator = iter(data_module.train_dataloader())
-    x = next(data_module_iterator)
-    print(type(x))
-    print(next(iter(data_module.train_dataset))["image"].shape)

@@ -96,7 +96,7 @@ class PretrainDataModule(pl.LightningDataModule):
 
 
 if __name__ == "__main__":
-    from asparagus.functional.loading import load_json
+    from gardening_tools.functional.paths.read import load_json
 
     splits = load_json("/Users/zcr545/Desktop/Projects/repos/asparagus_data/preprocessed_data/Task999_DummyData/splits.json")
     train_split = splits["train"]

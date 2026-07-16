@@ -1,0 +1,26 @@
+_pretrain_net:
+  _target_: asparagus.modules.networks.dinov2.${model.pretrain_net}
+  patch_size: ${training.patch_size}
+  img_size: ${training.global_crop_size}
+  hidden_size: ${model.hidden_size}
+  ibot_separate_head: ${model.ibot_separate_head}
+  projection_dim: ${model.projection_dim}
+  input_channels: 1
+
+_seg_net:
+  _target_: asparagus.modules.networks.dinov2.${model.seg_net}
+
+_plugin_seg_net:
+  _target_: asparagus.modules.networks.dinov2.${model.plugin_seg_net}
+
+pretrain_optim: AdamW
+pretrain_lr: 0.0005
+train_optim: AdamW
+train_lr: 0.0005
+finetune_optim: AdamW
+finetune_lr: 0.0005
+
+patch_embed_size: 8
+
+min_test_patch_size: ${training.patch_size}
+deep_supervision: False # not supported
