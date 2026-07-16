@@ -1,19 +1,22 @@
 # @package _global_
+# Example EvalBox. Invoke by PLAIN name (box dir must be the configs root or on
+# ASPARAGUS_EVAL_BOX_CONFIGS):  asp_eval_box_run --config-name=dev_box checkpoint_run_id=<ID>
 defaults:
-  - core/box@
+  - /core/box@            
+  - model: unet_b_lw_dec  
   - _self_
 
-checkpoint_run_id: 955624
+checkpoint_run_id: null   # set here or on the CLI
 load_checkpoint_name: last.ckpt
+test_checkpoint: best
 scheduler: auto
 default_hardware: 1gpu12cpu
 
 segmentation_tasks:
-  - task: DEBUG_FT_SEG
+  - task: DEBUG_FT_SEG    # finetune CONFIG name; the dataset is set inside that config
     hardware: 1gpu40cpu
+    # folds: [0, 1, 2, 3, 4]   # optional: one job per fold
 classification_tasks:
-  -
   - task: DEBUG_FT_CLS
 regression_tasks:
-  - task: DEBUG_FT_REGR
   - task: DEBUG_FT_REGR

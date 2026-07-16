@@ -28,6 +28,8 @@ hydra:
           - run_id
           - stem
           - task
+          - data.fold
+          - test_checkpoint
 
   output_subdir: hydra
   run:
