@@ -2,7 +2,13 @@ import lightning as pl
 import logging
 import torch.distributed as dist
 from asparagus.functional.collate import collate_return
-from asparagus.modules.datasets.TrainDataset import ClsRegDataset, ClsRegTestDataset, SegDataset, SegTestDataset
+from asparagus.modules.datasets.TrainDataset import (
+    ClsRegDataset,
+    ClsRegTestDataset,
+    SegDataset,
+    SegTestDataset,
+    SingleSubjectPredictDataset,
+)
 from lightning.fabric.utilities.distributed import DistributedSamplerWrapper
 from torch.utils.data import DataLoader, RandomSampler
 from torchvision.transforms import Compose
@@ -17,6 +23,8 @@ class SegDataModule(pl.LightningDataModule):
         train_split: list,
         val_split: list,
         test_samples: list = [],
+        predict_samples: Optional[list] = [],
+        predict_transforms: Optional[Compose] = None,
         train_transforms: Optional[Compose] = None,
         test_transforms: Optional[Compose] = None,
         val_transforms: Optional[Compose] = None,
@@ -30,6 +38,8 @@ class SegDataModule(pl.LightningDataModule):
         self.train_split = train_split
         self.test_samples = test_samples
         self.val_split = val_split
+        self.predict_samples = predict_samples
+        self.predict_transforms = predict_transforms
 
         logging.info(f"Using {self.num_workers} workers")
 
@@ -39,7 +49,7 @@ class SegDataModule(pl.LightningDataModule):
         elif stage == "test":
             self.setup_test()
         elif stage == "predict":
-            raise NotImplementedError("Predict stage not supported for PretrainModule.")
+            self.setup_predict()
 
     def setup_fit(self):
         self.train_dataset = SegDataset(
@@ -58,6 +68,12 @@ class SegDataModule(pl.LightningDataModule):
             transforms=self.test_transforms,
         )
 
+    def setup_predict(self):
+        self.predict_dataset = SingleSubjectPredictDataset(
+            self.predict_samples,
+            transforms=self.predict_transforms,
+        )
+
     def train_dataloader(self):
         sampler = RandomSampler(self.train_dataset, num_samples=999999, replacement=True)
         if dist.is_initialized():
@@ -99,6 +115,14 @@ class SegDataModule(pl.LightningDataModule):
             collate_fn=collate_return,
         )
 
+    def predict_dataloader(self):
+        return DataLoader(
+            self.predict_dataset,
+            num_workers=self.num_workers,
+            batch_size=1,
+            collate_fn=collate_return,
+        )
+
 
 class ClsRegDataModule(pl.LightningDataModule):
     def __init__(
@@ -110,7 +134,10 @@ class ClsRegDataModule(pl.LightningDataModule):
         train_transforms: Optional[Compose] = None,
         val_transforms: Optional[Compose] = None,
         test_transforms: Optional[Compose] = None,
+        predict_transforms: Optional[Compose] = None,
         test_samples: Optional[list] = [],
+        predict_samples: Optional[list] = [],
+        use_random_datasampler: Optional[bool] = True,
     ):
         super().__init__()
         self.batch_size = batch_size
@@ -121,6 +148,9 @@ class ClsRegDataModule(pl.LightningDataModule):
         self.train_split = train_split
         self.val_split = val_split
         self.test_samples = test_samples
+        self.use_random_datasampler = use_random_datasampler
+        self.predict_samples = predict_samples
+        self.predict_transforms = predict_transforms
         logging.info(f"Using {self.num_workers} workers")
 
     def setup(self, stage: Literal["fit", "test", "predict"]):
@@ -129,7 +159,7 @@ class ClsRegDataModule(pl.LightningDataModule):
         elif stage == "test":
             self.setup_test()
         elif stage == "predict":
-            raise NotImplementedError("Predict stage not supported for PretrainModule.")
+            self.setup_predict()
 
     def setup_fit(self):
         self.train_dataset = ClsRegDataset(
@@ -148,10 +178,17 @@ class ClsRegDataModule(pl.LightningDataModule):
             transforms=self.test_transforms,
         )
 
+    def setup_predict(self):
+        self.predict_dataset = SingleSubjectPredictDataset(
+            self.predict_samples,
+            transforms=self.predict_transforms,
+        )
+
     def train_dataloader(self):
-        sampler = RandomSampler(self.train_dataset, num_samples=999999, replacement=True)
-        if dist.is_initialized():
-            sampler = DistributedSamplerWrapper(sampler)
+        sampler = None
+        if self.use_random_datasampler:
+            sampler = RandomSampler(self.train_dataset, num_samples=999999, replacement=True)
+            sampler = DistributedSamplerWrapper(sampler) if dist.is_initialized() else sampler
 
         return DataLoader(
             self.train_dataset,
@@ -160,23 +197,25 @@ class ClsRegDataModule(pl.LightningDataModule):
             pin_memory=False,
             persistent_workers=True,
             drop_last=True,
+            shuffle=sampler is None,
             sampler=sampler,
         )
 
     def val_dataloader(self):
-        sampler = RandomSampler(self.val_dataset, num_samples=999999, replacement=True)
-        if dist.is_initialized():
-            sampler = DistributedSamplerWrapper(sampler)
+        sampler = None
+        if self.use_random_datasampler:
+            sampler = RandomSampler(self.val_dataset, num_samples=999999, replacement=True)
+            sampler = DistributedSamplerWrapper(sampler) if dist.is_initialized() else sampler
 
         return DataLoader(
             self.val_dataset,
             num_workers=self.num_workers // 2,
             batch_size=self.batch_size,
             pin_memory=False,
-            shuffle=False,
             persistent_workers=True,
-            drop_last=True,
+            drop_last=False,
             sampler=sampler,
+            shuffle=False,
         )
 
     def test_dataloader(self):
@@ -189,26 +228,10 @@ class ClsRegDataModule(pl.LightningDataModule):
             collate_fn=collate_return,
         )
 
-
-if __name__ == "__main__":
-    from asparagus.functional.loading import load_json
-
-    dataset_json = load_json(
-        "/Users/zcr545/Desktop/Projects/repos/asparagus_data/preprocessed_data/Task997_LauritSynSeg/dataset.json"
-    )
-    splits = load_json(
-        "/Users/zcr545/Desktop/Projects/repos/asparagus_data/preprocessed_data/Task997_LauritSynSeg/split_80_20.json"
-    )[0]
-    train_split = splits["train"]
-    val_split = splits["val"]
-    data_module = SegDataModule(
-        train_split=train_split,
-        val_split=val_split,
-        batch_size=2,
-        num_workers=6,
-    )
-    data_module.setup("fit")
-    data_module_iterator = iter(data_module.train_dataloader())
-    x = next(data_module_iterator)
-    print(type(x))
-    print(next(iter(data_module.train_dataset))["image"].shape)
+    def predict_dataloader(self):
+        return DataLoader(
+            self.predict_dataset,
+            num_workers=self.num_workers,
+            batch_size=1,
+            collate_fn=collate_return,
+        )

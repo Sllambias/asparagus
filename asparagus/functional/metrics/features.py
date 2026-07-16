@@ -7,6 +7,16 @@ import torch.nn as nn
 from typing import Dict
 
 
+def _to_channel_samples(features: torch.Tensor) -> torch.Tensor:
+    """Reshape [B, C, *spatial] → [B*N_spatial, C] for channel-space analysis.
+    2D inputs [B, C] are returned unchanged."""
+    if features.dim() <= 2:
+        return features
+    C = features.shape[1]
+    spatial_dims = list(range(2, features.dim()))
+    return features.permute(0, *spatial_dims, 1).reshape(-1, C)
+
+
 def compute_train(encoder_features: torch.Tensor) -> Dict[str, float]:
     """Metrics computed every training step."""
     return compute_embedding_metrics(encoder_features)
@@ -35,10 +45,7 @@ def compute_feature_covariance(features: torch.Tensor) -> Dict[str, float]:
     if features is None:
         return {}
 
-    # Flatten spatial dimensions if present
-    if features.dim() > 2:
-        B = features.shape[0]
-        features = features.view(B, -1)
+    features = _to_channel_samples(features)
 
     features_centered = features - features.mean(dim=0, keepdim=True)
     cov = torch.mm(features_centered.T, features_centered) / (features.shape[0] - 1)
@@ -84,9 +91,7 @@ def compute_collapse_score(features: torch.Tensor, eps: float = 1e-8) -> Dict[st
     if features is None or features.numel() == 0:
         return {}
 
-    if features.dim() > 2:
-        B = features.shape[0]
-        features = features.view(B, -1)
+    features = _to_channel_samples(features)
 
     dim_variance = features.var(dim=0, unbiased=False)
 
@@ -135,11 +140,7 @@ def compute_participation_ratio(features: torch.Tensor, k_values: list = [10, 50
     if features is None or features.numel() == 0:
         return {}
 
-    if features.dim() > 2:
-        B = features.shape[0]
-        features = features.view(B, -1).float()
-    else:
-        features = features.float()
+    features = _to_channel_samples(features).float()
 
     features_centered = features - features.mean(dim=0, keepdim=True)
 
@@ -183,11 +184,7 @@ def compute_whitening_diagnostics(features: torch.Tensor) -> Dict[str, float]:
     if features is None or features.numel() == 0:
         return {}
 
-    if features.dim() > 2:
-        B = features.shape[0]
-        features = features.view(B, -1).float()
-    else:
-        features = features.float()
+    features = _to_channel_samples(features).float()
 
     # Compute correlation matrix
     features_centered = features - features.mean(dim=0, keepdim=True)

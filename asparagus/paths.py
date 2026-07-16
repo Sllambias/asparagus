@@ -52,10 +52,6 @@ def get_source_labels_path():
     return get_environment_variable("ASPARAGUS_RAW_LABELS")
 
 
-def get_source_path():
-    return get_environment_variable("ASPARAGUS_SOURCE", optional=True)
-
-
 def get_additional_pretrain_config_path(optional=False):
     return get_environment_variables("ASPARAGUS_PRETRAIN_CONFIGS", optional=optional)
 

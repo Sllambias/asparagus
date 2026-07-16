@@ -2,6 +2,7 @@ import hydra
 import lightning as pl
 import os
 import random
+from asparagus.functional.hydra import fast_instantiate
 from asparagus.functional.versioning import generate_unused_run_id
 from asparagus.modules.hydra.plugins.searchpath_plugins import TrainSearchpathPlugin
 from asparagus.modules.transforms.presets import CPU_seg_test_transforms
@@ -14,7 +15,6 @@ from dotenv import load_dotenv
 from gardening_tools.modules.networks.components.weight_init import set_params_to_zero
 from hydra.core.hydra_config import HydraConfig
 from hydra.core.plugins import Plugins
-from hydra.utils import instantiate
 from lightning.pytorch.callbacks import (
     LearningRateMonitor,
     ModelCheckpoint,
@@ -25,7 +25,11 @@ from omegaconf import DictConfig, OmegaConf
 load_dotenv()
 
 OmegaConf.register_new_resolver("random", lambda min, max: random.randint(min, max))
-OmegaConf.register_new_resolver("version", lambda: generate_unused_run_id(), use_cache=True)
+OmegaConf.register_new_resolver(
+    "version",
+    lambda resume_training, run_dir: generate_unused_run_id(resume_training=resume_training, run_dir=run_dir),
+    use_cache=True,
+)
 OmegaConf.register_new_resolver("eval", eval)
 Plugins.instance().register(TrainSearchpathPlugin)
 
@@ -49,9 +53,10 @@ def main(cfg: DictConfig) -> None:
         version=version_store.version,
         wandb_config=logging_safe_cfg,
         wandb_experiment=HydraConfig.get().job.config_name,
-        wandb_project=cfg.task,
+        wandb_project=cfg.logger.wandb_project,
         wandb_logging=cfg.logger.wandb_logging,
         mlflow_logging=cfg.logger.mlflow_logging,
+        log_to_stdout=cfg.logger.log_to_stdout,
     )
 
     best_ckpt_callback = ModelCheckpoint(
@@ -74,37 +79,37 @@ def main(cfg: DictConfig) -> None:
     lr_monitor_callback = LearningRateMonitor(logging_interval="epoch", log_momentum=True)
     profilers = None
 
-    cpu_tr_transforms = instantiate(
+    cpu_tr_transforms = fast_instantiate(
         cfg.transforms._cpu_tr_transforms,
         patch_size=cfg.training.patch_size,
     )
-    cpu_val_transforms = instantiate(
+    cpu_val_transforms = fast_instantiate(
         cfg.transforms._cpu_val_transforms,
         patch_size=cfg.training.patch_size,
     )
-    gpu_tr_transforms = instantiate(
+    gpu_tr_transforms = fast_instantiate(
         cfg.transforms._gpu_tr_transforms,
         ndim=len(cfg.training.patch_size),
         deep_supervision=cfg.model.deep_supervision,
     )
 
-    data_module = instantiate(
+    data_module = fast_instantiate(
         cfg.lightning._data_module,
         train_split=file_store.splits["train"],
         val_split=file_store.splits["val"],
         train_transforms=cpu_tr_transforms,
         val_transforms=cpu_val_transforms,
         test_samples=file_store.test,
-        test_transforms=CPU_seg_test_transforms(),
+        test_transforms=CPU_seg_test_transforms(patch_size=cfg.training.patch_size),
     )
 
-    model = instantiate(
+    model = fast_instantiate(
         cfg.model._seg_net,
         input_channels=file_store.dataset_json["dataset_config"]["n_modalities"],
         output_channels=file_store.dataset_json["dataset_config"]["n_classes"],
     )
 
-    model_module = instantiate(
+    model_module = fast_instantiate(
         cfg.lightning._lightning_module,
         model=model,
         warmup_epochs=cfg.training.warmup_epochs,
@@ -115,6 +120,7 @@ def main(cfg: DictConfig) -> None:
         optimizer=cfg.model.train_optim,
         learning_rate=cfg.model.train_lr,
         deep_supervision=cfg.model.deep_supervision,
+        inference_patch_size=cfg.training.patch_size,
         test_output_path=os.path.join(
             path_store.run_dir,
             "predictions",
@@ -122,7 +128,7 @@ def main(cfg: DictConfig) -> None:
         ),
     )
 
-    trainer = instantiate(
+    trainer = fast_instantiate(
         cfg.lightning._trainer,
         callbacks=[
             last_ckpt_callback,

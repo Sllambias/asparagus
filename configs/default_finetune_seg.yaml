@@ -6,6 +6,7 @@ defaults:
 task:
 checkpoint_run_id:
 load_checkpoint_name: last.ckpt
+test_checkpoint: best   # which finetuned checkpoint to run inference on: best | last
 root: base
 stem: ${checkpoint_run_id}_${load_checkpoint_name}
 
@@ -51,6 +52,8 @@ logger:
   wandb_log_model: False
   wandb_logging: True
   wandb_entity: ${oc.env:WANDB_ENTITY, "team-asparagus"}
+  wandb_project: ${task}
   mlflow_logging: False
   log_every_n_steps: 50
   log_images_every_n_epoch: 5
+  log_to_stdout: True

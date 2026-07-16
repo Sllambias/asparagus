@@ -1,0 +1,16 @@
+# @package _global_
+defaults:
+  - /default_pretrain
+  - /model/primus_m@model
+  - /hardware/1node8gpus@hardware
+  - _self_
+
+task: PT900_FOMO300K
+root: datapaper
+stem: pretrain
+
+checkpoint_run_id:
+
+training:
+  batch_size: 16
+  max_samples: 6_000_000

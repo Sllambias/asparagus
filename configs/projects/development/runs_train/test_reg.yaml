@@ -2,8 +2,8 @@
 defaults:
   - /core/base@
   - /default_train_reg@
-  - /hardware/1gpu12cpu@hardware
-  - /model/unet_b_lw_dec@model
+  - /hardware/cpu@hardware
+  - /model/unet_tiny@model
   - _self_
 
 task: 
@@ -18,6 +18,8 @@ training:
   accumulate_grad_batches: 2
   target_size: [32,32,32]
   check_val_every_n_epoch: 1
+  warmup_epochs: 2
+
 
 logger:
   wandb_logging: True

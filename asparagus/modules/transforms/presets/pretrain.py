@@ -1,8 +1,10 @@
+from asparagus.modules.transforms import Torch_ClampTarget
+from asparagus.modules.transforms.crop import Torch_Crop
+from asparagus.modules.transforms.pad import Torch_Pad
 from gardening_tools.functional.transforms.spatial import get_max_rotated_size
 from gardening_tools.modules.transforms.bias_field import Torch_BiasField
 from gardening_tools.modules.transforms.blur import Torch_Blur
 from gardening_tools.modules.transforms.copy_image_to_label import Torch_CopyImageToLabel
-from gardening_tools.modules.transforms.cropping_and_padding import Torch_CropPad
 from gardening_tools.modules.transforms.gamma import Torch_Gamma
 from gardening_tools.modules.transforms.masking import Torch_Mask
 from gardening_tools.modules.transforms.motion_ghosting import Torch_MotionGhosting
@@ -18,8 +20,10 @@ def CPU_val_transforms(patch_size):
     return transforms.Compose(
         [
             Torch_Normalize(normalize=True),
-            Torch_CropPad(patch_size=patch_size, p_oversample_foreground=0.4),
+            Torch_Pad(patch_size=patch_size),
+            Torch_Crop(patch_size=patch_size, p_oversample_foreground=0.0),
             Torch_CopyImageToLabel(copy=True),
+            Torch_ClampTarget(clamp=True, min_value=-2.0, max_value=4.0),
         ]
     )
 
@@ -36,7 +40,8 @@ def CPU_train_transforms(patch_size):
     return transforms.Compose(
         [
             Torch_Normalize(normalize=True),
-            Torch_CropPad(patch_size=pre_aug_patch_size, p_oversample_foreground=0.4),
+            Torch_Pad(patch_size=pre_aug_patch_size),
+            Torch_Crop(patch_size=pre_aug_patch_size, p_oversample_foreground=0.0),
             Torch_Spatial(
                 patch_size=patch_size,
                 p_deform_all_channel=0.0,
@@ -47,6 +52,7 @@ def CPU_train_transforms(patch_size):
                 skip_label=False,
             ),
             Torch_CopyImageToLabel(copy=True),
+            Torch_ClampTarget(clamp=True, min_value=-2.0, max_value=4.0),
         ]
     )
 

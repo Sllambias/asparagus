@@ -21,7 +21,7 @@ class SelfSupervisedModule(BaseModule):
     def __init__(
         self,
         model: nn.Module,
-        learning_rate: float,
+        learning_rate: float = 1e-4,
         log_images_every_n_epoch: int = 5,
         warmup_epochs: int = 10,
         cosine_period_ratio: float = 1,
@@ -30,12 +30,13 @@ class SelfSupervisedModule(BaseModule):
         train_transforms: Optional[transforms.Compose] = None,
         test_transforms: Optional[transforms.Compose] = None,
         val_transforms: Optional[transforms.Compose] = None,
-        optimizer: str = "SGD",
+        optimizer: str = "AdamW",
         mlflow_logging: bool = False,
         log_every_n_steps: int = 50,
         weight_decay: float = 3e-5,
         nesterov: bool = True,
         momentum: float = 0.99,
+        weights: dict = None,
     ):
         super().__init__(
             model=model,
@@ -50,6 +51,7 @@ class SelfSupervisedModule(BaseModule):
             weight_decay=weight_decay,
             nesterov=nesterov,
             momentum=momentum,
+            weights=weights,
         )
 
         self.model = model
@@ -146,11 +148,11 @@ class SelfSupervisedModule(BaseModule):
 
     def _rec_loss(self, pred, y, mask=None):
         if mask is not None:
-            y_masked = y.clone()
-            pred_masked = pred.clone()
-            y_masked[~mask] = 0
-            pred_masked[~mask] = 0
-            return self._rec_loss_fn(pred_masked, y_masked)
+            # mask is True for kept/visible voxels and False for masked voxels.
+            assert mask.dtype == torch.bool, "Mask must be boolean"
+            masked = ~mask
+            assert masked.any(), "Mask contains no masked voxels"
+            return self._rec_loss_fn(pred[masked], y[masked])
 
         return self._rec_loss_fn(pred, y)
 
@@ -177,3 +179,8 @@ class SelfSupervisedModule(BaseModule):
             for key, value in metric_dict.items():
                 metrics[f"{stage}{metric_separator}{module_name}/{key}"] = value
         return metrics
+
+    def predict_step(self, batch, batch_idx):
+        x = batch["image"]
+        embeddings = self.model.encoder(x)[-1]
+        return embeddings

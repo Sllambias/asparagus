@@ -22,13 +22,11 @@ ASPARAGUS_RAW_LABELS=/PATH/TO/ASPARAGUS/RAW_LABELS
 (supports multiple colon-separated (":") paths):
 
 ```bash
-ASPARAGUS_SOURCE=/PATH/TO/ASPARAGUS/SOURCE
 ASPARAGUS_PRETRAIN_CONFIGS=/PATH1/TO/ADDITIONAL/PRETRAIN/CONFIG/DIR:PATH2/TO/ADDITIONAL/PRETRAIN/CONFIG/DIR:PATH3...
 ASPARAGUS_TRAIN_CONFIGS=/PATH1/TO/ADDITIONAL/TRAIN/CONFIG/DIR:PATH2/TO/ADDITIONAL/TRAIN/CONFIG/DIR:PATH3...
 ASPARAGUS_FINETUNE_CONFIGS=/PATH1/TO/ADDITIONAL/FINETUNE/CONFIG/DIR:PATH2/TO/ADDITIONAL/FINETUNECONFIG/DIR:PATH3...
 ```
 
-- `ASPARAGUS_SOURCE` points to the directory containing raw datasets. This variable can be used in task conversion scripts.
 - `ASPARAGUS_PRETRAIN_CONFIGS` points to all directories containing pretraining configs. When `asp_pretrain --config-name MyFancyPretrainConfig`is called all the given `ASPARAGUS_PRETRAIN_CONFIGS` directories are scanned for MyFancyPretrainConfig.yaml.
 - `ASPARAGUS_TRAIN_CONFIGS` points to all directories containing training from scratch configs. When `asp_train_[cls,reg,seg] --config-name MyLovelyTrainConfig`is called all the given `ASPARAGUS_PRETRAIN_CONFIGS` directories are scanned for MyLovelyTrainingConfig.yaml.
 - `ASPARAGUS_FINETUNE_CONFIGS` points to all directories containing finetuning configs. When `asp_finetune_[cls,reg,seg] --config-name MyAwesomeFinetuneConfig`is called all the given `ASPARAGUS_PRETRAIN_CONFIGS` directories are scanned for MyAwesomeFinetuneConfig.yaml.

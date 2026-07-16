@@ -1,6 +1,7 @@
 import os
 from asparagus.functional.versioning import detect_id, detect_mlflow_id, detect_wandb_id
 from asparagus.modules.dataclasses import PathingConfig, VersioningConfig
+from asparagus.pipeline.auto_configuration.checkpoint import resolve_checkpoint_path
 from hydra.core.hydra_config import HydraConfig
 
 
@@ -21,25 +22,18 @@ def pathing(cfg, train=True):
     run_dir = HydraConfig.get().runtime.output_dir
     os.makedirs(run_dir, exist_ok=True)
 
-    if cfg.checkpoint_run_id is not None and cfg.checkpoint_run_id != "":
-        model_folder = detect_id(cfg.checkpoint_run_id)
-        pretrained_ckpt = os.path.join(model_folder, "checkpoints", cfg.load_checkpoint_name)
-        assert cfg.checkpoint_path is None, "You cannot provide both a checkpoint path and a checkpoint run id"
-    elif cfg.checkpoint_path is not None and cfg.checkpoint_path != "":
-        model_folder = None
-        pretrained_ckpt = cfg.checkpoint_path
-    else:
-        model_folder, pretrained_ckpt = None, None
+    ckpt_path = resolve_checkpoint_path(cfg)
+    ckpt_parent_folder = detect_id(cfg.checkpoint_run_id) if cfg.checkpoint_run_id else None
 
     if train:
         dataset_json_path = cfg.data.data_path + "/dataset.json"
     else:
         dataset_json_path = cfg.data.test_data_path + "/dataset.json"
-    pathingcfg = PathingConfig(
+
+    return PathingConfig(
         run_dir=run_dir,
         ckpt_save_dir=os.path.join(run_dir, "checkpoints"),
-        ckpt_parent_folder=model_folder,
-        ckpt_path=pretrained_ckpt,
+        ckpt_parent_folder=ckpt_parent_folder,
+        ckpt_path=ckpt_path,
         dataset_json_path=dataset_json_path,
     )
-    return pathingcfg

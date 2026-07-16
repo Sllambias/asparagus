@@ -28,6 +28,7 @@ def logging(
     wandb_logging: bool = True,
     wandb_config: dict = None,
     mlflow_logging: bool = False,
+    log_to_stdout: bool = True,
 ):
     """
     Configure and return loggers for training.
@@ -42,7 +43,7 @@ def logging(
     Returns:
         list: Configured loggers
     """
-    loggers = [BaseLogger(save_dir=run_dir, file_name=log_file_name)]
+    loggers = [BaseLogger(save_dir=run_dir, file_name=log_file_name, log_to_stdout=log_to_stdout)]
 
     if wandb_logging:
         loggers.append(

@@ -10,6 +10,7 @@ from asparagus.functional.lr_scheduling import (
     separate_encoder_decoder_weights,
     simple_warmup_cosine_decay_schedule,
 )
+from asparagus.functional.pos_embed import resize_pos_embed_3d
 from asparagus.functional.visualization import (
     get_logger_compatible_image_output_target,
     log_image_output_target_to_mlflow,
@@ -29,9 +30,8 @@ class BaseModule(L.LightningModule):
         decoder_warmup_epochs: int = 0,
         cosine_period_ratio: float = 1,
         compile_mode: str = None,
-        weights: str = None,
+        weights: dict = None,
         load_decoder: bool = True,
-        repeat_stem_weights: bool = True,
         optimizer: str = "SGD",
         train_transforms: Optional[transforms.Compose] = None,
         test_transforms: Optional[transforms.Compose] = None,
@@ -39,12 +39,17 @@ class BaseModule(L.LightningModule):
         weight_decay: float = 3e-5,
         nesterov: bool = True,
         momentum: float = 0.99,
+        repeat_stem_weights: bool = True,
+        pretrained_target_size: Optional[tuple] = None,
+        target_size: Optional[tuple] = None,
     ):
         super().__init__()
         self.learning_rate = learning_rate
         self.train_transforms = train_transforms
         self.test_transforms = test_transforms
         self.val_transforms = val_transforms
+        self.pretrained_target_size = pretrained_target_size
+        self.target_size = target_size
 
         self.loss = None
         self.train_metrics = None
@@ -60,11 +65,11 @@ class BaseModule(L.LightningModule):
         self.repeat_stem_weights = repeat_stem_weights
         assert 0 < cosine_period_ratio <= 1
 
-        self.save_hyperparameters(ignore=["model", "train_transforms", "val_transforms", "test_transforms"])
+        self.save_hyperparameters(ignore=["model", "weights", "train_transforms", "val_transforms", "test_transforms"])
         self.model = model
 
         if weights is not None:
-            self.load_weights(weights, load_decoder=load_decoder)
+            self.load_state_dict(weights, load_decoder=load_decoder, strict=False)
 
         self.model = torch.compile(model, mode=compile_mode) if compile_mode is not None else model
 
@@ -105,7 +110,13 @@ class BaseModule(L.LightningModule):
 
         print(f"Using optimizer {optimizer.__class__.__name__} with learning rate {self.learning_rate}")
 
-        steps_per_epoch = self.trainer.estimated_stepping_batches // self.trainer.max_epochs
+        # Calculate steps per epoch based on trainer configuration
+        # if max_epochs is *not* set (i.e., set to -1), we are probably using max_steps
+        # if max_epochs is set, we can calculate steps per epoch based on estimated_stepping_batches
+        if self.trainer.max_epochs <= 0:
+            optimizer_steps_per_epoch = self.trainer.limit_train_batches // self.trainer.accumulate_grad_batches
+        else:
+            optimizer_steps_per_epoch = self.trainer.estimated_stepping_batches // self.trainer.max_epochs
 
         # Scheduler option 1: Three-phase schedule with separate decoder/joint warmup
         if self.decoder_warmup_epochs > 0:
@@ -113,26 +124,28 @@ class BaseModule(L.LightningModule):
                 optimizer,
                 self.decoder_warmup_epochs,
                 self.warmup_epochs,
-                steps_per_epoch,
+                optimizer_steps_per_epoch,
                 self.cosine_period_ratio,
-                self.trainer.max_epochs,
+                self.trainer.max_epochs,  # may be -1, if using max_steps
             )
         # Scheduler option 2: Two-phase schedule with joint warmup
         elif self.warmup_epochs > 0:
             scheduler = simple_warmup_cosine_decay_schedule(
                 optimizer,
                 self.warmup_epochs,
-                steps_per_epoch,
+                optimizer_steps_per_epoch,
                 self.cosine_period_ratio,
-                self.trainer.max_epochs,
+                self.trainer.max_epochs,  # may be -1, if using max_steps
+                self.trainer.max_steps,  # may be -1, if using max_epochs
             )
         # Scheduler option 3: Just cosine annealing
         else:
             scheduler = cosine_decay_schedule(
                 optimizer,
-                steps_per_epoch,
+                optimizer_steps_per_epoch,
                 self.cosine_period_ratio,
-                self.trainer.max_epochs,
+                self.trainer.max_epochs,  # may be -1, if using max_steps
+                self.trainer.max_steps,  # may be -1, if using max_epochs
             )
 
         scheduler_config = {
@@ -142,11 +155,6 @@ class BaseModule(L.LightningModule):
         }
 
         return [optimizer], [scheduler_config]
-
-    def load_weights(self, weights, load_decoder=True):
-        ckpt = torch.load(weights, map_location="cpu", weights_only=False)
-        print(f"Loading weights trained for {ckpt['global_step']} steps / {ckpt['epoch']} epochs.")
-        self.load_state_dict(ckpt["state_dict"], load_decoder=load_decoder, strict=False)
 
     def load_state_dict(self, state_dict, load_decoder=True, *args, **kwargs):
         old_params = copy.deepcopy(self.state_dict())
@@ -161,10 +169,10 @@ class BaseModule(L.LightningModule):
             state_dict = {k.replace("_orig_mod.", ""): v for k, v in state_dict.items()}
 
         # Repeat stem weights when state_dict num_channels is smaller than new_state_dict num_channels
-        if self.model.stem_weight_name is not None and self.repeat_stem_weights:
+        if hasattr(self.model, "stem_weight_name") and self.model.stem_weight_name is not None and self.repeat_stem_weights:
             prefix = "model._orig_mod." if "_orig_mod" in list(state_dict.keys())[0] else "model."
             stem_name = f"{prefix}{self.model.stem_weight_name}"
-            pt_input_channels = state_dict[stem_name].shape[1]  # (N, C, H, W, Z) where N is num tokens.
+            pt_input_channels = state_dict[stem_name].shape[1]
             ft_input_channels = old_params[stem_name].shape[1]
             if pt_input_channels < ft_input_channels:
                 assert pt_input_channels == 1, (
@@ -172,6 +180,24 @@ class BaseModule(L.LightningModule):
                 )
                 print(f"Repeating stem weights from {pt_input_channels} to {ft_input_channels} channels for {stem_name}.")
                 state_dict[stem_name] = state_dict[stem_name].repeat(1, ft_input_channels, 1, 1, 1) / ft_input_channels
+
+        # Interpolate positional embeddings when spatial dimensions differ
+        if self.pretrained_target_size is not None and self.target_size is not None:
+            for key in list(state_dict.keys()):
+                if key not in old_params or old_params[key].shape == state_dict[key].shape:
+                    continue
+                if key.endswith("pos_embed"):
+                    num_prefix_tokens = getattr(self.model.eva, "num_prefix_tokens", 0)
+                    patch_embed_size = tuple(self.model.encoder.proj.weight.shape[2:])
+                    print(f"Interpolating {key}: {state_dict[key].shape} -> {old_params[key].shape}")
+                    state_dict[key] = resize_pos_embed_3d(
+                        state_dict[key],
+                        old_params[key],
+                        num_prefix_tokens=num_prefix_tokens,
+                        pretrained_target_size=self.pretrained_target_size,
+                        target_size=self.target_size,
+                        patch_embed_size=patch_embed_size,
+                    )
 
         # Filter out keys that are not in the old state dict or have different shapes
         def should_load_key(key, state_dict, old_params, load_decoder):

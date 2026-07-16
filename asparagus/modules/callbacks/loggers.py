@@ -13,6 +13,7 @@ class BaseLogger(Logger):
         self,
         file_name: str,
         save_dir: str = "./",
+        log_to_stdout: bool = True,
     ):
         super().__init__()
         self._file_name = file_name
@@ -26,6 +27,8 @@ class BaseLogger(Logger):
         self.NAME_HPARAMS_FILE = "hparams.yaml"
         self.step_metrics = {}
 
+        self.log_to_stdout = log_to_stdout
+
         if self.log_file is None:
             self.create_logfile()
 
@@ -35,8 +38,7 @@ class BaseLogger(Logger):
 
     @property
     def name(self):
-        return None
-        # return self._file_name
+        return self._file_name
 
     @property
     def root_dir(self):
@@ -54,12 +56,12 @@ class BaseLogger(Logger):
         os.makedirs(self.log_dir, exist_ok=True)
         self.log_file = os.path.join(
             self.log_dir,
-            "train_seg.log",
-            # self.name + ".log",
+            self.name + ".log",
         )
-        with open(self.log_file, "w") as f:
-            f.write(f"Starting model training \n {'log file:':20} {self.log_file} \n")
-            print(f"Starting model training \n {'log file:':20} {self.log_file} \n")
+        t = strftime("%Y_%m_%d_%H_%M_%S", localtime())
+        with open(self.log_file, "a+") as f:
+            f.write(f"{t} Starting model training \n {'log file:':20} {self.log_file} \n")
+            print(f"{t} Starting model training \n {'log file:':20} {self.log_file} \n")
 
     @rank_zero_only
     def log_hyperparams(self, params: Union[Dict[str, Any], Namespace]) -> None:  # type: ignore[override]
@@ -68,29 +70,39 @@ class BaseLogger(Logger):
 
     @rank_zero_only
     def log_metrics(self, metrics: dict, step):
+        def _print_if_log_to_stdout(*args, **kwargs):
+            if self.log_to_stdout:
+                print(*args, **kwargs)
+
         if "epoch" not in metrics:
             self.step_metrics.update(metrics)
             return
+
         self.current_epoch = metrics["epoch"]
         t = strftime("%Y_%m_%d_%H_%M_%S", localtime())
+
         with open(self.log_file, "a+") as f:
             if self.current_epoch > self.previous_epoch:
                 epoch_end_time = time()
                 f.write(f"\n \n{t} {'Current Epoch:':20} {self.current_epoch} \n")
-                print(f"\n \n{t} {'Current Epoch:':20} {self.current_epoch}")
+                _print_if_log_to_stdout(f"\n \n{t} {'Current Epoch:':20} {self.current_epoch}")
+
                 f.write(f"{t} {'Epoch Time:':20} {epoch_end_time - self.epoch_start_time} \n")
-                print(f"{t} {'Epoch Time:':20} {epoch_end_time - self.epoch_start_time}")
+                _print_if_log_to_stdout(f"{t} {'Epoch Time:':20} {epoch_end_time - self.epoch_start_time}")
+
                 for key, val in self.step_metrics.items():
                     f.write(f"{t} {key + ':':20} {val} \n")
-                    print(f"{t} {key + ':':20} {val}")
+                    _print_if_log_to_stdout(f"{t} {key + ':':20} {val}")
+
                 self.previous_epoch = self.current_epoch
                 self.epoch_start_time = epoch_end_time
                 self.step_metrics = {}
+
             for key, val in metrics.items():
                 if "_step" in key or key == "epoch":
                     continue
                 f.write(f"{t} {key + ':':20} {metrics[key]} \n")
-                print(f"{t} {key + ':':20} {metrics[key]}")
+                _print_if_log_to_stdout(f"{t} {key + ':':20} {metrics[key]}")
 
     @rank_zero_only
     def log_hparams(self, params: Dict[str, Any]) -> None:

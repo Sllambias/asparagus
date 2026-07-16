@@ -2,10 +2,12 @@ import hydra
 import lightning as pl
 import os
 import random
+from asparagus.functional.hydra import fast_instantiate
 from asparagus.functional.versioning import generate_unused_run_id
 from asparagus.modules.hydra.plugins.searchpath_plugins import FinetuneSearchpathPlugin
 from asparagus.modules.transforms.presets import CPU_clsreg_val_test_transforms_crop
 from asparagus.paths import get_config_path
+from asparagus.pipeline.auto_configuration.checkpoint import resolve_checkpoint
 from asparagus.pipeline.auto_configuration.experiment_setup import (
     prepare_standard_experiment,
 )
@@ -14,7 +16,6 @@ from dotenv import load_dotenv
 from gardening_tools.modules.networks.components.weight_init import set_params_to_zero
 from hydra.core.hydra_config import HydraConfig
 from hydra.core.plugins import Plugins
-from hydra.utils import instantiate
 from lightning.pytorch.callbacks import (
     LearningRateMonitor,
     ModelCheckpoint,
@@ -25,7 +26,11 @@ from omegaconf import DictConfig, OmegaConf
 load_dotenv()
 
 OmegaConf.register_new_resolver("random", lambda min, max: random.randint(min, max))
-OmegaConf.register_new_resolver("version", lambda: generate_unused_run_id(), use_cache=True)
+OmegaConf.register_new_resolver(
+    "version",
+    lambda resume_training, run_dir: generate_unused_run_id(resume_training=resume_training, run_dir=run_dir),
+    use_cache=True,
+)
 OmegaConf.register_new_resolver("eval", eval)
 Plugins.instance().register(FinetuneSearchpathPlugin)
 
@@ -38,6 +43,7 @@ Plugins.instance().register(FinetuneSearchpathPlugin)
 def main(cfg: DictConfig) -> None:
     print(f"{OmegaConf.to_yaml(cfg)}\n Version: {cfg.run_id}\n Run dir: {HydraConfig.get().run.dir}\n")
     file_store, path_store, version_store = prepare_standard_experiment(cfg)
+    weights = resolve_checkpoint(cfg)
 
     pl.seed_everything(seed=cfg.training.seed, workers=True)
 
@@ -49,9 +55,10 @@ def main(cfg: DictConfig) -> None:
         version=version_store.version,
         wandb_experiment=HydraConfig.get().job.config_name,
         wandb_entity=cfg.logger.wandb_entity,
-        wandb_project="Finetune",
+        wandb_project=cfg.logger.wandb_project,
         wandb_logging=cfg.logger.wandb_logging,
         mlflow_logging=cfg.logger.mlflow_logging,
+        log_to_stdout=cfg.logger.log_to_stdout,
     )
 
     best_ckpt_callback = ModelCheckpoint(
@@ -74,17 +81,17 @@ def main(cfg: DictConfig) -> None:
     lr_monitor_callback = LearningRateMonitor(logging_interval="epoch", log_momentum=True)
     profilers = None
 
-    cpu_tr_transforms = instantiate(
+    cpu_tr_transforms = fast_instantiate(
         cfg.transforms._cpu_tr_transforms,
         target_size=cfg.training.target_size,
     )
-    cpu_val_transforms = instantiate(
+    cpu_val_transforms = fast_instantiate(
         cfg.transforms._cpu_val_transforms,
         target_size=cfg.training.target_size,
     )
-    gpu_tr_transforms = instantiate(cfg.transforms._gpu_tr_transforms, ndim=len(cfg.training.target_size))
+    gpu_tr_transforms = fast_instantiate(cfg.transforms._gpu_tr_transforms, ndim=len(cfg.training.target_size))
 
-    data_module = instantiate(
+    data_module = fast_instantiate(
         cfg.lightning._data_module,
         train_split=file_store.splits["train"],
         val_split=file_store.splits["val"],
@@ -94,31 +101,32 @@ def main(cfg: DictConfig) -> None:
         test_transforms=CPU_clsreg_val_test_transforms_crop(target_size=cfg.training.target_size),
     )
 
-    model = instantiate(
+    model = fast_instantiate(
         cfg.model._cls_net,
         input_channels=file_store.dataset_json["metadata"]["n_modalities"],
         output_channels=file_store.dataset_json["metadata"]["n_classes"],
     )
 
-    model_module = instantiate(
+    model_module = fast_instantiate(
         cfg.lightning._lightning_module,
         model=model,
         train_transforms=gpu_tr_transforms,
         val_transforms=None,
-        weights=path_store.ckpt_path,
+        weights=weights,
         log_image_every_n_epochs=cfg.logger.log_images_every_n_epoch,
         optimizer=cfg.model.finetune_optim,
         learning_rate=cfg.model.finetune_lr,
         warmup_epochs=cfg.training.warmup_epochs,
         weight_decay=cfg.model.weight_decay,
+        load_decoder=cfg.training.load_decoder,
         test_output_path=os.path.join(
             path_store.run_dir,
             "predictions",
-            cfg.test_task + "__" + cfg.data.test_split + "__" + "best.json",
+            cfg.test_task + "__" + cfg.data.test_split + "__" + cfg.test_checkpoint + ".json",
         ),
     )
 
-    trainer = instantiate(
+    trainer = fast_instantiate(
         cfg.lightning._trainer,
         callbacks=[
             last_ckpt_callback,
@@ -144,10 +152,12 @@ def main(cfg: DictConfig) -> None:
 
     model_module.model.apply(set_params_to_zero)
 
+    test_ckpt_callback = best_ckpt_callback if cfg.test_checkpoint == "best" else last_ckpt_callback
+    assert test_ckpt_callback.best_model_path, f"No '{cfg.test_checkpoint}' checkpoint was saved to test from."
     trainer.test(
         model=model_module,
         datamodule=data_module,
-        ckpt_path=best_ckpt_callback.best_model_path,
+        ckpt_path=test_ckpt_callback.best_model_path,
     )
 
 

@@ -23,7 +23,7 @@ class ClsRegBase(BaseModule):
         decoder_warmup_epochs: int = 0,
         cosine_period_ratio: float = 1,
         compile_mode: str = None,
-        weights: str = None,
+        weights: dict = None,
         optimizer: str = "SGD",
         train_transforms: Optional[transforms.Compose] = None,
         test_transforms: Optional[transforms.Compose] = None,
@@ -33,6 +33,7 @@ class ClsRegBase(BaseModule):
         momentum: float = 0.99,
         log_image_every_n_epochs: int = 50,
         test_output_path: str = None,
+        load_decoder: bool = True,
         repeat_stem_weights: bool = True,
     ):
         super().__init__(
@@ -50,6 +51,7 @@ class ClsRegBase(BaseModule):
             weight_decay=weight_decay,
             nesterov=nesterov,
             momentum=momentum,
+            load_decoder=load_decoder,
             repeat_stem_weights=repeat_stem_weights,
         )
         self.loss = None
@@ -75,18 +77,13 @@ class ClsRegBase(BaseModule):
 
         pred = self.model(x)
         loss = self.loss(pred, y)
+
         self.log(
             "train/loss", loss, on_step=False, on_epoch=True, sync_dist=True, batch_size=self.trainer.datamodule.batch_size
         )
 
-        metrics = self.train_metrics(pred, y)
-        self.log_dict(
-            format_multilabel_metrics(metrics, ignore_index=self.ignore_index_in_metrics),
-            on_step=False,
-            on_epoch=True,
-            sync_dist=True,
-            batch_size=self.trainer.datamodule.batch_size,
-        )
+        self.train_metrics.update(pred, y)
+
         if (
             self.current_epoch > 0
             and batch_idx == 0
@@ -106,6 +103,12 @@ class ClsRegBase(BaseModule):
 
         return loss
 
+    def on_train_epoch_end(self):
+        metrics_results = self.train_metrics.compute()
+        formatted_metrics = format_multilabel_metrics(metrics_results, ignore_index=self.ignore_index_in_metrics)
+        self.log_dict(formatted_metrics, sync_dist=True)
+        self.train_metrics.reset()
+
     def validation_step(self, batch, batch_idx):
         x, y = batch["image"], batch["CLSREG_label"]
 
@@ -113,14 +116,8 @@ class ClsRegBase(BaseModule):
         loss = self.loss(pred, y)
         self.log("val/loss", loss, on_step=False, on_epoch=True, sync_dist=True, batch_size=self.trainer.datamodule.batch_size)
 
-        metrics = self.val_metrics(pred, y)
-        self.log_dict(
-            format_multilabel_metrics(metrics, ignore_index=self.ignore_index_in_metrics),
-            on_step=False,
-            on_epoch=True,
-            sync_dist=True,
-            batch_size=self.trainer.datamodule.batch_size,
-        )
+        self.val_metrics.update(pred, y)
+
         if (
             self.current_epoch > 0
             and batch_idx == 0
@@ -138,6 +135,12 @@ class ClsRegBase(BaseModule):
                 task_type=self.task_type,
             )
 
+    def on_validation_epoch_end(self):
+        metrics_results = self.val_metrics.compute()
+        formatted_metrics = format_multilabel_metrics(metrics_results, ignore_index=self.ignore_index_in_metrics)
+        self.log_dict(formatted_metrics, sync_dist=True)
+        self.val_metrics.reset()
+
     def on_test_epoch_start(self):
         self.results = {}
         self.predictions = []
@@ -145,6 +148,11 @@ class ClsRegBase(BaseModule):
         return super().on_test_epoch_start()
 
     def test_step(self, batch, batch_idx):
+        x = batch["image"]
+        outputs = self.model.forward(x)
+        return outputs
+
+    def predict_step(self, batch, batch_idx):
         x = batch["image"]
         outputs = self.model.forward(x)
         return outputs
@@ -187,7 +195,8 @@ class ClassificationModule(ClsRegBase):
         )
 
     def on_before_batch_transfer(self, batch, dataloader_idx):
-        batch["CLSREG_label"] = batch["CLSREG_label"].squeeze().long()
+        if not self.trainer.predicting:
+            batch["CLSREG_label"] = batch["CLSREG_label"].view(-1).long()
         return batch
 
     def on_test_batch_end(self, outputs, batch, batch_idx, dataloader_idx=0):

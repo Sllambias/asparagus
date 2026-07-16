@@ -7,3 +7,6 @@ hydra:
   output_subdir: null  
   run:  
     dir: .
+
+data:
+  test_data_path: ""

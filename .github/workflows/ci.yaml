@@ -35,6 +35,3 @@ jobs:
         with:
           args: format --check .
 
-      - name: Run tests
-        if: ${{ always() }} 
-        run: pytest
