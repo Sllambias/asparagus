@@ -132,7 +132,7 @@ See the [asparagus_preprocessing repo](https://github.com/Sllambias/asparagus_pr
     ```python
     @dataclass
     class PreprocessingConfig:
-        normalization_operation: List   # one entry per modality
+        normalization_operation: List  # one entry per modality
         target_spacing: Optional[List]
         background_pixel_value: int = 0
         crop_to_nonzero: bool = True

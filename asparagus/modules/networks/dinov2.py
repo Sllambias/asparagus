@@ -166,7 +166,6 @@ class DINOv2(nn.Module):
             "student_patch_tokens": student_global_patch_tokens,
             "student_glob_cls_token": student_global_cls_token,
             "mask": patch_mask,
-            "n_local_views": torch.tensor(local_views.shape[0] if local_views is not None else 0, device=device),
         }
 
         return {"pred": out}

@@ -13,7 +13,7 @@ from torchvision.transforms import Compose
 from typing import List, Optional, Tuple, Union
 
 
-class RandomResizedCrop3D(Transform):
+class RandomResizedCropND(Transform):
     """
     Combines monai's random spatial crop followed by resize to the desired size.
 
@@ -105,7 +105,7 @@ class DINOv2Augmentation(nn.Module):
                     shear_range=0.1,
                     padding_mode="zeros",
                 ),
-                RandomResizedCrop3D(prob=1, size=self.global_view_size, scale=self.global_view_scale),
+                RandomResizedCropND(prob=1, size=self.global_view_size, scale=self.global_view_scale),
                 RandHistogramShift(prob=0.5),
                 RandGaussianSmooth(prob=0.5),
                 SpatialPad(spatial_size=self.global_view_size),
@@ -120,7 +120,7 @@ class DINOv2Augmentation(nn.Module):
                         shear_range=0.1,
                         padding_mode="zeros",
                     ),
-                    RandomResizedCrop3D(prob=1, size=self.local_view_size, scale=self.local_view_scale),
+                    RandomResizedCropND(prob=1, size=self.local_view_size, scale=self.local_view_scale),
                     RandHistogramShift(prob=0.5),
                     RandGaussianSmooth(prob=0.5),
                     SpatialPad(spatial_size=self.local_view_size),
@@ -135,14 +135,9 @@ class DINOv2Augmentation(nn.Module):
         Args:
             x (torch.Tensor): Input tensor of shape (B, D, H, W).
         Returns:
-            List[torch.Tensor]: List containing N augmented tensors for global (2) and local (N-2) views.
+            List[torch.Tensor]: List containing N augmented tensors for global (2) and local (N) views.
         """
         if self.local_aug is not None:
             data["local_views"] = [self.local_aug(data["image"].clone()) for _ in range(self.num_local_views)]
         data["image"] = [self.global_aug(data["image"].clone()) for _ in range(2)]
         return data
-
-
-# %%
-
-# %%
