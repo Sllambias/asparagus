@@ -55,6 +55,7 @@ lightning:
     num_nodes: ${hardware.num_nodes}
     enable_progress_bar: ${logger.progress_bar}
     precision: ${hardware.precision}
+    strategy: ${hardware.strategy}
 
 train_split_path: ${oc.env:ASPARAGUS_DATA}/${task}/${data.train_split}.json
 test_task: ${task}
