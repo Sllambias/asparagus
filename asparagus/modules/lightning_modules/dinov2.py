@@ -79,8 +79,9 @@ class DINOv2Module(L.LightningModule):
 
     def training_step(self, batch: tuple[list[Tensor], Tensor, list[str]], batch_idx: int) -> Tensor:
         outputs = self.model(global_views=batch["image"], local_views=batch.get("local_views", None))
-
-        loss_dict = self.criterion(outputs["pred"], global_step=self.trainer.global_step)
+        loss_dict = self.criterion(
+            outputs["pred"], global_step=self.trainer.global_step, batch_size=self.trainer.datamodule.batch_size
+        )
 
         log_dict = {}
         for key, value in loss_dict.items():

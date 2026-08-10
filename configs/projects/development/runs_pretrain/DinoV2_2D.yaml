@@ -2,7 +2,7 @@
 defaults:
   - /core/base@
   - /default_pretrain@
-  - /hardware/cpu@hardware
+  - /hardware/1gpu40cpu@hardware
   - /model/dinov2_test@model
   - _self_
 
@@ -37,9 +37,9 @@ training:
   patch_size: [16,16]
   global_crop_size: [64,64]
   local_crop_size: [32,32]
-  batch_size: 2
-  steps: 500
-  steps_per_epoch: 25
+  batch_size: 128
+  steps: 1000000
+  steps_per_epoch: 10000
   val_steps_per_epoch: 0
   max_epochs: ${eval:"${training.steps} / ${training.steps_per_epoch}"}
   warmup_epochs: ${eval:"${training.steps} // (${training.max_epochs} * 10)"}
