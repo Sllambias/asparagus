@@ -87,6 +87,14 @@ class DINOv2Module(L.LightningModule):
         for key, value in loss_dict.items():
             log_dict[f"train_{key}"] = value if value is not None else 0.0
 
+        self.log(
+            "train_loss",
+            loss_dict["total_loss"],
+            prog_bar=True,
+            sync_dist=True,
+            batch_size=self.trainer.datamodule.batch_size,
+        )
+
         log_dict["global_step"] = float(self.trainer.global_step)
         self.log_dict(log_dict, prog_bar=False, sync_dist=True, batch_size=self.trainer.datamodule.batch_size)
         return loss_dict["total_loss"]
