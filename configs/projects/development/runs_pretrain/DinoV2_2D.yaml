@@ -42,7 +42,7 @@ training:
   steps_per_epoch: 10000
   val_steps_per_epoch: 0
   max_epochs: ${eval:"${training.steps} / ${training.steps_per_epoch}"}
-  warmup_epochs: ${eval:"${training.steps} // (${training.max_epochs} * 10)"}
+  warmup_epochs: ${eval:"${training.max_epochs} // 10"}
   teacher_temp_warmup_epochs: 30
   teacher_temp_warmup_steps: ${eval:"(${training.teacher_temp_warmup_epochs} / ${training.max_epochs}) * ${training.steps}"}
   gradient_clip_val: 3.0

@@ -191,12 +191,18 @@ class DINOv2Module(L.LightningModule):
             raise ValueError(f"Unknown optimizer: {self.optimizer}")
 
         # Fix: Ensure proper scheduler configuration
-        max_steps = max(self.trainer.estimated_stepping_batches, 1)
+        if self.trainer.max_epochs <= 0:
+            optimizer_steps_per_epoch = self.trainer.limit_train_batches // self.trainer.accumulate_grad_batches
+        else:
+            optimizer_steps_per_epoch = self.trainer.estimated_stepping_batches // self.trainer.max_epochs
 
+        warmup_steps = self.warmup_epochs * optimizer_steps_per_epoch
+
+        max_steps = max(self.trainer.estimated_stepping_batches, 1)
         scheduler = {
             "scheduler": CosineWarmupScheduler(
                 optimizer=optimizer,
-                warmup_epochs=self.warmup_epochs,
+                warmup_epochs=warmup_steps,
                 max_epochs=max_steps,
                 end_value=self.min_lr / lr,
             ),
