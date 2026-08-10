@@ -2,11 +2,11 @@
 defaults:
   - /core/base@
   - /default_pretrain@
-  - /hardware/1gpu40cpu@hardware
+  - /hardware/2gpus@hardware
   - /model/dinov2_test@model
   - _self_
 
-task: PT000_LauritSSL_PNG
+task: PT400_DeepFetalV1
 root: base
 stem: debug
 
@@ -21,7 +21,10 @@ transforms:
   _cpu_val_transforms:
     global_view_size: ${training.global_crop_size}
     local_view_size: ${training.local_crop_size}
-    
+
+hardware:
+  strategy: ddp_find_unused_parameters_true
+  
 model:
   dimensions: 2D
   img_size: ${training.global_crop_size}
@@ -30,14 +33,14 @@ model:
   projection_dim: 65536
 
 data:
-  train_split: split_80_10_10
+  train_split: split_manual
   
 training:
   min_lr: 1e-6
   patch_size: [16,16]
   global_crop_size: [224,224]
   local_crop_size: [96,96]
-  batch_size: 128
+  batch_size: 256
   steps: 1000000
   steps_per_epoch: 10000
   val_steps_per_epoch: 0
