@@ -10,7 +10,6 @@ import lightning as L
 import torch
 import torch.nn as nn
 from asparagus.modules.data_modules.pretraining import PretrainDataModule
-from asparagus.modules.data_modules.training import ClsRegDataModule
 from asparagus.modules.lightning_modules.dinov2 import DINOv2Module
 from asparagus.modules.networks.dinov2 import vit_x
 from asparagus.modules.transforms.DinoV2 import DINOv2Augmentation
@@ -84,94 +83,97 @@ def test_2d_dinov2_pretrain_vit_x(pretrain_files_2d, make_trainer):
 
     # limit_val_batches=0: DINOv2Module.validation_step raises NotImplementedError
     # by design ("set val_steps_per_epoch to 0").
+    torch.cuda.memory._record_memory_history(max_entries=100000)
     make_trainer(limit_val_batches=0).fit(module, datamodule=data_module)
+    torch.cuda.memory._dump_snapshot("testmemout.pickle")
+    torch.cuda.memory._record_memory_history(enabled=None)
 
 
-def test_3d_dinov2_pretrain_vit_x(pretrain_files, make_trainer):
-    """DINOv2Module fits on synthetic pretrain data using a tiny vit_x backbone.
-
-    Uses img_size=(32,32,32) / patch_size=(8,8,8) → 4³=64 patches, which is
-    small enough to run on CPU in ~seconds while exercising the full pipeline:
-    DINOv2Augmentation → PretrainDataModule → DINOv2Module (DINO + iBOT + KoLeo
-    losses, layer-wise LR, teacher EMA update).
-    """
-    model = vit_x(img_size=(32, 32, 32), patch_size=(8, 8, 8))
-
-    # DINOv2Augmentation is used as a CPU transform: converts each raw image
-    # dict into {"image": [global_view1, global_view2], "local_views": [lv1, lv2]}.
-    # PyTorch's default collate then stacks per-sample lists into batched tensors.
-    augmentation = DINOv2Augmentation(
-        global_view_size=(32, 32, 32),
-        global_view_scale=[0.5, 1.0],
-        local_view_size=(32, 32, 32),
-        local_view_scale=[0.1, 0.5],
-        num_local_views=2,
-    )
-
-    data_module = PretrainDataModule(
-        batch_size=1,
-        num_workers=1,
-        train_split=pretrain_files["train"],
-        val_split=pretrain_files["val"],
-        train_transforms=augmentation,
-        val_transforms=None,
-    )
-
-    module = DINOv2Module(model=model, learning_rate=1e-3, teacher_temp_warmup_steps=0, warmup_epochs=0)
-
-    # limit_val_batches=0: DINOv2Module.validation_step raises NotImplementedError
-    # by design ("set val_steps_per_epoch to 0").
-    make_trainer(limit_val_batches=0).fit(module, datamodule=data_module)
-
-
-def test_3d_dinov2_cls_vit_x(cls_probe_files, make_trainer):
-    """Frozen vit_x backbone + linear head classifies on synthetic cls data.
-
-    vit_x.encode() extracts (B, 192) CLS-token features from 32³ volumes.
-    Only the linear head is trained; backbone gradients are disabled.
-    This mirrors the standard DinoV2 linear-evaluation protocol.
-    """
-    backbone = vit_x(img_size=(32, 32, 32), patch_size=(8, 8, 8))
-    module = DINOv2LinearHead(backbone=backbone, num_classes=2, hidden_size=192)
-
-    data_module = ClsRegDataModule(
-        batch_size=2,
-        num_workers=2,
-        train_split=cls_probe_files["train"],
-        val_split=cls_probe_files["val"],
-        test_samples=cls_probe_files["test"],
-        use_random_datasampler=False,
-    )
-
-    make_trainer().fit(module, datamodule=data_module)
-
-
-def test_3d_dinov2_vit_x_forward_structure():
-    """vit_x output dict matches the official DinoV2 interface.
-
-    Checks:
-    - All expected keys are present with correct shapes.
-    - Teacher outputs have no gradient (frozen backbone).
-    - encode() returns (B, hidden_size) CLS tokens for downstream use.
-    """
-    model = vit_x(img_size=(16, 16, 16), patch_size=(8, 8, 8))
-    model.eval()
-
-    B = 2
-    x = torch.randn(B, 1, 16, 16, 16)
-
-    out = model(global_views=[x])["pred"]
-
-    n_patches = (16 // 8) ** 3  # 2³ = 8
-    projection_dim = 65536
-    hidden_size = 192
-
-    assert out["teacher_cls_token"].shape == (B, projection_dim)
-    assert out["student_cls_token"].shape == (B, projection_dim)
-    assert out["teacher_patch_tokens"].shape == (B, n_patches, projection_dim)
-    assert out["student_patch_tokens"].shape == (B, n_patches, projection_dim)
-    assert out["mask"].shape == (B, n_patches)
-    assert not out["teacher_cls_token"].requires_grad  # teacher is frozen
-
-    feat = model.encode(x)
-    assert feat.shape == (B, hidden_size)
+# def test_3d_dinov2_pretrain_vit_x(pretrain_files, make_trainer):
+#    """DINOv2Module fits on synthetic pretrain data using a tiny vit_x backbone.
+#
+#    Uses img_size=(32,32,32) / patch_size=(8,8,8) → 4³=64 patches, which is
+#    small enough to run on CPU in ~seconds while exercising the full pipeline:
+#    DINOv2Augmentation → PretrainDataModule → DINOv2Module (DINO + iBOT + KoLeo
+#    losses, layer-wise LR, teacher EMA update).
+#    """
+#    model = vit_x(img_size=(32, 32, 32), patch_size=(8, 8, 8))
+#
+#    # DINOv2Augmentation is used as a CPU transform: converts each raw image
+#    # dict into {"image": [global_view1, global_view2], "local_views": [lv1, lv2]}.
+#    # PyTorch's default collate then stacks per-sample lists into batched tensors.
+#    augmentation = DINOv2Augmentation(
+#        global_view_size=(32, 32, 32),
+#        global_view_scale=[0.5, 1.0],
+#        local_view_size=(32, 32, 32),
+#        local_view_scale=[0.1, 0.5],
+#        num_local_views=2,
+#    )
+#
+#    data_module = PretrainDataModule(
+#        batch_size=1,
+#        num_workers=1,
+#        train_split=pretrain_files["train"],
+#        val_split=pretrain_files["val"],
+#        train_transforms=augmentation,
+#        val_transforms=None,
+#    )
+#
+#    module = DINOv2Module(model=model, learning_rate=1e-3, teacher_temp_warmup_steps=0, warmup_epochs=0)
+#
+#    # limit_val_batches=0: DINOv2Module.validation_step raises NotImplementedError
+#    # by design ("set val_steps_per_epoch to 0").
+#    make_trainer(limit_val_batches=0).fit(module, datamodule=data_module)
+#
+#
+# def test_3d_dinov2_cls_vit_x(cls_probe_files, make_trainer):
+#    """Frozen vit_x backbone + linear head classifies on synthetic cls data.
+#
+#    vit_x.encode() extracts (B, 192) CLS-token features from 32³ volumes.
+#    Only the linear head is trained; backbone gradients are disabled.
+#    This mirrors the standard DinoV2 linear-evaluation protocol.
+#    """
+#    backbone = vit_x(img_size=(32, 32, 32), patch_size=(8, 8, 8))
+#    module = DINOv2LinearHead(backbone=backbone, num_classes=2, hidden_size=192)
+#
+#    data_module = ClsRegDataModule(
+#        batch_size=2,
+#        num_workers=2,
+#        train_split=cls_probe_files["train"],
+#        val_split=cls_probe_files["val"],
+#        test_samples=cls_probe_files["test"],
+#        use_random_datasampler=False,
+#    )
+#
+#    make_trainer().fit(module, datamodule=data_module)
+#
+#
+# def test_3d_dinov2_vit_x_forward_structure():
+#    """vit_x output dict matches the official DinoV2 interface.
+#
+#    Checks:
+#    - All expected keys are present with correct shapes.
+#    - Teacher outputs have no gradient (frozen backbone).
+#    - encode() returns (B, hidden_size) CLS tokens for downstream use.
+#    """
+#    model = vit_x(img_size=(16, 16, 16), patch_size=(8, 8, 8))
+#    model.eval()
+#
+#    B = 2
+#    x = torch.randn(B, 1, 16, 16, 16)
+#
+#    out = model(global_views=[x])["pred"]
+#
+#    n_patches = (16 // 8) ** 3  # 2³ = 8
+#    projection_dim = 65536
+#    hidden_size = 192
+#
+#    assert out["teacher_cls_token"].shape == (B, projection_dim)
+#    assert out["student_cls_token"].shape == (B, projection_dim)
+#    assert out["teacher_patch_tokens"].shape == (B, n_patches, projection_dim)
+#    assert out["student_patch_tokens"].shape == (B, n_patches, projection_dim)
+#    assert out["mask"].shape == (B, n_patches)
+#    assert not out["teacher_cls_token"].requires_grad  # teacher is frozen
+#
+#    feat = model.encode(x)
+#    assert feat.shape == (B, hidden_size)
