@@ -147,7 +147,7 @@ def make_trainer(tmp_path):
 
     def _make(**kwargs):
         defaults = dict(
-            accelerator="cpu",
+            accelerator="gpu",
             max_epochs=1,
             limit_train_batches=5,
             limit_val_batches=5,
