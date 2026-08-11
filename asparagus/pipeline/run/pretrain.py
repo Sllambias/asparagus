@@ -1,6 +1,7 @@
 import hydra
 import lightning as pl
 import random
+import torch
 from asparagus.functional.hydra import fast_instantiate
 from asparagus.functional.versioning import generate_unused_run_id
 from asparagus.modules.hydra.plugins.searchpath_plugins import PretrainSearchpathPlugin
@@ -144,11 +145,14 @@ def main(cfg: DictConfig) -> None:
         )
         print(f"  - Warmup Pseudo Epochs: {cfg.training.warmup_epochs} (ratio {cfg.training.warmup_ratio})")
 
+    torch.cuda.memory._record_memory_history(max_entries=100000)
     trainer.fit(
         model=model_module,
         datamodule=data_module,
         ckpt_path="last",
     )
+    torch.cuda.memory._dump_snapshot("testmemout.pickle")
+    torch.cuda.memory._record_memory_history(enabled=None)
 
 
 if __name__ == "__main__":

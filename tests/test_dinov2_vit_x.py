@@ -83,10 +83,7 @@ def test_2d_dinov2_pretrain_vit_x(pretrain_files_2d, make_trainer):
 
     # limit_val_batches=0: DINOv2Module.validation_step raises NotImplementedError
     # by design ("set val_steps_per_epoch to 0").
-    torch.cuda.memory._record_memory_history(max_entries=100000)
     make_trainer(limit_val_batches=0).fit(module, datamodule=data_module)
-    torch.cuda.memory._dump_snapshot("testmemout.pickle")
-    torch.cuda.memory._record_memory_history(enabled=None)
 
 
 # def test_3d_dinov2_pretrain_vit_x(pretrain_files, make_trainer):
