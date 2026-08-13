@@ -144,12 +144,12 @@ class DINOv2(nn.Module):
         with torch.no_grad():
             teacher_cls_token, teacher_patch_tokens = self.forward_teacher(global_views)
             teacher_cls_token = self.teacher_dino_head(teacher_cls_token)
-            teacher_patch_tokens = self.teacher_ibot_head(teacher_patch_tokens)
+            masked_teacher_patch_tokens_after_head = self.teacher_ibot_head(teacher_patch_tokens[patch_mask])
 
         # Student forward
-        student_global_cls_token, student_global_patch_tokens = self.forward_student(global_views, mask=mask)
+        student_global_cls_token, masked_student_global_patch_tokens = self.forward_student(global_views, mask=mask)
         student_global_cls_token = self.student_dino_head(student_global_cls_token)
-        student_global_patch_tokens = self.student_ibot_head(student_global_patch_tokens)
+        masked_student_global_patch_tokens_after_head = self.student_ibot_head(masked_student_global_patch_tokens)
 
         # Local views
         if local_views is not None:
@@ -162,8 +162,8 @@ class DINOv2(nn.Module):
         out = {
             "teacher_cls_token": teacher_cls_token,
             "student_cls_token": student_cls_token,
-            "teacher_patch_tokens": teacher_patch_tokens,
-            "student_patch_tokens": student_global_patch_tokens,
+            "masked_teacher_patch_tokens_after_head": masked_teacher_patch_tokens_after_head,
+            "masked_student_global_patch_tokens_after_head": masked_student_global_patch_tokens_after_head,
             "student_glob_cls_token": student_global_cls_token,
             "mask": patch_mask,
         }
