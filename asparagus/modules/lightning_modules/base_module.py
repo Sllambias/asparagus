@@ -129,6 +129,7 @@ class BaseModule(L.LightningModule):
                 self.trainer.max_epochs,  # may be -1, if using max_steps
             )
         # Scheduler option 2: Two-phase schedule with joint warmup
+
         elif self.warmup_epochs > 0:
             scheduler = simple_warmup_cosine_decay_schedule(
                 optimizer,
