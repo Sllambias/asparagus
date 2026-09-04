@@ -91,6 +91,7 @@ def simple_warmup_cosine_decay_schedule(
 
     total_warmup_steps = int(warmup_epochs * steps_per_epoch)
     cosine_steps = int(cosine_period_ratio * (max_steps - total_warmup_steps))
+    assert max_steps > total_warmup_steps, "Max steps must be greater than total warmup steps for cosine decay schedule."
 
     cosine_scheduler = CosineAnnealingLR(optimizer, T_max=cosine_steps)
     warmup_scheduler = LinearLR(

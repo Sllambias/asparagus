@@ -9,10 +9,10 @@ from asparagus.functional.metrics import (
     performance as perf_metrics,
     reconstruction as recon_metrics,
     stability as stability_metrics,
-    visualization,
 )
-from asparagus.functional.visualization import log_images_to_logger
+from asparagus.functional.visualization import create_SSL_visualizations, log_images_to_logger
 from asparagus.modules.lightning_modules.base_module import BaseModule
+from asparagus.modules.losses.ssl_reconstruction_wrapper import ReconstructionLoss
 from torchvision import transforms
 from typing import Optional
 
@@ -55,12 +55,90 @@ class SelfSupervisedModule(BaseModule):
         )
 
         self.model = model
-        self._rec_loss_fn = nn.MSELoss(reduction="mean")
-        self.rec_loss_masked_only = rec_loss_masked_only
+        self.rec_loss_fn = ReconstructionLoss(nn.MSELoss(reduction="mean"), rec_loss_masked_only=rec_loss_masked_only)
         self.log_images_every_n_epoch = log_images_every_n_epoch
         self.mlflow_logging = mlflow_logging
         self.log_every_n_steps = log_every_n_steps
 
+    def training_step(self, batch, batch_idx):
+        x, y = batch["image"], batch["label"]
+
+        mask = batch.get("mask", None)
+        pred, encoder_features = self.model.forward_with_features(x)
+
+        loss = self.rec_loss_fn(pred, y, mask)
+        self.log(
+            "train/loss",
+            loss,
+            on_step=True,
+            sync_dist=True,
+            batch_size=self.trainer.datamodule.batch_size,
+        )
+
+        if self.current_epoch == self.log_images_every_n_epoch and batch_idx == 0 and self.trainer.is_global_zero:
+            with torch.no_grad():
+                images, error_images = create_SSL_visualizations(x, y, pred, mask, self.current_epoch)
+                log_images_to_logger(
+                    self.trainer.loggers,
+                    images,
+                    step=self.global_step,
+                    prefix="images/train",
+                )
+                log_images_to_logger(
+                    self.trainer.loggers,
+                    error_images,
+                    step=self.global_step,
+                    prefix="images/train_error",
+                )
+
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        x, y = batch["image"], batch["label"]
+
+        mask = batch.get("mask", None)
+
+        pred, encoder_features = self.model.forward_with_features(x)
+        loss = self.rec_loss_fn(pred, y, mask)
+
+        self.log(
+            "val/loss",
+            loss,
+            on_step=True,
+            sync_dist=True,
+            batch_size=self.trainer.datamodule.batch_size,
+        )
+
+        # rank zero only
+        if self.trainer.is_global_zero:
+            images, error_images = create_SSL_visualizations(x, y, pred, mask, self.current_epoch)
+            log_images_to_logger(self.trainer.loggers, images, step=self.global_step, prefix="images/val")
+            log_images_to_logger(
+                self.trainer.loggers,
+                error_images,
+                step=self.global_step,
+                prefix="images/val_error_map",
+            )
+
+    def format_metrics(self, stage, metric_groups):
+        """
+        Format metrics with hierarchical naming: stage/module/metric on wandb and stage_module/metric on MLflow.
+        """
+        #
+        metric_separator = "_" if self.mlflow_logging else "/"  # mlflow only supports one / (sigh)
+        metrics = {}
+        for module_name, metric_dict in metric_groups.items():
+            for key, value in metric_dict.items():
+                metrics[f"{stage}{metric_separator}{module_name}/{key}"] = value
+        return metrics
+
+    def predict_step(self, batch, batch_idx):
+        x = batch["image"]
+        embeddings = self.model.encoder(x)[-1]
+        return embeddings
+
+
+class SelfSupervisedModuleExtendedLogging(SelfSupervisedModule):
     def training_step(self, batch, batch_idx):
         x, y = batch["image"], batch["label"]
 
@@ -71,7 +149,7 @@ class SelfSupervisedModule(BaseModule):
         mask = batch.get("mask", None)
         pred, encoder_features = self.model.forward_with_features(x)
 
-        loss = self._rec_loss(pred, y, mask if self.rec_loss_masked_only else None)
+        loss = self.rec_loss_fn(pred, y, mask)
         assert not torch.isnan(loss), "Reconstruction loss is NaN"
 
         # Logging
@@ -80,20 +158,20 @@ class SelfSupervisedModule(BaseModule):
             transforms_applied = batch.get("transforms_applied", None)
             if self.global_step % self.log_every_n_steps == 0:  # dont compute if not being logged...
                 metrics = {
-                    "loss": loss_metrics.compute_train(loss, pred, y, mask, self._rec_loss),
+                    "loss": loss_metrics.compute_train(loss, pred, y, mask, self.rec_loss_fn),
                     "features": feat_metrics.compute_train(encoder_features),
                     "masking": masking.compute(mask, x),
                     "performance": perf_metrics.compute(transforms_applied, x.shape[0]),
                     "stability": stability_metrics.compute_nan_inf_metrics(loss=loss, pred=pred, activations=encoder_features),
                 }
                 self.log_dict(
-                    self._format_metrics("train", metrics),
+                    self.format_metrics("train", metrics),
                     sync_dist=True,
                     batch_size=self.trainer.datamodule.batch_size,
                 )
 
-            if self.current_epoch % 10 == 0 and batch_idx == 0 and self.trainer.is_global_zero:
-                images, error_images = visualization.create_visualizations(x, y, pred, mask, self.current_epoch)
+            if self.current_epoch == self.log_images_every_n_epoch and batch_idx == 0 and self.trainer.is_global_zero:
+                images, error_images = create_SSL_visualizations(x, y, pred, mask, self.current_epoch)
                 log_images_to_logger(
                     self.trainer.loggers,
                     images,
@@ -119,25 +197,25 @@ class SelfSupervisedModule(BaseModule):
         mask = batch.get("mask", None)
 
         pred, encoder_features = self.model.forward_with_features(x)
-        loss = self._rec_loss(pred, y, mask if self.rec_loss_masked_only else None)
+        loss = self.rec_loss_fn(pred, y, mask)
         assert not torch.isnan(loss), "Reconstruction loss is NaN"
 
         # Logging
         metrics = {
-            "loss": loss_metrics.compute_val(loss, pred, y, mask, self._rec_loss),
+            "loss": loss_metrics.compute_val(loss, pred, y, mask, self.rec_loss_fn),
             "features": feat_metrics.compute_val(encoder_features, self.model),
             "distribution": dist_metrics.compute(x, pred, y, encoder_features),
             "reconstruction": recon_metrics.compute(pred, y, mask),
         }
         self.log_dict(
-            self._format_metrics("val", metrics),
+            self.format_metrics("val", metrics),
             sync_dist=True,
             batch_size=self.trainer.datamodule.batch_size,
         )
 
         # rank zero only
         if self.trainer.is_global_zero:
-            images, error_images = visualization.create_visualizations(x, y, pred, mask, self.current_epoch)
+            images, error_images = create_SSL_visualizations(x, y, pred, mask, self.current_epoch)
             log_images_to_logger(self.trainer.loggers, images, step=self.global_step, prefix="images/val")
             log_images_to_logger(
                 self.trainer.loggers,
@@ -146,16 +224,6 @@ class SelfSupervisedModule(BaseModule):
                 prefix="images/val_error_map",
             )
 
-    def _rec_loss(self, pred, y, mask=None):
-        if mask is not None:
-            # mask is True for kept/visible voxels and False for masked voxels.
-            assert mask.dtype == torch.bool, "Mask must be boolean"
-            masked = ~mask
-            assert masked.any(), "Mask contains no masked voxels"
-            return self._rec_loss_fn(pred[masked], y[masked])
-
-        return self._rec_loss_fn(pred, y)
-
     def on_after_backward(self):
         grad_clip_val = self.trainer.gradient_clip_val if hasattr(self.trainer, "gradient_clip_val") else None
         metrics_grouped = {
@@ -163,24 +231,7 @@ class SelfSupervisedModule(BaseModule):
             "performance": perf_metrics.compute_on_backward(self.trainer),
         }
         self.log_dict(
-            self._format_metrics("train", metrics_grouped),
+            self.format_metrics("train", metrics_grouped),
             sync_dist=True,
             batch_size=self.trainer.datamodule.batch_size,
         )
-
-    def _format_metrics(self, stage, metric_groups):
-        """
-        Format metrics with hierarchical naming: stage/module/metric on wandb and stage_module/metric on MLflow.
-        """
-        #
-        metric_separator = "_" if self.mlflow_logging else "/"  # mlflow only supports one / (sigh)
-        metrics = {}
-        for module_name, metric_dict in metric_groups.items():
-            for key, value in metric_dict.items():
-                metrics[f"{stage}{metric_separator}{module_name}/{key}"] = value
-        return metrics
-
-    def predict_step(self, batch, batch_idx):
-        x = batch["image"]
-        embeddings = self.model.encoder(x)[-1]
-        return embeddings

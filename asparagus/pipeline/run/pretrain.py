@@ -39,8 +39,6 @@ def main(cfg: DictConfig) -> None:
 
     plugins = prepare_ssl_plugins(cfg)
 
-    assert cfg.task is not None, "Config file is not set up correctly."
-
     loggers = logging(
         ckpt_wandb_id=version_store.wandb_id,
         ckpt_mlflow_id=version_store.mlflow_id,
@@ -118,30 +116,17 @@ def main(cfg: DictConfig) -> None:
 
     trainer = fast_instantiate(
         cfg.lightning._trainer,
+        accumulate_grad_batches=cfg.training.accumulate_grad_batches,
         callbacks=callbacks,
+        check_val_every_n_epoch=cfg.training.check_val_every_n_epoch,
+        default_root_dir=path_store.run_dir,
+        limit_train_batches=cfg.training.train_batches_per_epoch_per_device,
+        limit_val_batches=cfg.training.val_batches_per_epoch_per_device,
         log_every_n_steps=cfg.logger.log_every_n_steps,
         logger=loggers,
-        default_root_dir=path_store.run_dir,
-        check_val_every_n_epoch=cfg.training.check_val_every_n_epoch,
-        max_steps=cfg.training.steps,
-        limit_train_batches=cfg.training.steps_per_epoch,
-        limit_val_batches=cfg.training.val_steps_per_epoch,
+        max_epochs=cfg.training.epochs,
         use_distributed_sampler=False,
-        accumulate_grad_batches=cfg.training.accumulate_grad_batches,
     )
-
-    if trainer.is_global_zero:
-        print("Training duration configured as:")
-        print(f"  - Steps: {cfg.training.steps}")
-        print(f"  - Global batch size: {cfg.training.global_batch_size}")
-        print(f"  - Steps per pseudo epoch: {cfg.training.steps_per_epoch}")
-        print(f"  - Validation steps per pseudo epoch: {cfg.training.val_steps_per_epoch}")
-        print(
-            "  - Pseudo Epochs: {:.1f}".format(
-                cfg.training.steps / (cfg.training.steps_per_epoch * cfg.training.accumulate_grad_batches)
-            )
-        )
-        print(f"  - Warmup Pseudo Epochs: {cfg.training.warmup_epochs} (ratio {cfg.training.warmup_ratio})")
 
     trainer.fit(
         model=model_module,
