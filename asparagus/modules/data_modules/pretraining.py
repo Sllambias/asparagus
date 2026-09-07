@@ -56,7 +56,7 @@ class PretrainDataModule(pl.LightningDataModule):
         )
 
     def train_dataloader(self):
-        sampler = RandomSampler(self.train_dataset, num_samples=999999, replacement=True)
+        sampler = RandomSampler(self.train_dataset, num_samples=9999999, replacement=True)
         if dist.is_initialized():
             sampler = DistributedSamplerWrapper(sampler)
 
@@ -71,7 +71,7 @@ class PretrainDataModule(pl.LightningDataModule):
         )
 
     def val_dataloader(self):
-        sampler = RandomSampler(self.val_dataset, num_samples=999999, replacement=True)
+        sampler = RandomSampler(self.val_dataset, num_samples=9999999, replacement=True)
         if dist.is_initialized():
             sampler = DistributedSamplerWrapper(sampler)
 
@@ -98,9 +98,11 @@ class PretrainDataModule(pl.LightningDataModule):
 if __name__ == "__main__":
     from gardening_tools.functional.paths.read import load_json
 
-    splits = load_json("/Users/zcr545/Desktop/Projects/repos/asparagus_data/preprocessed_data/Task999_DummyData/splits.json")
-    train_split = splits["train"]
-    val_split = splits["validation"]
+    splits = load_json(
+        "/Users/zcr545/Desktop/Projects/repos/asparagus_data/preprocessed_data/PT000_LauritSSL_PNG/split_80_10_10.json"
+    )
+    train_split = splits[0]["train"]
+    val_split = splits[0]["val"]
     data_module = PretrainDataModule(
         train_split=train_split,
         val_split=val_split,

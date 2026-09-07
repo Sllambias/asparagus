@@ -2,23 +2,26 @@
 defaults:
   - /core/base@
   - /default_pretrain@
-  - /hardware/1gpu12cpu@hardware
+  - /hardware/cpu@hardware
+  - /model/unet_tiny@model
   - _self_
 
-task: 
+task: PT000_LauritSSL2D
 root: base
 stem: debug
 
 model:
-  dimensions: 3D
+  dimensions: 2D
 
 training:
-  patch_size: [32, 32, 32]
+  accumulate_grad_batches: 4
+  patch_size: [32, 32]
   batch_size: 2
-  steps_per_epoch: 50
-  val_steps_per_epoch: 10
   epochs: 5
+  warmup_epochs: 3
 
+data:
+  train_split: split_40_10_50
 logger:
   progress_bar: True
   profile: False
