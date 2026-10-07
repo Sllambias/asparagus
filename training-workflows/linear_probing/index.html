@@ -5,10 +5,10 @@
 <head>
     <script>
         /* const base_url = "https://Sllambias.github.io/asparagus/"; */
-        const base_url = (new URL("..", window.location)).href.replace(/\/+$/, ""); /* for search plugin notably */
-        /* const root_relative_url = ".."; */
+        const base_url = (new URL("../..", window.location)).href.replace(/\/+$/, ""); /* for search plugin notably */
+        /* const root_relative_url = "../.."; */
     </script>
-    <script integrity="sha384-m6cZ+Whl1ci89lidlu8DH4C+sZLNOYBvImtjUIhUK+iaNffXhqtbYgBVuuPfRsa0" src="../js/dark.js"></script>
+    <script integrity="sha384-m6cZ+Whl1ci89lidlu8DH4C+sZLNOYBvImtjUIhUK+iaNffXhqtbYgBVuuPfRsa0" src="../../js/dark.js"></script>
 
 
     <meta charset="utf-8" />
@@ -18,7 +18,7 @@
     
 
 
-<title>Environment variables</title>
+<title>Linear Probing</title>
 
 
 
@@ -28,18 +28,18 @@
 
 
 
-<link rel="canonical" href="https://Sllambias.github.io/asparagus/environment_variables/">
+<link rel="canonical" href="https://Sllambias.github.io/asparagus/training-workflows/linear_probing/">
 
 
 <!-- Open Graph (Facebook, LinkedIn) -->
 
-<meta property="og:title" content="Environment variables">
+<meta property="og:title" content="Linear Probing">
 
 
 
 
 
-<meta property="og:url" content="https://Sllambias.github.io/asparagus/environment_variables/">
+<meta property="og:url" content="https://Sllambias.github.io/asparagus/training-workflows/linear_probing/">
 
 
 
@@ -48,7 +48,7 @@
 
 <!-- Twitter Card -->
 
-<meta name="twitter:title" content="Environment variables">
+<meta name="twitter:title" content="Linear Probing">
 
 
 
@@ -60,10 +60,10 @@
 
 
     
-    <link href="../assets/imgs/favicon.ico" rel="icon" />
+    <link href="../../assets/imgs/favicon.ico" rel="icon" />
 
-    <link href="../css/base.css" rel="stylesheet" />
-    <link href="../css/geist.css" rel="stylesheet" />
+    <link href="../../css/base.css" rel="stylesheet" />
+    <link href="../../css/geist.css" rel="stylesheet" />
 
     
 
@@ -72,12 +72,12 @@
             --theme-accent: oklch(62.3% 0.214 259.815);
         }
     </style>
-    <link href="../assets/css/copy-code-button.css" rel="stylesheet" />
+    <link href="../../assets/css/copy-code-button.css" rel="stylesheet" />
 
     
 
     <script integrity="sha384-V2jkXRy811qODUbfkLlkVJYBbf4h6XHAEjcU6ReASBPrJvTrlYh4GrI4t6GCju6n"
-        src="../js/callbacks.js"></script>
+        src="../../js/callbacks.js"></script>
 
     
 
@@ -141,7 +141,7 @@
                     
 
 
-<img class="size-5" src="../assets/imgs/android-chrome-512x512.png" alt="icon">
+<img class="size-5" src="../../assets/imgs/android-chrome-512x512.png" alt="icon">
 
 
 
@@ -283,7 +283,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href=".."
+        data-size="default" href="../.."
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -316,7 +316,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../getting-started/install/"
+        data-size="default" href="../../getting-started/install/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -335,7 +335,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../getting-started/environment_variables/"
+        data-size="default" href="../../getting-started/environment_variables/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -354,7 +354,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../getting-started/environment_on_gefion/"
+        data-size="default" href="../../getting-started/environment_on_gefion/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -386,7 +386,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../data-pipeline/preprocessing/"
+        data-size="default" href="../../data-pipeline/preprocessing/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -405,7 +405,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../data-pipeline/data_structure/"
+        data-size="default" href="../../data-pipeline/data_structure/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -437,7 +437,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../training-workflows/pretraining/"
+        data-size="default" href="../pretraining/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -456,7 +456,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../training-workflows/segmentation/"
+        data-size="default" href="../segmentation/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -475,7 +475,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../training-workflows/classification/"
+        data-size="default" href="../classification/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -493,8 +493,8 @@
             
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
-    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../training-workflows/linear_probing/"
+    <a data-slot="sidebar-menu-button" data-active="true" data-sidebar="menu-button"
+        data-size="default" href="./"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -513,7 +513,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../training-workflows/regression/"
+        data-size="default" href="../regression/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -532,7 +532,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../training-workflows/cross_dataset/"
+        data-size="default" href="../cross_dataset/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -551,7 +551,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../training-workflows/configs/"
+        data-size="default" href="../configs/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -583,7 +583,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../evaluation/evalbox/"
+        data-size="default" href="../../evaluation/evalbox/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -615,7 +615,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../advanced/common_issues/"
+        data-size="default" href="../../advanced/common_issues/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -634,7 +634,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../advanced/hacking_asparagus/"
+        data-size="default" href="../../advanced/hacking_asparagus/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -653,7 +653,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../advanced/training_times/"
+        data-size="default" href="../../advanced/training_times/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -685,7 +685,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../project/about/"
+        data-size="default" href="../../project/about/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -704,7 +704,7 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../project/contributing/"
+        data-size="default" href="../../project/contributing/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
 
         
@@ -746,13 +746,13 @@
     <div class="flex flex-col gap-2">
       <div id="page-header" class="flex items-start justify-between">
         <h1 class="scroll-m-20 text-4xl font-semibold tracking-tight sm:text-3xl xl:text-4xl">
-          Environment variables
+          Linear Probing
         </h1>
 
         <div class="flex items-center gap-2 pt-1.5">
           
           <button
-    onclick="fetch(`..`).then((r) => r.text()).then((text) => navigator.clipboard.write([new ClipboardItem({ 'text/plain': text })]))"
+    onclick="fetch(`../..`).then((r) => r.text()).then((text) => navigator.clipboard.write([new ClipboardItem({ 'text/plain': text })]))"
     data-slot="button" class="secondary cursor-pointer">
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
         stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tabler-icon tabler-icon-copy ">
@@ -765,6 +765,32 @@
 </button>
           
           
+          <a data-slot="button" id="previous-button"
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-secondary text-secondary-foreground hover:bg-secondary/80 extend-touch-target size-8 shadow-none md:size-7"
+            href="../classification/">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="tabler-icon tabler-icon-arrow-left">
+              <path d="M5 12l14 0"></path>
+              <path d="M5 12l6 6"></path>
+              <path d="M5 12l6 -6"></path>
+            </svg>
+            <span class="sr-only">Previous</span>
+          </a>
+          
+          
+          <a data-slot="button" id="next-button"
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-secondary text-secondary-foreground hover:bg-secondary/80 extend-touch-target size-8 shadow-none md:size-7"
+            href="../regression/">
+            <span class="sr-only">Next</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="tabler-icon tabler-icon-arrow-right">
+              <path d="M5 12l14 0"></path>
+              <path d="M13 18l6 -6"></path>
+              <path d="M13 6l6 6"></path>
+            </svg>
+          </a>
           
         </div>
       </div>
@@ -776,33 +802,129 @@
     </div>
   </div>
   <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
-    <h2 id="environment-variables">Environment Variables</h2>
-<p>All environment variables should be put in a <code>.env</code> file in the project root which will be loaded automatically. Alternatively they can be set manually using <code>export VAR=VALUE</code> at the start of each session.</p>
-<h3 id="required-environment-variables">Required Environment Variables:</h3>
-<pre><code class="language-bash">ASPARAGUS_CONFIGS=/PATH/TO/CONFIG/DIR
-ASPARAGUS_DATA=/PATH/TO/ASPARAGUS/DATA
-ASPARAGUS_MODELS=/PATH/TO/ASPARAGUS/MODELS
-ASPARAGUS_RESULTS=/PATH/TO/ASPARAGUS/RESULTS
-ASPARAGUS_RAW_LABELS=/PATH/TO/ASPARAGUS/RAW_LABELS
-</code></pre>
+    <h1 id="linear-probing">Linear Probing</h1>
+<p>Linear probing measures how useful an encoder's features are for classification. Asparagus freezes the encoder, keeps it in evaluation mode, and trains linear classification heads on globally averaged features from its final layer. Unlike <a href="../classification/#finetuning-from-a-pretrained-model">fine-tuning</a>, this leaves the encoder weights unchanged.</p>
+<p><code>asp_linear_probe</code> uses <code>configs/default_linear_probe.yaml</code>. It trains one head per candidate learning rate in a single run, selects the head with the highest validation <strong>macro AUROC</strong>, and automatically evaluates that head on the test set.</p>
+<h2 id="prerequisites">Prerequisites</h2>
 <ul>
-<li><code>ASPARAGUS_CONFIGS</code> points to the directory containing the default configs found in asparagus/configs. This variable is used in the training and inference scripts.</li>
-<li><code>ASPARAGUS_DATA</code> points to the directory containing the task converted data and is used to locate data and metadata for the Task. Task Conversion scripts must save processed data here. </li>
-<li><code>ASPARAGUS_MODELS</code> points to the directory containing model checkpoints, test outputs (results only), logs and metadata. </li>
-<li><code>ASPARAGUS_RESULTS</code> points to the directory containing predict outputs (output files and results).</li>
-<li><code>ASPARAGUS_RAW_LABELS</code> points to the directory containing raw labels. Preprocessing scripts must save FORMATTED but NOT PROCESSED labels here. This is used to get results on native labels. I.e. <em>formatting</em> such as changing all LabelX instances to become LabelY SHOULD be done on the RAW labels but <em>preprocessing</em> such as resampling to a specific resolution/spacing SHOULD NOT be done on the RAW labels. For additional explanation see: <a href="https://github.com/Sllambias/asparagus_preprocessing/README.md">Asparagus Preprocessing</a>.</li>
+<li><a href="../../getting-started/install/">Install Asparagus</a> and configure the <a href="../../getting-started/environment_variables/">environment variables</a>, including <code>ASPARAGUS_CONFIGS</code>, <code>ASPARAGUS_DATA</code>, and <code>ASPARAGUS_MODELS</code>.</li>
+<li>Prepare a <a href="../../data-pipeline/data_structure/">classification dataset and split files</a>. Each image must have a single integer class label; task metadata must include <code>n_classes</code> and <code>n_modalities</code>.</li>
+<li>Choose a classification model config compatible with your pretrained encoder. The example below uses <code>resenc_unet_b_clsreg</code> for a matching residual UNet encoder. Custom models must accept <code>late_fusion=True</code> and expose <code>_encode()</code> features suitable for spatial average pooling.</li>
+<li>Provide both a train/validation split and a held-out test split. The command runs testing automatically, so set <code>data.test_split</code> explicitly to an existing split file name, without <code>.json</code>.</li>
 </ul>
-<h3 id="optional-environment-variables">Optional Environment Variables</h3>
-<p>(supports multiple colon-separated (":") paths):</p>
-<pre><code class="language-bash">ASPARAGUS_PRETRAIN_CONFIGS=/PATH1/TO/ADDITIONAL/PRETRAIN/CONFIG/DIR:PATH2/TO/ADDITIONAL/PRETRAIN/CONFIG/DIR:PATH3...
-ASPARAGUS_TRAIN_CONFIGS=/PATH1/TO/ADDITIONAL/TRAIN/CONFIG/DIR:PATH2/TO/ADDITIONAL/TRAIN/CONFIG/DIR:PATH3...
-ASPARAGUS_FINETUNE_CONFIGS=/PATH1/TO/ADDITIONAL/FINETUNE/CONFIG/DIR:PATH2/TO/ADDITIONAL/FINETUNECONFIG/DIR:PATH3...
+<h2 id="run-a-probe">Run a Probe</h2>
+<p>Load a pretrained checkpoint by its run ID:</p>
+<pre><code class="language-bash">asp_linear_probe \
+    task=Task004_Name \
+    +model=resenc_unet_b_clsreg \
+    checkpoint_run_id=435850 \
+    load_checkpoint_name=last.ckpt \
+    data.train_split=split_75_15_10 \
+    data.test_split=TEST_75_15_10
 </code></pre>
-<ul>
-<li><code>ASPARAGUS_PRETRAIN_CONFIGS</code> points to all directories containing pretraining configs. When <code>asp_pretrain --config-name MyFancyPretrainConfig</code>is called all the given <code>ASPARAGUS_PRETRAIN_CONFIGS</code> directories are scanned for MyFancyPretrainConfig.yaml.</li>
-<li><code>ASPARAGUS_TRAIN_CONFIGS</code> points to all directories containing training from scratch configs. When <code>asp_train_[cls,reg,seg] --config-name MyLovelyTrainConfig</code>is called all the given <code>ASPARAGUS_PRETRAIN_CONFIGS</code> directories are scanned for MyLovelyTrainingConfig.yaml.</li>
-<li><code>ASPARAGUS_FINETUNE_CONFIGS</code> points to all directories containing finetuning configs. When <code>asp_finetune_[cls,reg,seg] --config-name MyAwesomeFinetuneConfig</code>is called all the given <code>ASPARAGUS_PRETRAIN_CONFIGS</code> directories are scanned for MyAwesomeFinetuneConfig.yaml.</li>
-</ul>
+<p>Replace the task, checkpoint run ID, model config, and split names with your own. Match <code>model.dimensions</code> and <code>training.target_size</code> to the data and encoder; defaults are <code>3D</code> for this model and <code>[160,160,160]</code> for the probe's target size.</p>
+<p>To load a checkpoint directly, replace <code>checkpoint_run_id</code> and <code>load_checkpoint_name</code> with a path:</p>
+<pre><code class="language-bash">asp_linear_probe \
+    task=Task004_Name \
+    +model=resenc_unet_b_clsreg \
+    checkpoint_path=/path/to/last.ckpt \
+    data.train_split=split_75_15_10 \
+    data.test_split=TEST_75_15_10
+</code></pre>
+<p>You can also set <code>hf_model_id=owner/model</code> for an Asparagus-compatible Hugging Face checkpoint, with <code>hf_weight_format</code> configured if a different weight mapper is needed. Use only one checkpoint source: <code>checkpoint_run_id</code>, <code>checkpoint_path</code>, or <code>hf_model_id</code>. If none is supplied, the probe uses a randomly initialized, frozen encoder as a baseline.</p>
+<p>Weights are loaded into the encoder without loading the pretrained decoder. Check the weight-loading output to confirm that the intended encoder weights were loaded.</p>
+<h2 id="configure-training">Configure Training</h2>
+<p>Use Hydra overrides to adjust the learning-rate candidates and training settings:</p>
+<pre><code class="language-bash">asp_linear_probe \
+    task=Task004_Name \
+    +model=resenc_unet_b_clsreg \
+    checkpoint_run_id=435850 \
+    data.train_split=split_75_15_10 \
+    data.test_split=TEST_75_15_10 \
+    training.probing.learning_rates='[1e-4,1e-3,1e-2]' \
+    training.epochs=20 \
+    training.check_val_every_n_epoch=1 \
+    training.batch_size=8 \
+    training.target_size='[160,160,160]' \
+    training.seed=42 \
+    +hardware=1gpu12cpu
+</code></pre>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Purpose</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>training.probing.learning_rates</code></td>
+<td>Candidate initial learning rates; one head per value</td>
+<td><code>[5e-5,1e-4,5e-4,1e-3,5e-3,1e-2,5e-2,1e-1]</code></td>
+</tr>
+<tr>
+<td><code>training.epochs</code></td>
+<td>Training epochs</td>
+<td><code>15</code></td>
+</tr>
+<tr>
+<td><code>training.check_val_every_n_epoch</code></td>
+<td>Validation interval in epochs</td>
+<td><code>2</code></td>
+</tr>
+<tr>
+<td><code>training.batch_size</code></td>
+<td>Training and validation batch size</td>
+<td><code>4</code></td>
+</tr>
+<tr>
+<td><code>training.accumulate_grad_batches</code></td>
+<td>Batches accumulated per optimizer step</td>
+<td><code>2</code></td>
+</tr>
+<tr>
+<td><code>training.target_size</code></td>
+<td>Spatial crop size</td>
+<td><code>[160,160,160]</code></td>
+</tr>
+<tr>
+<td><code>training.pretrained_target_size</code></td>
+<td>Original spatial size when positional embeddings need resizing</td>
+<td>unset</td>
+</tr>
+<tr>
+<td><code>training.seed</code></td>
+<td>Random seed</td>
+<td>randomly generated</td>
+</tr>
+<tr>
+<td><code>data.fold</code></td>
+<td>Fold index in the train/validation split</td>
+<td><code>0</code></td>
+</tr>
+<tr>
+<td><code>+hardware</code></td>
+<td>Hardware config to append</td>
+<td><code>1gpu40cpu</code></td>
+</tr>
+<tr>
+<td><code>logger.wandb_logging</code></td>
+<td>Enable Weights &amp; Biases logging</td>
+<td><code>True</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Use a non-empty list of distinct learning-rate candidates. Heads use SGD with momentum <code>0.9</code>, no weight decay, and cosine learning-rate decay. The probe uses <code>training.probing.learning_rates</code> rather than <code>model.finetune_lr</code> or <code>model.train_lr</code>.</p>
+<p>Validation runs before training and at the configured interval. Each validation pass selects the highest-AUROC head at that point; testing uses the selected head's current weights after training. Set <code>training.check_val_every_n_epoch=1</code> to ensure selection also runs at the end of the final epoch.</p>
+<p>Weights &amp; Biases logging is enabled by default under the <code>LinearProbe</code> project. Configure your account as for other training workflows, or pass <code>logger.wandb_logging=false</code> to disable it.</p>
+<p>To inspect the composed configuration without training, append <code>--cfg job</code> to your command. For reusable YAML configs and <code>--config-name</code>, see the <a href="../configs/">Config Reference</a>.</p>
+<h2 id="results">Results</h2>
+<p>The run prints its run ID and full run directory under <code>$ASPARAGUS_MODELS</code>. Predictions are written to:</p>
+<pre><code class="language-text">&lt;run_dir&gt;/predictions/&lt;test_task&gt;__&lt;data.test_split&gt;__linear_probe.json
+</code></pre>
+<p><code>test_task</code> defaults to <code>task</code>. The JSON contains the predicted class and label for each test sample, aggregate <code>AUROC_macro</code>, <code>AUPRC_macro</code>, and <code>F1_macro</code> metrics, and the selected <code>best_head</code> and <code>best_head_lr</code>. Per-head training and validation metrics and <code>val/best_head_auroc</code> are logged during the run.</p>
+<p>Linear probing disables model checkpoint saving. The results describe an encoder evaluation; the trained heads are not saved for later use with <code>asp_test_cls</code>.</p>
   </div>
   
   <script>
@@ -813,6 +935,32 @@ ASPARAGUS_FINETUNE_CONFIGS=/PATH1/TO/ADDITIONAL/FINETUNE/CONFIG/DIR:PATH2/TO/ADD
 </article>
                                 <div class="mx-auto flex flex-wrap h-16 w-full max-w-2xl items-center gap-2 px-4 md:px-0">
     
+    <a data-slot="button"
+        class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-secondary text-secondary-foreground hover:bg-secondary/80 h-8 rounded-md gap-1.5 px-3 has-[&gt;svg]:px-2.5 shadow-none"
+        href="../classification/">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="tabler-icon tabler-icon-arrow-left ">
+            <path d="M5 12l14 0"></path>
+            <path d="M5 12l6 6"></path>
+            <path d="M5 12l6 -6"></path>
+        </svg>
+        <span class="max-[500px]:hidden">Classification</span>
+    </a>
+    
+    
+    <a data-slot="button"
+        class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-secondary text-secondary-foreground hover:bg-secondary/80 h-8 rounded-md gap-1.5 px-3 has-[&gt;svg]:px-2.5 ml-auto shadow-none"
+        href="../regression/">
+        <span class="max-[500px]:hidden">Regression</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="tabler-icon tabler-icon-arrow-right ">
+            <path d="M5 12l14 0"></path>
+            <path d="M13 18l6 -6"></path>
+            <path d="M13 6l6 6"></path>
+        </svg>
+    </a>
     
 </div>
                                 
@@ -835,7 +983,7 @@ ASPARAGUS_FINETUNE_CONFIGS=/PATH1/TO/ADDITIONAL/FINETUNE/CONFIG/DIR:PATH2/TO/ADD
                 <div class="text-muted-foreground text-sm font-medium">Menu</div>
                 <div class="flex flex-col gap-3">
                     
-                    <a class="text-2xl font-medium" href="..">
+                    <a class="text-2xl font-medium" href="../..">
                         
                         Home
                         
@@ -853,19 +1001,19 @@ ASPARAGUS_FINETUNE_CONFIGS=/PATH1/TO/ADDITIONAL/FINETUNE/CONFIG/DIR:PATH2/TO/ADD
                     
                     <div class="flex flex-col gap-3">
                         
-                        <a class="text-2xl font-medium" href="../getting-started/install/">
+                        <a class="text-2xl font-medium" href="../../getting-started/install/">
                             
                             Installation
                             
                         </a>
                         
-                        <a class="text-2xl font-medium" href="../getting-started/environment_variables/">
+                        <a class="text-2xl font-medium" href="../../getting-started/environment_variables/">
                             
                             Environment Setup
                             
                         </a>
                         
-                        <a class="text-2xl font-medium" href="../getting-started/environment_on_gefion/">
+                        <a class="text-2xl font-medium" href="../../getting-started/environment_on_gefion/">
                             
                             HPC Configuration
                             
@@ -880,13 +1028,13 @@ ASPARAGUS_FINETUNE_CONFIGS=/PATH1/TO/ADDITIONAL/FINETUNE/CONFIG/DIR:PATH2/TO/ADD
                     
                     <div class="flex flex-col gap-3">
                         
-                        <a class="text-2xl font-medium" href="../data-pipeline/preprocessing/">
+                        <a class="text-2xl font-medium" href="../../data-pipeline/preprocessing/">
                             
                             Preprocessing
                             
                         </a>
                         
-                        <a class="text-2xl font-medium" href="../data-pipeline/data_structure/">
+                        <a class="text-2xl font-medium" href="../../data-pipeline/data_structure/">
                             
                             Data Structure
                             
@@ -901,43 +1049,43 @@ ASPARAGUS_FINETUNE_CONFIGS=/PATH1/TO/ADDITIONAL/FINETUNE/CONFIG/DIR:PATH2/TO/ADD
                     
                     <div class="flex flex-col gap-3">
                         
-                        <a class="text-2xl font-medium" href="../training-workflows/pretraining/">
+                        <a class="text-2xl font-medium" href="../pretraining/">
                             
                             Pretraining (SSL)
                             
                         </a>
                         
-                        <a class="text-2xl font-medium" href="../training-workflows/segmentation/">
+                        <a class="text-2xl font-medium" href="../segmentation/">
                             
                             Segmentation
                             
                         </a>
                         
-                        <a class="text-2xl font-medium" href="../training-workflows/classification/">
+                        <a class="text-2xl font-medium" href="../classification/">
                             
                             Classification
                             
                         </a>
                         
-                        <a class="text-2xl font-medium" href="../training-workflows/linear_probing/">
+                        <a class="text-2xl font-medium" href="./">
                             
                             Linear Probing
                             
                         </a>
                         
-                        <a class="text-2xl font-medium" href="../training-workflows/regression/">
+                        <a class="text-2xl font-medium" href="../regression/">
                             
                             Regression
                             
                         </a>
                         
-                        <a class="text-2xl font-medium" href="../training-workflows/cross_dataset/">
+                        <a class="text-2xl font-medium" href="../cross_dataset/">
                             
                             Cross-Dataset Evaluation
                             
                         </a>
                         
-                        <a class="text-2xl font-medium" href="../training-workflows/configs/">
+                        <a class="text-2xl font-medium" href="../configs/">
                             
                             Config Reference
                             
@@ -952,7 +1100,7 @@ ASPARAGUS_FINETUNE_CONFIGS=/PATH1/TO/ADDITIONAL/FINETUNE/CONFIG/DIR:PATH2/TO/ADD
                     
                     <div class="flex flex-col gap-3">
                         
-                        <a class="text-2xl font-medium" href="../evaluation/evalbox/">
+                        <a class="text-2xl font-medium" href="../../evaluation/evalbox/">
                             
                             The EvalBox
                             
@@ -967,19 +1115,19 @@ ASPARAGUS_FINETUNE_CONFIGS=/PATH1/TO/ADDITIONAL/FINETUNE/CONFIG/DIR:PATH2/TO/ADD
                     
                     <div class="flex flex-col gap-3">
                         
-                        <a class="text-2xl font-medium" href="../advanced/common_issues/">
+                        <a class="text-2xl font-medium" href="../../advanced/common_issues/">
                             
                             Common Issues
                             
                         </a>
                         
-                        <a class="text-2xl font-medium" href="../advanced/hacking_asparagus/">
+                        <a class="text-2xl font-medium" href="../../advanced/hacking_asparagus/">
                             
                             Hacking Asparagus
                             
                         </a>
                         
-                        <a class="text-2xl font-medium" href="../advanced/training_times/">
+                        <a class="text-2xl font-medium" href="../../advanced/training_times/">
                             
                             Training Benchmarks
                             
@@ -994,13 +1142,13 @@ ASPARAGUS_FINETUNE_CONFIGS=/PATH1/TO/ADDITIONAL/FINETUNE/CONFIG/DIR:PATH2/TO/ADD
                     
                     <div class="flex flex-col gap-3">
                         
-                        <a class="text-2xl font-medium" href="../project/about/">
+                        <a class="text-2xl font-medium" href="../../project/about/">
                             
                             About Us
                             
                         </a>
                         
-                        <a class="text-2xl font-medium" href="../project/contributing/">
+                        <a class="text-2xl font-medium" href="../../project/contributing/">
                             
                             Contributing
                             
@@ -1029,18 +1177,34 @@ ASPARAGUS_FINETUNE_CONFIGS=/PATH1/TO/ADDITIONAL/FINETUNE/CONFIG/DIR:PATH2/TO/ADD
         
         
         
-        <a href="#required-environment-variables"
+        <a href="#prerequisites"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2" onClick="deferSetActiveTocLink('#required-environment-variables');">
-            Required Environment Variables:
+            data-active="false" data-depth="2" onClick="deferSetActiveTocLink('#prerequisites');">
+            Prerequisites
         </a>
         
 
         
-        <a href="#optional-environment-variables"
+        <a href="#run-a-probe"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2" onClick="deferSetActiveTocLink('#optional-environment-variables');">
-            Optional Environment Variables
+            data-active="false" data-depth="2" onClick="deferSetActiveTocLink('#run-a-probe');">
+            Run a Probe
+        </a>
+        
+
+        
+        <a href="#configure-training"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2" onClick="deferSetActiveTocLink('#configure-training');">
+            Configure Training
+        </a>
+        
+
+        
+        <a href="#results"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2" onClick="deferSetActiveTocLink('#results');">
+            Results
         </a>
         
 
@@ -1077,21 +1241,21 @@ ASPARAGUS_FINETUNE_CONFIGS=/PATH1/TO/ADDITIONAL/FINETUNE/CONFIG/DIR:PATH2/TO/ADD
     </div>
      
 
-<script src="../assets/js/copy-code-button.js"></script>
+<script src="../../assets/js/copy-code-button.js"></script>
 
      
 
-<script src="../search/main.js"></script>
+<script src="../../search/main.js"></script>
 
 
     
 
     <script integrity="sha384-JLNLRFGzvOp0up707XKgSnAjjt1w5BF/+lbeLQvlf6mNwf0m89IXFdpNAk4t6Hcs"
-        src="../js/copy-button.js"></script>
+        src="../../js/copy-button.js"></script>
     <script integrity="sha384-JBx6cBEiyhK1KPwZgBHiI6GDaAmvlOxMQFyWAZTEpW5Ifo5XQ2LBcJ61GVOumwF1"
-        src="../js/sidebar.js"></script>
+        src="../../js/sidebar.js"></script>
     <script integrity="sha384-fNURFMRt0p/HqXnQnV4+CT9dX1GiU5F0fC3pFbg7gfoANytoUMErSW7suWSBkSuF"
-        src="../js/slider.js"></script>
+        src="../../js/slider.js"></script>
     <script>updatePygmentsStylesheet();</script>
     
     <script>fetchStargazers("https://github.com/Sllambias/asparagus");</script>
