@@ -2,6 +2,8 @@
 
 Asparagus supports 2D and 3D medical image classification. This page covers the full lifecycle: training from scratch, fine-tuning from a pretrained model, running inference, and tuning hyperparameters.
 
+To evaluate a pretrained encoder by training only a linear classification head, see [Linear Probing](linear_probing.md).
+
 
 ## Training from Scratch
 
