@@ -1,0 +1,13 @@
+# @package _global_
+defaults:
+  - /default_pretrain
+  - /hardware/2gpus@hardware
+  - _self_
+
+# Step-based recipe: fixed batches per epoch (one FOMO60k pass at 2 GPUs x 16), epochs derived from max_samples
+training:
+  max_samples: 6_000_000
+  train_batches_per_epoch_per_device: 1890
+  val_batches_per_epoch_per_device: ${eval:"${training.train_batches_per_epoch_per_device} // 100"}
+  epochs: ${eval:"${training.max_samples} // (${training.train_batches_per_epoch_per_device} * ${training.batch_size} * ${hardware.num_devices} * ${hardware.num_nodes})"}
+  warmup_epochs: ${eval:"max(1, int(${training.epochs} * 0.02))"}

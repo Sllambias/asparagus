@@ -92,7 +92,9 @@ class DINOv2Module(L.LightningModule):
         return loss_dict["total_loss"]
 
     def validation_step(self, batch: tuple[Tensor, Tensor, list[str]], batch_idx: int) -> Tensor:
-        raise NotImplementedError("Validation not support for DinoV2 training. Set val_steps_per_epoch to 0.")
+        raise NotImplementedError(
+            "Validation not support for DinoV2 training. Set training.val_batches_per_epoch_per_device to 0."
+        )
 
     def forward(self, x: Tensor) -> Tensor:
         return self.model(x)

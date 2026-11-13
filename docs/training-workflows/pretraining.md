@@ -38,8 +38,9 @@ asp_pretrain --config-name my_pretrain_config
 | `+model` | Model architecture config to append | required |
 | `data.train_split` | Split file name inside the task folder | required |
 | `training.mask_ratio` | Fraction of patches to mask | ~0.75 |
-| `training.epochs` | Total training epochs | configured in model |
-| `training.warmup_ratio` | Fraction of epochs used for LR warmup | configured in model |
+| `training.max_samples` | Total samples seen across all devices; sets the batches per epoch | `10_000_000` |
+| `training.epochs` | Total training epochs | `1000` |
+| `training.warmup_epochs` | Epochs of linear LR warmup | `20` |
 | `training.rec_loss_masked_only` | Only compute loss on masked patches | `True` |
 | `training.patch_size` | 3D patch size for SSL training | configured in model |
 | `run_id` | Assign a specific run ID (omit for auto) | auto-generated |
