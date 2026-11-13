@@ -1,68 +1,13 @@
+# @package _global_
 defaults:
-  - core/base@
-  - hardware/2gpus@hardware
+  - /default_pretrain
+  - /hardware/2gpus@hardware
   - _self_
 
-task:
-root: base
-stem:
-
-model:
-  net: ${model.pretrain_net}
-  ckpt_every_n_epoch: 5
-
-lightning:
-  data_module: PretrainDataModule
-  lightning_module: SelfSupervisedModule
-
-data:
-  data_path: ${oc.env:ASPARAGUS_DATA}/${task}
-  train_split: split_99_01_00
-  fold: 0
-
+# Step-based recipe: fixed batches per epoch (one FOMO60k pass at 2 GPUs x 16), epochs derived from max_samples
 training:
-  batch_size: 16
-  accumulate_grad_batches: 1
-  patch_size: [160, 160, 160]
-  seed: ${random:0,1000000}
-  mask_patch_size: ${model.patch_embed_size}
-  mask_ratio: 0.6
   max_samples: 6_000_000
-  warmup_ratio: 0.02
-  steps_per_epoch: 1890  # <--- should be constant ... but note that if gradient accumulation is used, then steps_per_epoch > number of backwards passes.
-  val_steps_per_epoch: ${eval:"${training.steps_per_epoch} // 100"}
-  global_batch_size: ${eval:"${training.batch_size} * ${hardware.num_devices} * ${hardware.num_nodes} * ${training.accumulate_grad_batches}"}
-  steps: ${eval:"${training.max_samples} // (${training.global_batch_size})"}
-  warmup_epochs: ${eval:"max(1, int((${training.steps} // ${training.steps_per_epoch}) * ${training.warmup_ratio}))"}
-  decoder_warmup_epochs: 0
-  rec_loss_masked_only: False
-  check_val_every_n_epoch: 3
-
-# samples_per_epoch = steps_per_epoch * num_devices * num_nodes * batch_size
-# epochs = 6_000_000 / samples_per_epoch
-# steps = 6_000_000 / (num_devices * num_nodes * batch_size)
-
-transforms:
-  cpu_tr_transforms: pretrain_CPU_train_transforms
-  cpu_val_transforms: pretrain_CPU_val_transforms
-  gpu_tr_transforms: pretrain_GPU_train_transforms
-  gpu_val_transforms: pretrain_GPU_val_transforms
-  masking: True
-  normalize: True
-
-logger:
-  progress_bar: True
-  profile: False
-  wandb_log_model: False
-  wandb_logging: True
-  wandb_entity: ${oc.env:WANDB_ENTITY, "team-asparagus"}
-  wandb_project: Pretrain
-  mlflow_logging: False
-  log_every_n_steps: 250
-  log_images_every_n_epoch: 5
-  log_to_stdout: False
-
-profiler:
-  enabled: False
-  profile_every_n_steps: 500
-  warmup_steps: 10
+  train_batches_per_epoch_per_device: 1890
+  val_batches_per_epoch_per_device: ${eval:"${training.train_batches_per_epoch_per_device} // 100"}
+  epochs: ${eval:"${training.max_samples} // (${training.train_batches_per_epoch_per_device} * ${training.batch_size} * ${hardware.num_devices} * ${hardware.num_nodes})"}
+  warmup_epochs: ${eval:"max(1, int(${training.epochs} * 0.02))"}

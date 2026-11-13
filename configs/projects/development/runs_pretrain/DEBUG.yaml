@@ -18,6 +18,7 @@ training:
   patch_size: [32, 32]
   batch_size: 2
   epochs: 5
+  max_samples: 500  # 50 batches per epoch
   warmup_epochs: 3
 
 data:

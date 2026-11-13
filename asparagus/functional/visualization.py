@@ -5,7 +5,7 @@ import wandb
 from asparagus.functional.decorators import depends_on_mlflow
 from math import ceil, floor
 from PIL import Image
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 try:
     import mlflow
@@ -327,7 +327,9 @@ def log_image_output_target_to_mlflow(
         )
 
 
-def create_SSL_visualizations(x: torch.Tensor, y: torch.Tensor, pred: torch.Tensor, mask: Optional[torch.Tensor], epoch: int):
+def create_ssl_visualizations(
+    x: torch.Tensor, y: torch.Tensor, pred: torch.Tensor, mask: Optional[torch.Tensor], epoch: int
+) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     """
     Create visualization tensors for logging.
 

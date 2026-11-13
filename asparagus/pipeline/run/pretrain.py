@@ -32,6 +32,7 @@ Plugins.instance().register(PretrainSearchpathPlugin)
     version_base="1.2",
 )
 def main(cfg: DictConfig) -> None:
+    assert cfg.task is not None, "No task set. Pass task=<task name> or set it in the config."
     print(f"{OmegaConf.to_yaml(cfg)}\n Version: {cfg.run_id}\n Run dir: {HydraConfig.get().run.dir}\n")
     logging_safe_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     file_store, path_store, version_store = prepare_standard_experiment(cfg)
