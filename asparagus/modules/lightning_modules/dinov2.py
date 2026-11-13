@@ -87,6 +87,14 @@ class DINOv2Module(L.LightningModule):
         for key, value in loss_dict.items():
             log_dict[f"train_{key}"] = value if value is not None else 0.0
 
+        self.log(
+            "train_loss",
+            loss_dict["total_loss"],
+            prog_bar=True,
+            sync_dist=True,
+            batch_size=self.trainer.datamodule.batch_size,
+        )
+
         log_dict["global_step"] = float(self.trainer.global_step)
         self.log_dict(log_dict, prog_bar=False, sync_dist=True, batch_size=self.trainer.datamodule.batch_size)
         return loss_dict["total_loss"]
@@ -183,12 +191,18 @@ class DINOv2Module(L.LightningModule):
             raise ValueError(f"Unknown optimizer: {self.optimizer}")
 
         # Fix: Ensure proper scheduler configuration
-        max_steps = max(self.trainer.estimated_stepping_batches, 1)
+        if self.trainer.max_epochs <= 0:
+            optimizer_steps_per_epoch = self.trainer.limit_train_batches // self.trainer.accumulate_grad_batches
+        else:
+            optimizer_steps_per_epoch = self.trainer.estimated_stepping_batches // self.trainer.max_epochs
 
+        warmup_steps = self.warmup_epochs * optimizer_steps_per_epoch
+
+        max_steps = max(self.trainer.estimated_stepping_batches, 1)
         scheduler = {
             "scheduler": CosineWarmupScheduler(
                 optimizer=optimizer,
-                warmup_epochs=self.warmup_epochs,
+                warmup_epochs=warmup_steps,
                 max_epochs=max_steps,
                 end_value=self.min_lr / lr,
             ),

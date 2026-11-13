@@ -1,6 +1,7 @@
 import hydra
 import lightning as pl
 import random
+import torch
 from asparagus.functional.hydra import fast_instantiate
 from asparagus.functional.versioning import generate_unused_run_id
 from asparagus.modules.hydra.plugins.searchpath_plugins import PretrainSearchpathPlugin
@@ -10,7 +11,7 @@ from asparagus.pipeline.auto_configuration.logging import logging
 from dotenv import load_dotenv
 from hydra.core.hydra_config import HydraConfig
 from hydra.core.plugins import Plugins
-from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint, TQDMProgressBar
+from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint, ModelSummary, TQDMProgressBar
 from omegaconf import DictConfig, OmegaConf
 
 load_dotenv()
@@ -64,6 +65,7 @@ def main(cfg: DictConfig) -> None:
             filename="last",
             enable_version_counter=False,
         ),
+        ModelSummary(max_depth=3),
         LearningRateMonitor(logging_interval="epoch", log_momentum=True),
     ] + plugins
 
@@ -143,11 +145,14 @@ def main(cfg: DictConfig) -> None:
         )
         print(f"  - Warmup Pseudo Epochs: {cfg.training.warmup_epochs} (ratio {cfg.training.warmup_ratio})")
 
+    torch.cuda.memory._record_memory_history(max_entries=100000)
     trainer.fit(
         model=model_module,
         datamodule=data_module,
         ckpt_path="last",
     )
+    torch.cuda.memory._dump_snapshot("testmemout.pickle")
+    torch.cuda.memory._record_memory_history(enabled=None)
 
 
 if __name__ == "__main__":

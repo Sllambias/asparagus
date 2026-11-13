@@ -38,16 +38,17 @@ class DINOv2Loss(nn.Module):
             center_momentum=self.center_momentum,
         )
 
-        self.ibot_loss_fn = (
-            IBOTPatchLoss3D(
-                output_dim=self.output_dim,
-                teacher_temp=self.teacher_temp_min,  # Will be updated dynamically
-                student_temp=self.student_temp,
-                center_momentum=self.center_momentum,
-            )
-            if self.w_ibot > 0
-            else None
-        )
+        # self.ibot_loss_fn = (
+        #    IBOTPatchLoss3D(
+        #        output_dim=self.output_dim,
+        #        teacher_temp=self.teacher_temp_min,  # Will be updated dynamically
+        #        student_temp=self.student_temp,
+        #        center_momentum=self.center_momentum,
+        #    )
+        #    if self.w_ibot > 0
+        #    else None
+        # )
+        self.ibot_loss_fn = None
 
         self.koleo_loss_fn = KoLeoLoss() if self.w_koleo > 0 else None
 
