@@ -30,6 +30,7 @@ nav:
     - Pretraining (SSL):   training-workflows/pretraining.md
     - Segmentation:        training-workflows/segmentation.md
     - Classification:      training-workflows/classification.md
+    - Linear Probing:      training-workflows/linear_probing.md
     - Regression:          training-workflows/regression.md
     - Cross-Dataset Evaluation: training-workflows/cross_dataset.md
     - Config Reference:    training-workflows/configs.md
