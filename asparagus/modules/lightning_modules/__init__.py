@@ -1,7 +1,7 @@
 from .clsreg_module import ClassificationModule, RegressionModule
 from .linear_probe_module import LinearProbeModule
 from .segmentation_module import SegmentationModule
-from .self_supervised import SelfSupervisedModule
+from .self_supervised import SelfSupervisedModule, SelfSupervisedModuleExtendedLogging
 from importlib import import_module
 
 __all__ = [
@@ -9,6 +9,7 @@ __all__ = [
     "ClassificationModule",
     "RegressionModule",
     "SelfSupervisedModule",
+    "SelfSupervisedModuleExtendedLogging",
     "DINOv2Module",
     "LinearProbeModule",
 ]

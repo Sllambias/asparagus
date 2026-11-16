@@ -39,8 +39,8 @@ training:
   global_crop_size: [64,64,64]
   local_crop_size: [32,32,32]
   batch_size: 2
-  steps_per_epoch: 50
-  val_steps_per_epoch: 0
+  train_batches_per_epoch_per_device: 50
+  val_batches_per_epoch_per_device: 0
   epochs: 5
 
 logger:
