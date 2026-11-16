@@ -6,6 +6,7 @@ from lightly.models.modules.heads import DINOv2ProjectionHead
 from lightly.utils.scheduler import cosine_schedule
 from monai.networks.nets.vit import ViT
 from torch import nn
+from typing import Dict, List, Optional
 
 
 @torch.no_grad()
@@ -122,12 +123,18 @@ class DINOv2(nn.Module):
         if self.ibot_separate_head:
             self.student_ibot_head.cancel_last_layer_gradients(current_epoch)
 
-    def forward(self, global_views: list[torch.Tensor], local_views: list[torch.Tensor] = None) -> dict:
+    def forward(
+        self,
+        global_views: List[torch.Tensor],
+        local_views: Optional[List[torch.Tensor]] = None,
+        ibot: bool = True,
+    ) -> Dict[str, Dict[str, torch.Tensor]]:
         """
-        Forward pass for DINOv2 3D with block masking and multi-view augmentations.
+        Forward pass for DINOv2 with block masking and multi-view augmentations.
         Args:
-            global_views: List of augmented 3D tensors (global views)
-            local_views: List of augmented 3D tensors (local views)
+            global_views: List of augmented tensors (global views)
+            local_views: List of augmented tensors (local views)
+            ibot: Whether to project the masked patch tokens for the iBOT loss
         Returns:
             Dict of teacher/student outputs for loss computation
         """
@@ -144,12 +151,10 @@ class DINOv2(nn.Module):
         with torch.no_grad():
             teacher_cls_token, teacher_patch_tokens = self.forward_teacher(global_views)
             teacher_cls_token = self.teacher_dino_head(teacher_cls_token)
-            masked_teacher_patch_tokens_after_head = self.teacher_ibot_head(teacher_patch_tokens[patch_mask])
 
         # Student forward
-        student_global_cls_token, masked_student_global_patch_tokens = self.forward_student(global_views, mask=mask)
+        student_global_cls_token, student_global_patch_tokens = self.forward_student(global_views, mask=mask)
         student_global_cls_token = self.student_dino_head(student_global_cls_token)
-        masked_student_global_patch_tokens_after_head = self.student_ibot_head(masked_student_global_patch_tokens)
 
         # Local views
         if local_views is not None:
@@ -162,11 +167,17 @@ class DINOv2(nn.Module):
         out = {
             "teacher_cls_token": teacher_cls_token,
             "student_cls_token": student_cls_token,
-            "masked_teacher_patch_tokens_after_head": masked_teacher_patch_tokens_after_head,
-            "masked_student_global_patch_tokens_after_head": masked_student_global_patch_tokens_after_head,
             "student_glob_cls_token": student_global_cls_token,
             "mask": patch_mask,
         }
+
+        # Only the masked patch tokens go through the heads, as in the official implementation
+        if ibot:
+            with torch.no_grad():
+                out["masked_teacher_patch_tokens_after_head"] = self.teacher_ibot_head(teacher_patch_tokens[patch_mask])
+            out["masked_student_global_patch_tokens_after_head"] = self.student_ibot_head(
+                student_global_patch_tokens[patch_mask]
+            )
 
         return {"pred": out}
 

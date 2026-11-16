@@ -84,6 +84,10 @@ class IBOTPatchLoss3D(nn.Module):
         else:
             raise ValueError("teacher_out must be 2D or 3D (got dim={})".format(teacher_out.dim()))
 
+        # No masked patches: return a zero that keeps the student in the graph and leave the center alone
+        if teacher_sel.shape[0] == 0:
+            return student_sel.sum() * 0.0
+
         # Cross-entropy between centered teacher and student distributions
         teacher_softmax = F.softmax((teacher_sel - self.center.value.to(teacher_sel.device)) / teacher_temperature, dim=-1)
         student_log_softmax = F.log_softmax(student_sel / self.student_temp, dim=-1)

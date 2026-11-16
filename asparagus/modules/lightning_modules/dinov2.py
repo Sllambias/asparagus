@@ -30,6 +30,8 @@ class DINOv2Module(L.LightningModule):
         teacher_temp_warmup_steps: int = 30,
         teacher_temp_min: float = 0.04,
         teacher_temp_max: float = 0.07,
+        ibot_loss_weight: float = 1.0,
+        koleo_loss_weight: float = 0.1,
         freeze_last_layer_epochs: int = 0,
         warmup_epochs: int = 10,
         compile_mode: bool = False,  # not currently used
@@ -68,8 +70,8 @@ class DINOv2Module(L.LightningModule):
             teacher_temp_max=teacher_temp_max,
             teacher_temp_warmup_steps=teacher_temp_warmup_steps,
             output_dim=self.model.projection_dim,
-            ibot_loss_weight=1.0,
-            koleo_loss_weight=0.1,
+            ibot_loss_weight=ibot_loss_weight,
+            koleo_loss_weight=koleo_loss_weight,
         )
 
     def predict_step(self, batch: tuple[list[Tensor], Tensor, list[str]], batch_idx: int) -> Tensor:
@@ -78,10 +80,13 @@ class DINOv2Module(L.LightningModule):
         )
 
     def training_step(self, batch: tuple[list[Tensor], Tensor, list[str]], batch_idx: int) -> Tensor:
-        outputs = self.model(global_views=batch["image"], local_views=batch.get("local_views", None))
-        loss_dict = self.criterion(
-            outputs["pred"], global_step=self.trainer.global_step, batch_size=self.trainer.datamodule.batch_size
+        batch_size = batch["image"][0].shape[0]
+        outputs = self.model(
+            global_views=batch["image"],
+            local_views=batch.get("local_views", None),
+            ibot=self.criterion.ibot_loss_fn is not None,
         )
+        loss_dict = self.criterion(outputs["pred"], global_step=self.trainer.global_step, batch_size=batch_size)
 
         log_dict = {}
         for key, value in loss_dict.items():
@@ -92,11 +97,11 @@ class DINOv2Module(L.LightningModule):
             loss_dict["total_loss"],
             prog_bar=True,
             sync_dist=True,
-            batch_size=self.trainer.datamodule.batch_size,
+            batch_size=batch_size,
         )
 
         log_dict["global_step"] = float(self.trainer.global_step)
-        self.log_dict(log_dict, prog_bar=False, sync_dist=True, batch_size=self.trainer.datamodule.batch_size)
+        self.log_dict(log_dict, prog_bar=False, sync_dist=True, batch_size=batch_size)
         return loss_dict["total_loss"]
 
     def validation_step(self, batch: tuple[Tensor, Tensor, list[str]], batch_idx: int) -> Tensor:
