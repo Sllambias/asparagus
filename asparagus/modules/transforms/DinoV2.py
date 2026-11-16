@@ -35,8 +35,8 @@ class RandomResizedCropND(Transform):
             prob (float): Probability of applying the random resized crop.
             size (Union[int, Tuple[int, int, int]]): Desired output size after resizing.
                 If an int is provided, it will be used for all three dimensions.
-            scale (List[int]): Specifies the lower and upper bounds for the random area of the crop,
-             before resizing. The scale is defined with respect to the area of the original image.
+            scale (Tuple[float, float]): Lower and upper bounds for the crop's share of the image area
+             (volume in 3D) before resizing, as in torchvision's RandomResizedCrop.
         """
         super().__init__()
         self.prob = prob
@@ -51,7 +51,8 @@ class RandomResizedCropND(Transform):
 
     def __call__(self, image):
         if torch.rand(1) < self.prob:
-            random_scale = torch.empty(1).uniform_(*self.scale).item()
+            # scale is a share of the area or volume, RandScaleCrop scales each axis
+            random_scale = torch.empty(1).uniform_(*self.scale).item() ** (1 / len(self.size))
             rand_cropper = RandScaleCrop(random_scale, random_size=False)
             resizer = Resize(self.size, mode=self.mode)
 
@@ -85,9 +86,9 @@ class DINOv2Augmentation(nn.Module):
         """
         super().__init__()
         if global_view_scale is None:
-            global_view_scale = [0.3, 1.0]
+            global_view_scale = [0.32, 1.0]
         if local_view_scale is None:
-            local_view_scale = [0.1, 0.3]
+            local_view_scale = [0.05, 0.32]
         self.global_view_scale = global_view_scale
         self.global_view_size = global_view_size
         self.local_view_scale = local_view_scale
