@@ -35,10 +35,12 @@ def compute_loss_metrics(
     mask: torch.Tensor,
     loss_fn: nn.Module,
 ) -> Dict[str, Any]:
+    loss_full = loss_fn(pred, y)
+    loss_masked = loss_fn(pred[~mask], y[~mask]) if mask is not None else loss_full
     return {
         "loss": loss.item(),
-        "loss_masked": loss_fn(pred, y, mask).item(),
-        "loss_full": loss_fn(pred, y, None).item(),
+        "loss_masked": loss_masked.item(),
+        "loss_full": loss_full.item(),
     }
 
 
