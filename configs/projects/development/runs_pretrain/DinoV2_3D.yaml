@@ -30,6 +30,9 @@ transforms:
     
 model:
   dimensions: 3D
+  hidden_size: 192
+  ibot_separate_head: False
+  projection_dim: 65536
 
 data:
   train_split: split_40_10_50
@@ -42,6 +45,7 @@ training:
   train_batches_per_epoch_per_device: 50
   val_batches_per_epoch_per_device: 0
   epochs: 5
+  warmup_epochs: ${eval:"${training.epochs} // 10"}
 
 logger:
   progress_bar: True
