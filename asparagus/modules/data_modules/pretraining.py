@@ -6,7 +6,7 @@ from asparagus.modules.datasets.PretrainDataset import PretrainDataset
 from asparagus.modules.datasets.TrainDataset import SingleSubjectPredictDataset
 from asparagus.modules.transforms.presets import pretrain_CPU_train_transforms, pretrain_CPU_val_transforms
 from lightning.fabric.utilities.distributed import DistributedSamplerWrapper
-from torch.utils.data import DataLoader, RandomSampler
+from torch.utils.data import DataLoader, RandomSampler, Sampler
 from torchvision.transforms import Compose
 from typing import Literal, Optional
 
@@ -55,10 +55,16 @@ class PretrainDataModule(pl.LightningDataModule):
             transforms=self.predict_transforms,
         )
 
-    def train_dataloader(self):
-        sampler = RandomSampler(self.train_dataset, num_samples=999999, replacement=True)
+    def random_sampler(self, dataset: PretrainDataset, batches_per_device: int) -> Sampler:
+        """Draw with replacement exactly the samples one epoch needs across all devices."""
+        world_size = dist.get_world_size() if dist.is_initialized() else 1
+        sampler = RandomSampler(dataset, num_samples=batches_per_device * self.batch_size * world_size, replacement=True)
         if dist.is_initialized():
             sampler = DistributedSamplerWrapper(sampler)
+        return sampler
+
+    def train_dataloader(self):
+        sampler = self.random_sampler(self.train_dataset, self.trainer.limit_train_batches)
 
         return DataLoader(
             self.train_dataset,
@@ -71,9 +77,7 @@ class PretrainDataModule(pl.LightningDataModule):
         )
 
     def val_dataloader(self):
-        sampler = RandomSampler(self.val_dataset, num_samples=999999, replacement=True)
-        if dist.is_initialized():
-            sampler = DistributedSamplerWrapper(sampler)
+        sampler = self.random_sampler(self.val_dataset, self.trainer.limit_val_batches)
 
         return DataLoader(
             self.val_dataset,
@@ -98,9 +102,11 @@ class PretrainDataModule(pl.LightningDataModule):
 if __name__ == "__main__":
     from gardening_tools.functional.paths.read import load_json
 
-    splits = load_json("/Users/zcr545/Desktop/Projects/repos/asparagus_data/preprocessed_data/Task999_DummyData/splits.json")
-    train_split = splits["train"]
-    val_split = splits["validation"]
+    splits = load_json(
+        "/Users/zcr545/Desktop/Projects/repos/asparagus_data/preprocessed_data/PT000_LauritSSL_PNG/split_80_10_10.json"
+    )
+    train_split = splits[0]["train"]
+    val_split = splits[0]["val"]
     data_module = PretrainDataModule(
         train_split=train_split,
         val_split=val_split,
