@@ -1,6 +1,7 @@
+import math
 import torch
 from asparagus.modules.networks.vision_transformer import MaskedVisionTransformer
-from asparagus.modules.transforms.blockmask import random_block_mask
+from asparagus.modules.transforms.blockmask import RandomBlockMask
 from functools import partial
 from lightly.models.modules.heads import DINOv2ProjectionHead
 from lightly.utils.scheduler import cosine_schedule
@@ -38,6 +39,9 @@ class DINOv2(nn.Module):
         ibot_separate_head: bool = False,
         freeze_last_layer: int = -1,
         projection_dim: int = 65536,
+        mask_probability: float = 0.5,
+        mask_ratio_min: float = 0.1,
+        mask_ratio_max: float = 0.5,
     ):
         """
         Initialize DINOv2_3D model.
@@ -88,8 +92,15 @@ class DINOv2(nn.Module):
 
         self.teacher_ibot_head = self.teacher_dino_head
         self.student_ibot_head = self.student_dino_head
-        self.random_block_mask = random_block_mask(
-            grid_size=self.student_backbone.grid_size, sequence_length=self.student_backbone.sequence_length
+        grid_size = self.student_backbone.grid_size
+        assert math.prod(grid_size) == self.student_backbone.sequence_length - 1, (
+            f"Grid size {grid_size} does not match {self.student_backbone.sequence_length - 1} patches"
+        )
+        self.random_block_mask = RandomBlockMask(
+            grid_size=grid_size,
+            mask_probability=mask_probability,
+            mask_ratio_min=mask_ratio_min,
+            mask_ratio_max=mask_ratio_max,
         )
 
     def forward_teacher(self, x):
