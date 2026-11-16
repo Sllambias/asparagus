@@ -228,8 +228,10 @@ def test_teacher_starts_as_copy_of_student():
 
 def test_local_views_train_the_position_embeddings():
     model = vit_x(img_size=(32, 32), patch_size=(8, 8), projection_dim=256)
-    model.student_backbone(torch.randn(2, 1, 16, 16))[:, 0].sum().backward()
-    assert model.student_backbone.vit.patch_embedding.position_embeddings.grad.abs().sum() > 0
+    # A plain sum of the final LayerNorm output has zero gradient, so square it
+    model.student_backbone(torch.randn(2, 1, 16, 16))[:, 0].pow(2).sum().backward()
+    grad = model.student_backbone.vit.patch_embedding.position_embeddings.grad
+    assert grad is not None and grad.abs().sum() > 0
 
 
 def test_koleo_uses_backbone_cls_tokens():
