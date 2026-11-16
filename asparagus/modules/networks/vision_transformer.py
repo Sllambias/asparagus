@@ -25,6 +25,11 @@ class MaskedVisionTransformer(nn.Module):
 
         self.grid_size = [round(self.sequence_length ** (1 / self.spatial_dims))] * self.spatial_dims
 
+        # MONAI's classification head is unused; freezing it lets DDP run without find_unused_parameters
+        if hasattr(self.vit, "classification_head"):
+            for param in self.vit.classification_head.parameters():
+                param.requires_grad = False
+
         # Initialize learnable parameters
         self.mask_token = nn.Parameter(torch.zeros(1, 1, self.hidden_dim))
         nn.init.normal_(self.mask_token, std=0.02)
@@ -51,10 +56,12 @@ class MaskedVisionTransformer(nn.Module):
         if embeddings.shape[1] != self.vit.patch_embedding.position_embeddings.shape[1]:
             root_n_positions = round(embeddings.shape[1] ** (1 / self.spatial_dims))
             new_grid_size = [root_n_positions] * self.spatial_dims
-            x = self.vit.patch_embedding.position_embeddings.transpose(1, 2).reshape(1, self.hidden_dim, *self.grid_size)
+            pos_embed = self.vit.patch_embedding.position_embeddings.transpose(1, 2).reshape(
+                1, self.hidden_dim, *self.grid_size
+            )
             new_pos_embed = (
                 torch.nn.functional.interpolate(
-                    x,
+                    pos_embed,
                     size=new_grid_size,
                     mode=self.interpolation_mode,
                     align_corners=False,
@@ -62,7 +69,7 @@ class MaskedVisionTransformer(nn.Module):
                 .reshape(1, self.hidden_dim, -1)
                 .transpose(1, 2)
             )
-            embeddings = embeddings + nn.Parameter(new_pos_embed)
+            embeddings = embeddings + new_pos_embed
         else:
             embeddings = embeddings + self.vit.patch_embedding.position_embeddings
 

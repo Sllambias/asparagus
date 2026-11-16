@@ -196,3 +196,67 @@ def test_2d_dinov2_pretrain_without_ibot(pretrain_files_2d, make_trainer):
     module = DINOv2Module(model=model, teacher_temp_warmup_steps=0, warmup_epochs=0, ibot_loss_weight=0.0)
     assert module.criterion.ibot_loss_fn is None
     make_trainer(limit_val_batches=0).fit(module, datamodule=data_module)
+
+
+def tiny_2d_setup(pretrain_files_2d, **module_kwargs):
+    model = vit_x(img_size=(32, 32), patch_size=(8, 8), projection_dim=256)
+    augmentation = DINOv2Augmentation(global_view_size=(32, 32), local_view_size=(16, 16), num_local_views=2)
+    data_module = PretrainDataModule(
+        batch_size=4,
+        num_workers=1,
+        train_split=pretrain_files_2d["train"],
+        val_split=pretrain_files_2d["val"],
+        train_transforms=augmentation,
+        val_transforms=None,
+    )
+    module = DINOv2Module(model=model, teacher_temp_warmup_steps=0, warmup_epochs=0, **module_kwargs)
+    return model, data_module, module
+
+
+def test_teacher_starts_as_copy_of_student():
+    model = vit_x(img_size=(32, 32), patch_size=(8, 8), projection_dim=256, ibot_separate_head=True)
+    for student, teacher in [
+        (model.student_backbone, model.teacher_backbone),
+        (model.student_dino_head, model.teacher_dino_head),
+        (model.student_ibot_head, model.teacher_ibot_head),
+    ]:
+        for name, value in student.state_dict().items():
+            assert torch.equal(value, teacher.state_dict()[name]), name
+    assert model.student_ibot_head is not model.student_dino_head
+    assert not any(p.requires_grad for p in model.teacher_ibot_head.parameters())
+
+
+def test_local_views_train_the_position_embeddings():
+    model = vit_x(img_size=(32, 32), patch_size=(8, 8), projection_dim=256)
+    model.student_backbone(torch.randn(2, 1, 16, 16))[:, 0].sum().backward()
+    assert model.student_backbone.vit.patch_embedding.position_embeddings.grad.abs().sum() > 0
+
+
+def test_koleo_uses_backbone_cls_tokens():
+    model = vit_x(img_size=(32, 32), patch_size=(8, 8), projection_dim=256)
+    out = model(global_views=[torch.randn(2, 1, 32, 32)] * 2)["pred"]
+    assert out["student_global_cls_token_before_head"].shape == (4, 192)
+
+
+def test_last_layer_is_frozen_during_the_first_epoch(pretrain_files_2d, make_trainer):
+    for freeze_last_layer_epochs, expect_frozen in [(1, True), (0, False)]:
+        model, data_module, module = tiny_2d_setup(pretrain_files_2d, freeze_last_layer_epochs=freeze_last_layer_epochs)
+        last_layer = model.student_dino_head.last_layer.weight_v.detach().clone()
+        first_layer = model.student_dino_head.layers[0].weight.detach().clone()
+        make_trainer(limit_val_batches=0).fit(module, datamodule=data_module)
+        assert torch.equal(last_layer, model.student_dino_head.last_layer.weight_v) == expect_frozen
+        assert not torch.equal(first_layer, model.student_dino_head.layers[0].weight)
+
+
+def test_teacher_updates_once_per_optimizer_step(pretrain_files_2d, make_trainer):
+    model, data_module, module = tiny_2d_setup(pretrain_files_2d)
+    steps = []
+    update_teacher = model.update_teacher
+
+    def counting_update_teacher(global_step, max_steps):
+        steps.append(global_step)
+        update_teacher(global_step=global_step, max_steps=max_steps)
+
+    model.update_teacher = counting_update_teacher
+    make_trainer(limit_val_batches=0, limit_train_batches=4, accumulate_grad_batches=2).fit(module, datamodule=data_module)
+    assert steps == [1, 2]

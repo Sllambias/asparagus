@@ -67,31 +67,29 @@ class DINOv2(nn.Module):
             spatial_dims=len(img_size),
         )
 
-        self.teacher_backbone = MaskedVisionTransformer(vit=vit())
-        # Freeze teacher backbone
-        freeze_eval_module(self.teacher_backbone)
-
-        # DINO head
-        self.teacher_dino_head = DINOv2ProjectionHead(
-            input_dim=self.hidden_size,
-            output_dim=projection_dim,
-        )
-        freeze_eval_module(self.teacher_dino_head)
-
-        # Student components
         self.student_backbone = MaskedVisionTransformer(vit=vit())
-        # Unfreeze student
-        for param in self.student_backbone.parameters():
-            param.requires_grad = True
-        self.student_backbone.train()
+        self.student_dino_head = DINOv2ProjectionHead(input_dim=hidden_size, output_dim=projection_dim)
+        if ibot_separate_head:
+            self.student_ibot_head = DINOv2ProjectionHead(input_dim=hidden_size, output_dim=projection_dim)
+        else:
+            self.student_ibot_head = self.student_dino_head
 
-        self.student_dino_head = DINOv2ProjectionHead(
-            input_dim=self.hidden_size,
-            output_dim=projection_dim,
-        )
+        self.teacher_backbone = MaskedVisionTransformer(vit=vit())
+        self.teacher_dino_head = DINOv2ProjectionHead(input_dim=hidden_size, output_dim=projection_dim)
+        if ibot_separate_head:
+            self.teacher_ibot_head = DINOv2ProjectionHead(input_dim=hidden_size, output_dim=projection_dim)
+        else:
+            self.teacher_ibot_head = self.teacher_dino_head
 
-        self.teacher_ibot_head = self.teacher_dino_head
-        self.student_ibot_head = self.student_dino_head
+        # The teacher starts as a copy of the student, as in the official implementation
+        for student, teacher in [
+            (self.student_backbone, self.teacher_backbone),
+            (self.student_dino_head, self.teacher_dino_head),
+            (self.student_ibot_head, self.teacher_ibot_head),
+        ]:
+            teacher.load_state_dict(student.state_dict())
+            freeze_eval_module(teacher)
+
         grid_size = self.student_backbone.grid_size
         assert math.prod(grid_size) == self.student_backbone.sequence_length - 1, (
             f"Grid size {grid_size} does not match {self.student_backbone.sequence_length - 1} patches"
@@ -128,11 +126,12 @@ class DINOv2(nn.Module):
         if self.ibot_separate_head:
             update_momentum(self.student_ibot_head, self.teacher_ibot_head, m=momentum)
 
-    def cancel_last_layer_gradients(self, current_epoch: int) -> None:
-        """Cancel gradients in the last layer during warmup."""
-        self.student_dino_head.cancel_last_layer_gradients(current_epoch)
+    def student_modules(self) -> List[nn.Module]:
+        """Student submodules, which the official implementation clips separately."""
+        modules = [self.student_backbone, self.student_dino_head]
         if self.ibot_separate_head:
-            self.student_ibot_head.cancel_last_layer_gradients(current_epoch)
+            modules.append(self.student_ibot_head)
+        return modules
 
     def forward(
         self,
@@ -164,8 +163,8 @@ class DINOv2(nn.Module):
             teacher_cls_token = self.teacher_dino_head(teacher_cls_token)
 
         # Student forward
-        student_global_cls_token, student_global_patch_tokens = self.forward_student(global_views, mask=mask)
-        student_global_cls_token = self.student_dino_head(student_global_cls_token)
+        student_global_cls_features, student_global_patch_tokens = self.forward_student(global_views, mask=mask)
+        student_global_cls_token = self.student_dino_head(student_global_cls_features)
 
         # Local views
         if local_views is not None:
@@ -178,7 +177,7 @@ class DINOv2(nn.Module):
         out = {
             "teacher_cls_token": teacher_cls_token,
             "student_cls_token": student_cls_token,
-            "student_glob_cls_token": student_global_cls_token,
+            "student_global_cls_token_before_head": student_global_cls_features,
             "mask": patch_mask,
         }
 

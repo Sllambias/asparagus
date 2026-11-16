@@ -32,7 +32,7 @@ class DINOv2Module(L.LightningModule):
         teacher_temp_max: float = 0.07,
         ibot_loss_weight: float = 1.0,
         koleo_loss_weight: float = 0.1,
-        freeze_last_layer_epochs: int = 0,
+        freeze_last_layer_epochs: int = 1,
         warmup_epochs: int = 10,
         compile_mode: bool = False,  # not currently used
         train_transforms: nn.Module = None,  # not currently used
@@ -60,6 +60,7 @@ class DINOv2Module(L.LightningModule):
         self.teacher_temp_min = teacher_temp_min
         self.teacher_temp_max = teacher_temp_max
         self.freeze_last_layer_epochs = freeze_last_layer_epochs
+        self.last_teacher_update_step = 0
         self.metrics = {"train": None, "val": None}
         self.warmup_epochs = warmup_epochs
         self.model = model
@@ -149,6 +150,7 @@ class DINOv2Module(L.LightningModule):
                 s in name
                 for s in [
                     "pos_embed",
+                    "position_embeddings",
                     "mask_token",
                     "cls_token",
                     "register_tokens",
@@ -226,17 +228,19 @@ class DINOv2Module(L.LightningModule):
         gradient_clip_val: int | float | None = None,
         gradient_clip_algorithm: str | None = None,
     ) -> None:
-        # Gradient clipping as per issue #10
-        self.clip_gradients(
-            optimizer=optimizer,
-            gradient_clip_val=self.gradient_clip_val,
-            gradient_clip_algorithm="norm",
-        )
+        # Official DINOv2 clips the backbone and each head separately
+        if self.gradient_clip_val:
+            for module in self.model.student_modules():
+                nn.utils.clip_grad_norm_(module.parameters(), self.gradient_clip_val)
+
+        # Official DINOv2 gives the heads' last layer no update in the first epochs; without a gradient AdamW skips it
+        if self.current_epoch < self.freeze_last_layer_epochs:
+            for module in self.model.student_modules():
+                for name, param in module.named_parameters():
+                    if "last_layer" in name:
+                        param.grad = None
 
     def on_before_optimizer_step(self, optimizer: AdamW, *args) -> None:
-        # Cancel last layer gradients during warmup (issue #5)
-        # self.model.cancel_last_layer_gradients(self.current_epoch)
-
         # Apply weight decay schedule
         weight_decay = cosine_schedule(
             step=self.trainer.global_step,
@@ -252,7 +256,9 @@ class DINOv2Module(L.LightningModule):
         update_param_groups(optimizer, updates=updates)
 
     def on_train_batch_end(self, outputs, batch, batch_idx):
-        # EMA update of teacher - DDP handles synchronization automatically
-        max_steps = max(self.trainer.estimated_stepping_batches, 1000)
-        self.model.update_teacher(global_step=self.trainer.global_step, max_steps=max_steps)
+        # Update the teacher once per optimizer step, not once per accumulated batch
+        if self.trainer.global_step > self.last_teacher_update_step:
+            max_steps = max(self.trainer.estimated_stepping_batches, 1000)
+            self.model.update_teacher(global_step=self.trainer.global_step, max_steps=max_steps)
+            self.last_teacher_update_step = self.trainer.global_step
         return super().on_train_batch_end(outputs, batch, batch_idx)

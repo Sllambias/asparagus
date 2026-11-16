@@ -68,7 +68,7 @@ class DINOv2Loss(nn.Module):
             "student_cls_out": Tensor,
             "masked_teacher_patch_tokens_after_head": Tensor [N_masked, C] (optional),
             "masked_student_global_patch_tokens_after_head": Tensor [N_masked, C] (optional),
-            "student_glob_cls_token": Tensor (optional),
+            "student_global_cls_token_before_head": Tensor (optional),
             "mask": Tensor (optional, for patch loss),
         }
         Computes the DINOV2 loss for 3D data with dynamic teacher temperature
@@ -78,7 +78,7 @@ class DINOv2Loss(nn.Module):
         student_outputs = input_dict.get("student_cls_token", None)
         teacher_patches = input_dict.get("masked_teacher_patch_tokens_after_head", None)
         student_patches = input_dict.get("masked_student_global_patch_tokens_after_head", None)
-        student_glob_cls_token = input_dict.get("student_glob_cls_token", None)
+        student_global_cls_features = input_dict.get("student_global_cls_token_before_head", None)
         mask = input_dict.get("mask", None)
         n_local_views = input_dict.get("n_local_views", 0)
 
@@ -127,9 +127,9 @@ class DINOv2Loss(nn.Module):
         else:
             ibot_loss = 0
 
-        # Koleo loss - only on global views
+        # KoLeo on the backbone CLS tokens of the global views, one view at a time, as in the official implementation
         koleo_loss = (
-            sum(self.koleo_loss_fn(s) for s in student_glob_cls_token.chunk(2)) if self.koleo_loss_fn is not None else 0
+            sum(self.koleo_loss_fn(s) for s in student_global_cls_features.chunk(2)) if self.koleo_loss_fn is not None else 0
         )
 
         losses = {
