@@ -153,7 +153,7 @@ class PrimusCLSREG(BaseNet):
 
     def _encode(self, x):
         if not self.late_fusion:
-            return self.encoder(x)  # early-fusion of modalities
+            return self._encode_single(x)  # early-fusion of modalities
 
         # late-fusion of modalities
         B, N = x.shape[:2]
