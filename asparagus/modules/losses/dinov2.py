@@ -8,7 +8,7 @@ from torch import nn
 class DINOv2Loss(nn.Module):
     def __init__(
         self,
-        teacher_temp_warmup_steps: int,
+        teacher_temp_warmup_steps: int = 0,
         student_temp: float = 0.1,
         teacher_temp_min: float = 0.04,
         teacher_temp_max: float = 0.07,

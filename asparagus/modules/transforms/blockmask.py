@@ -7,7 +7,8 @@ import math
 import random
 import torch
 from torch import Tensor, nn
-from typing import List, Optional, Tuple, Union
+from torch.utils.data import default_collate
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 
 class RandomBlockMask(nn.Module):
@@ -90,3 +91,38 @@ class RandomBlockMask(nn.Module):
             log_offsets[i + 1] -= log_aspect / 2
         side = target_area ** (1 / len(self.grid_size))
         return [max(1, round(side * math.exp(offset))) for offset in log_offsets]
+
+
+class DINOv2Collate:
+    """Collates DINOv2 views and draws the block masks of the global views in the data loader workers, as official."""
+
+    def __init__(
+        self,
+        global_view_size: Sequence[int],
+        patch_size: Sequence[int],
+        mask_probability: float = 0.5,
+        mask_ratio_min: float = 0.1,
+        mask_ratio_max: float = 0.5,
+    ):
+        """
+        Args:
+            global_view_size: Spatial size of a global view, (H, W) or (D, H, W).
+            patch_size: Patch size of the ViT, same length as global_view_size.
+            mask_probability: Share of the global views that get masked.
+            mask_ratio_min: Lowest share of patches masked in a masked view.
+            mask_ratio_max: Highest share of patches masked in a masked view.
+        """
+        grid_size = [size // patch for size, patch in zip(global_view_size, patch_size)]
+        self.random_block_mask = RandomBlockMask(
+            grid_size=grid_size,
+            mask_probability=mask_probability,
+            mask_ratio_min=mask_ratio_min,
+            mask_ratio_max=mask_ratio_max,
+        )
+
+    def __call__(self, samples: List[Dict[str, Any]]) -> Dict[str, Any]:
+        batch = default_collate(samples)
+        # One mask per global view, in the order the views are concatenated: all first views, then all second views
+        n_global_views = len(batch["image"]) * len(samples)
+        batch["masks"] = self.random_block_mask(batch_size=n_global_views).flatten(start_dim=1)
+        return batch

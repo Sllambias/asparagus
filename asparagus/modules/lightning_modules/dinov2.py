@@ -25,9 +25,10 @@ class DINOv2Module(L.LightningModule):
         learning_rate: float = 0.0005,  # Reduced from 0.004 as per issue #6
         min_lr: float = 1e-6,
         weight_decay: float = 0.04,
+        weight_decay_end: float = 0.4,
         layer_decay: float = 0.9,
         gradient_clip_val: float = 3.0,
-        teacher_temp_warmup_steps: int = 30,
+        teacher_temp_warmup_epochs: int = 30,
         teacher_temp_min: float = 0.04,
         teacher_temp_max: float = 0.07,
         ibot_loss_weight: float = 1.0,
@@ -53,10 +54,11 @@ class DINOv2Module(L.LightningModule):
         self.lr = learning_rate
         self.min_lr = min_lr
         self.weight_decay = weight_decay
+        self.weight_decay_end = weight_decay_end
         self.layer_decay = layer_decay
         self.gradient_clip_val = gradient_clip_val
         self.optimizer = optimizer
-        self.teacher_temp_warmup_steps = teacher_temp_warmup_steps
+        self.teacher_temp_warmup_epochs = teacher_temp_warmup_epochs
         self.teacher_temp_min = teacher_temp_min
         self.teacher_temp_max = teacher_temp_max
         self.freeze_last_layer_epochs = freeze_last_layer_epochs
@@ -69,7 +71,6 @@ class DINOv2Module(L.LightningModule):
         self.criterion = DINOv2Loss(
             teacher_temp_min=teacher_temp_min,
             teacher_temp_max=teacher_temp_max,
-            teacher_temp_warmup_steps=teacher_temp_warmup_steps,
             output_dim=self.model.projection_dim,
             ibot_loss_weight=ibot_loss_weight,
             koleo_loss_weight=koleo_loss_weight,
@@ -85,6 +86,7 @@ class DINOv2Module(L.LightningModule):
         outputs = self.model(
             global_views=batch["image"],
             local_views=batch.get("local_views", None),
+            masks=batch.get("masks", None),
             ibot=self.criterion.ibot_loss_fn is not None,
         )
         loss_dict = self.criterion(outputs["pred"], global_step=self.trainer.global_step, batch_size=batch_size)
@@ -114,8 +116,9 @@ class DINOv2Module(L.LightningModule):
         return self.model(x)
 
     def configure_optimizers(self):
-        # Calculate learning rate based on batch size
-        lr_scale = math.sqrt(self.trainer.datamodule.batch_size * self.trainer.world_size / 1024)
+        # Scale the learning rate with the batch size of one optimizer step
+        total_batch_size = self.trainer.datamodule.batch_size * self.trainer.world_size * self.trainer.accumulate_grad_batches
+        lr_scale = math.sqrt(total_batch_size / 1024)
         lr = self.lr * lr_scale
         num_layers = len(self.model.student_backbone.vit.blocks)
 
@@ -143,6 +146,7 @@ class DINOv2Module(L.LightningModule):
                 "params": [param],
                 "lr": lr,
                 "weight_decay": self.weight_decay,
+                "is_last_layer": "last_layer" in name,
             }
 
             # Update lr based on layer
@@ -219,6 +223,7 @@ class DINOv2Module(L.LightningModule):
         }
 
         self.criterion.max_steps = max_steps
+        self.criterion.teacher_temp_warmup_steps = self.teacher_temp_warmup_epochs * optimizer_steps_per_epoch
         self.criterion.max_epochs = self.trainer.max_epochs
         return [optimizer], [scheduler]
 
@@ -233,20 +238,13 @@ class DINOv2Module(L.LightningModule):
             for module in self.model.student_modules():
                 nn.utils.clip_grad_norm_(module.parameters(), self.gradient_clip_val)
 
-        # Official DINOv2 gives the heads' last layer no update in the first epochs; without a gradient AdamW skips it
-        if self.current_epoch < self.freeze_last_layer_epochs:
-            for module in self.model.student_modules():
-                for name, param in module.named_parameters():
-                    if "last_layer" in name:
-                        param.grad = None
-
     def on_before_optimizer_step(self, optimizer: AdamW, *args) -> None:
         # Apply weight decay schedule
         weight_decay = cosine_schedule(
             step=self.trainer.global_step,
             max_steps=max(self.trainer.estimated_stepping_batches, 1),
-            start_value=0.04,
-            end_value=0.4,
+            start_value=self.weight_decay,
+            end_value=self.weight_decay_end,
         )
         updates = []
         for group in optimizer.param_groups:
@@ -254,6 +252,13 @@ class DINOv2Module(L.LightningModule):
                 updates.append({"name": group["name"], "weight_decay": weight_decay})
 
         update_param_groups(optimizer, updates=updates)
+
+        # Official DINOv2 sets the heads' last-layer lr to 0 in the first epochs, so AdamW keeps tracking its moments.
+        # The scheduler sets the lr again from the base lr at every step.
+        if self.current_epoch < self.freeze_last_layer_epochs:
+            for group in optimizer.param_groups:
+                if group["is_last_layer"]:
+                    group["lr"] = 0.0
 
     def on_train_batch_end(self, outputs, batch, batch_idx):
         # Update the teacher once per optimizer step, not once per accumulated batch

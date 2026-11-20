@@ -42,14 +42,18 @@ training:
   train_batches_per_epoch_per_device: 10000
   val_batches_per_epoch_per_device: 0
   warmup_epochs: ${eval:"${training.epochs} // 10"}
-  teacher_temp_warmup_epochs: 30
-  teacher_temp_warmup_steps: ${eval:"${training.teacher_temp_warmup_epochs} * ${training.train_batches_per_epoch_per_device}"}
+  teacher_temp_warmup_epochs: ${eval:"${training.epochs} * 3 // 10"}
   gradient_clip_val: 3.0
 
 lightning:
   lightning_module: DINOv2Module
+  _data_module:
+    collate_fn:
+      _target_: asparagus.modules.transforms.blockmask.DINOv2Collate
+      global_view_size: ${training.global_crop_size}
+      patch_size: ${training.patch_size}
   _lightning_module:
-    teacher_temp_warmup_steps: ${training.teacher_temp_warmup_steps}
+    teacher_temp_warmup_epochs: ${training.teacher_temp_warmup_epochs}
     gradient_clip_val: ${training.gradient_clip_val}
     min_lr: ${training.min_lr}
 

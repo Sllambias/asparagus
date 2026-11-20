@@ -1,7 +1,6 @@
 import math
 import torch
 from asparagus.modules.networks.vision_transformer import MaskedVisionTransformer
-from asparagus.modules.transforms.blockmask import RandomBlockMask
 from functools import partial
 from lightly.models.modules.heads import DINOv2ProjectionHead
 from lightly.utils.scheduler import cosine_schedule
@@ -25,8 +24,8 @@ def freeze_eval_module(module: nn.Module) -> None:
 
 class DINOv2(nn.Module):
     """
-    3D DINOv2 model with teacher/student ViT backbones and DINO/iBOT heads.
-    Supports block masking and teacher-student EMA updates.
+    2D/3D DINOv2 model with teacher/student ViT backbones and DINO/iBOT heads.
+    The block masks come from DINOv2Collate in the data loader.
     """
 
     def __init__(
@@ -39,13 +38,18 @@ class DINOv2(nn.Module):
         ibot_separate_head: bool = False,
         freeze_last_layer: int = -1,
         projection_dim: int = 65536,
-        mask_probability: float = 0.5,
-        mask_ratio_min: float = 0.1,
-        mask_ratio_max: float = 0.5,
+        num_layers: int = 8,
+        num_heads: int = 12,
+        mlp_dim: int = 3072,
+        qkv_bias: bool = False,
+        layer_scale_init: Optional[float] = None,
+        drop_path_rate: float = 0.0,
+        num_register_tokens: int = 0,
     ):
         """
         Initialize DINOv2_3D model.
-        Args: see model config for details.
+        Args: see model config for details. Official DINOv2 uses qkv_bias=True, layer_scale_init=1e-5 and
+            drop_path_rate=0.3. Drop path is only applied to the student, as official.
         """
         super().__init__()
         self.projection_dim = projection_dim
@@ -59,22 +63,28 @@ class DINOv2(nn.Module):
             img_size=img_size,
             patch_size=patch_size,
             hidden_size=hidden_size,
-            mlp_dim=3072,
-            num_layers=8,
-            num_heads=12,
+            mlp_dim=mlp_dim,
+            num_layers=num_layers,
+            num_heads=num_heads,
             proj_type="conv",
             classification=True,
             spatial_dims=len(img_size),
+            qkv_bias=qkv_bias,
+        )
+        backbone = partial(
+            MaskedVisionTransformer,
+            layer_scale_init=layer_scale_init,
+            num_register_tokens=num_register_tokens,
         )
 
-        self.student_backbone = MaskedVisionTransformer(vit=vit())
+        self.student_backbone = backbone(vit=vit(), drop_path_rate=drop_path_rate)
         self.student_dino_head = DINOv2ProjectionHead(input_dim=hidden_size, output_dim=projection_dim)
         if ibot_separate_head:
             self.student_ibot_head = DINOv2ProjectionHead(input_dim=hidden_size, output_dim=projection_dim)
         else:
             self.student_ibot_head = self.student_dino_head
 
-        self.teacher_backbone = MaskedVisionTransformer(vit=vit())
+        self.teacher_backbone = backbone(vit=vit())
         self.teacher_dino_head = DINOv2ProjectionHead(input_dim=hidden_size, output_dim=projection_dim)
         if ibot_separate_head:
             self.teacher_ibot_head = DINOv2ProjectionHead(input_dim=hidden_size, output_dim=projection_dim)
@@ -93,12 +103,6 @@ class DINOv2(nn.Module):
         grid_size = self.student_backbone.grid_size
         assert math.prod(grid_size) == self.student_backbone.sequence_length - 1, (
             f"Grid size {grid_size} does not match {self.student_backbone.sequence_length - 1} patches"
-        )
-        self.random_block_mask = RandomBlockMask(
-            grid_size=grid_size,
-            mask_probability=mask_probability,
-            mask_ratio_min=mask_ratio_min,
-            mask_ratio_max=mask_ratio_max,
         )
 
     def forward_teacher(self, x):
@@ -137,6 +141,7 @@ class DINOv2(nn.Module):
         self,
         global_views: List[torch.Tensor],
         local_views: Optional[List[torch.Tensor]] = None,
+        masks: Optional[torch.Tensor] = None,
         ibot: bool = True,
     ) -> Dict[str, Dict[str, torch.Tensor]]:
         """
@@ -144,26 +149,24 @@ class DINOv2(nn.Module):
         Args:
             global_views: List of augmented tensors (global views)
             local_views: List of augmented tensors (local views)
+            masks: Boolean patch masks of the concatenated global views (2 * B, num_patches), from DINOv2Collate
             ibot: Whether to project the masked patch tokens for the iBOT loss
         Returns:
             Dict of teacher/student outputs for loss computation
         """
-        device = global_views[0].device
+        if ibot and masks is None:
+            raise ValueError("iBOT needs the masks of the global views. Build the data loader with DINOv2Collate.")
         global_views = torch.cat(global_views)
 
         if local_views is not None and len(local_views) > 0:
             local_views = torch.cat(local_views)
-        block_mask = self.random_block_mask(batch_size=global_views.shape[0], device=device)
-        patch_mask = block_mask.flatten(start_dim=1)
-        mask = torch.zeros((global_views.shape[0], self.student_backbone.sequence_length), device=device, dtype=torch.bool)
-        mask[:, 1:] = patch_mask
 
         with torch.no_grad():
             teacher_cls_token, teacher_patch_tokens = self.forward_teacher(global_views)
             teacher_cls_token = self.teacher_dino_head(teacher_cls_token)
 
         # Student forward
-        student_global_cls_features, student_global_patch_tokens = self.forward_student(global_views, mask=mask)
+        student_global_cls_features, student_global_patch_tokens = self.forward_student(global_views, mask=masks)
         student_global_cls_token = self.student_dino_head(student_global_cls_features)
 
         # Local views
@@ -178,16 +181,14 @@ class DINOv2(nn.Module):
             "teacher_cls_token": teacher_cls_token,
             "student_cls_token": student_cls_token,
             "student_global_cls_token_before_head": student_global_cls_features,
-            "mask": patch_mask,
+            "mask": masks,
         }
 
         # Only the masked patch tokens go through the heads, as in the official implementation
         if ibot:
             with torch.no_grad():
-                out["masked_teacher_patch_tokens_after_head"] = self.teacher_ibot_head(teacher_patch_tokens[patch_mask])
-            out["masked_student_global_patch_tokens_after_head"] = self.student_ibot_head(
-                student_global_patch_tokens[patch_mask]
-            )
+                out["masked_teacher_patch_tokens_after_head"] = self.teacher_ibot_head(teacher_patch_tokens[masks])
+            out["masked_student_global_patch_tokens_after_head"] = self.student_ibot_head(student_global_patch_tokens[masks])
 
         return {"pred": out}
 
@@ -217,13 +218,20 @@ def vit_test(input_channels=1, img_size=(1, 1, 1), patch_size=(0, 0, 0), hidden_
 
 
 def vit_x(
-    input_channels=1,
-    img_size=(92, 92, 92),
-    patch_size=(8, 8, 8),
-    hidden_size=192,
-    ibot_separate_head=False,
-    projection_dim=65536,
-):
+    input_channels: int = 1,
+    img_size: tuple = (92, 92, 92),
+    patch_size: tuple = (8, 8, 8),
+    hidden_size: int = 192,
+    ibot_separate_head: bool = False,
+    projection_dim: int = 65536,
+    num_layers: int = 8,
+    num_heads: int = 12,
+    mlp_dim: int = 3072,
+    qkv_bias: bool = False,
+    layer_scale_init: Optional[float] = None,
+    drop_path_rate: float = 0.0,
+    num_register_tokens: int = 0,
+) -> DINOv2:
     return DINOv2(
         input_channels=input_channels,
         img_size=img_size,
@@ -232,4 +240,11 @@ def vit_x(
         norm_last_layer=False,
         ibot_separate_head=ibot_separate_head,
         projection_dim=projection_dim,
+        num_layers=num_layers,
+        num_heads=num_heads,
+        mlp_dim=mlp_dim,
+        qkv_bias=qkv_bias,
+        layer_scale_init=layer_scale_init,
+        drop_path_rate=drop_path_rate,
+        num_register_tokens=num_register_tokens,
     )
