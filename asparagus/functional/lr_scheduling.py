@@ -31,14 +31,16 @@ def separate_encoder_decoder_weights(named_parameters) -> List[Dict[str, Any]]:
 
 
 def merge_param_groups(param_groups: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Merge parameter groups whose settings (everything except params and name) are equal."""
+    """Merge parameter groups whose settings (everything except params and name) are equal.
+    merged_names lists the names of the groups that went into each merged group."""
     merged = {}
     for group in param_groups:
-        settings = {key: value for key, value in group.items() if key not in ["params", "name"]}
+        settings = {key: value for key, value in group.items() if key not in ["params", "name", "merged_names"]}
         settings_key = tuple(sorted(settings.items()))
         if settings_key not in merged:
-            merged[settings_key] = {"name": f"group_{len(merged)}", "params": [], **settings}
+            merged[settings_key] = {"name": f"group_{len(merged)}", "params": [], "merged_names": [], **settings}
         merged[settings_key]["params"].extend(group["params"])
+        merged[settings_key]["merged_names"].append(group.get("name"))
     return list(merged.values())
 
 
