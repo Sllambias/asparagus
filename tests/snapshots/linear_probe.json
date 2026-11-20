@@ -192,8 +192,6 @@
               "dimensions": "3D",
               "finetune_lr": 0.001,
               "finetune_optim": "SGD",
-              "momentum": 0.99,
-              "nesterov": true,
               "net": "unet_clsreg_tiny",
               "patch_embed_size": 4,
               "plugin_seg_net": null,

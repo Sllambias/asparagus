@@ -33,7 +33,5 @@ finetune_lr: 3e-5
 patch_embed_size: 8
 
 weight_decay: 5e-2
-nesterov: False
-momentum: 0.9
 
 deep_supervision: False # not supported

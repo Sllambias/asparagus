@@ -22,5 +22,4 @@ finetune_lr: 0.0005
 
 patch_embed_size: 8
 
-min_test_patch_size: ${training.patch_size}
 deep_supervision: False # not supported
