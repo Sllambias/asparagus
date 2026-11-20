@@ -1,0 +1,112 @@
+{
+  "built": {
+    "CPU_seg_test_transforms": [
+      {
+        "args": [],
+        "kwargs": {
+          "patch_size": [
+            160,
+            160,
+            160
+          ]
+        }
+      }
+    ],
+    "lightning._data_module": [
+      {
+        "args": [],
+        "kwargs": {
+          "batch_size": 1,
+          "num_workers": 12,
+          "test_samples": [
+            "test_0.pt"
+          ],
+          "test_transforms": "<CPU_seg_test_transforms>",
+          "train_split": null,
+          "val_split": null
+        }
+      }
+    ],
+    "lightning._lightning_module": [
+      {
+        "args": [],
+        "kwargs": {
+          "inference_patch_size": [
+            160,
+            160,
+            160
+          ],
+          "model": "<model._seg_net>",
+          "test_output_path": "<tmp>/models/EntryPointTask/unet_tiny__3D/script=train_seg/root=base__stem=None/leaf=default_train_seg__clargs=training.seed=0/split_40_10_50__fold=0/run_id=1001/predictions/EntryPointTask__TEST_40_10_50__best.json",
+          "weights": "<load_checkpoint_state_dict>"
+        }
+      }
+    ],
+    "lightning._trainer": [
+      {
+        "args": [],
+        "kwargs": {
+          "callbacks": null,
+          "default_root_dir": "<tmp>/cwd",
+          "enable_progress_bar": true,
+          "log_every_n_steps": 250,
+          "logger": null,
+          "profiler": null
+        }
+      }
+    ],
+    "load_checkpoint_state_dict": [
+      {
+        "args": [
+          "<tmp>/models/EntryPointTask/unet_tiny__3D/script=train_seg/root=base__stem=None/leaf=default_train_seg__clargs=training.seed=0/split_40_10_50__fold=0/run_id=1001/checkpoints/best.ckpt"
+        ],
+        "kwargs": {}
+      }
+    ],
+    "model._seg_net": [
+      {
+        "args": [],
+        "kwargs": {
+          "input_channels": 1,
+          "output_channels": 2
+        }
+      }
+    ]
+  },
+  "calls": [
+    {
+      "args": [],
+      "call": "lightning._trainer.test",
+      "kwargs": {
+        "datamodule": "<lightning._data_module>",
+        "model": "<lightning._lightning_module>"
+      }
+    }
+  ],
+  "configs": {
+    "lightning._data_module": {
+      "_target_": "asparagus.modules.data_modules.SegDataModule",
+      "batch_size": 2,
+      "num_workers": 40
+    },
+    "lightning._lightning_module": {
+      "_target_": "asparagus.modules.lightning_modules.SegmentationModule",
+      "compile_mode": "default",
+      "warmup_epochs": 25
+    },
+    "lightning._trainer": {
+      "_target_": "lightning.Trainer",
+      "accelerator": "auto",
+      "default_root_dir": ".",
+      "devices": 1,
+      "enable_progress_bar": true,
+      "num_nodes": 1,
+      "precision": "bf16-mixed"
+    },
+    "model._seg_net": {
+      "_target_": "asparagus.modules.networks.unet.unet_tiny",
+      "deep_supervision": false,
+      "dimensions": "3D"
+    }
+  }
+}

@@ -1,0 +1,389 @@
+{
+  "built": {
+    "CPU_clsreg_val_test_transforms_crop": [
+      {
+        "args": [],
+        "kwargs": {
+          "target_size": [
+            160,
+            160,
+            160
+          ]
+        }
+      }
+    ],
+    "LearningRateMonitor": [
+      {
+        "args": [],
+        "kwargs": {
+          "log_momentum": true,
+          "logging_interval": "epoch"
+        }
+      }
+    ],
+    "LinearProbeModule": [
+      {
+        "args": [],
+        "kwargs": {
+          "dimensions": "3D",
+          "learning_rates": [
+            5e-05,
+            0.0001,
+            0.0005,
+            0.001,
+            0.005,
+            0.01,
+            0.05,
+            0.1
+          ],
+          "loss_weight": null,
+          "model": "<model._cls_net>",
+          "num_classes": 3,
+          "pretrained_target_size": null,
+          "target_size": [
+            160,
+            160,
+            160
+          ],
+          "test_output_path": "<tmp>/models/EntryPointTask/unet_clsreg_tiny__3D/script=linear_probe/root=base__stem=None_last.ckpt/leaf=default_linear_probe__clargs=training.seed=0/split_75_15_10__fold=0/run_id=1001/predictions/EntryPointTask__TEST_75_15_10__linear_probe.json",
+          "train_transforms": "<transforms._gpu_tr_transforms>",
+          "val_transforms": null,
+          "weights": null
+        }
+      }
+    ],
+    "TQDMProgressBar": [
+      {
+        "args": [],
+        "kwargs": {
+          "refresh_rate": 25
+        }
+      }
+    ],
+    "lightning._data_module": [
+      {
+        "args": [],
+        "kwargs": {
+          "test_samples": [
+            "test_0.pt"
+          ],
+          "test_transforms": "<CPU_clsreg_val_test_transforms_crop>",
+          "train_split": [
+            "train_0.pt"
+          ],
+          "train_transforms": "<transforms._cpu_tr_transforms>",
+          "use_random_datasampler": false,
+          "val_split": [
+            "val_0.pt"
+          ],
+          "val_transforms": "<transforms._cpu_val_transforms>"
+        }
+      }
+    ],
+    "lightning._trainer": [
+      {
+        "args": [],
+        "kwargs": {
+          "accumulate_grad_batches": 2,
+          "callbacks": [
+            "<TQDMProgressBar>",
+            "<LearningRateMonitor>"
+          ],
+          "check_val_every_n_epoch": 2,
+          "default_root_dir": "<tmp>/models/EntryPointTask/unet_clsreg_tiny__3D/script=linear_probe/root=base__stem=None_last.ckpt/leaf=default_linear_probe__clargs=training.seed=0/split_75_15_10__fold=0/run_id=1001",
+          "enable_checkpointing": false,
+          "limit_train_batches": 1.0,
+          "limit_val_batches": 1.0,
+          "log_every_n_steps": 25,
+          "logger": "<logging>",
+          "max_epochs": 15,
+          "num_sanity_val_steps": 0,
+          "profiler": null,
+          "use_distributed_sampler": false
+        }
+      }
+    ],
+    "logging": [
+      {
+        "args": [],
+        "kwargs": {
+          "ckpt_mlflow_id": null,
+          "ckpt_wandb_id": null,
+          "log_file_name": "linear_probe",
+          "mlflow_logging": false,
+          "run_dir": "<tmp>/models/EntryPointTask/unet_clsreg_tiny__3D/script=linear_probe/root=base__stem=None_last.ckpt/leaf=default_linear_probe__clargs=training.seed=0/split_75_15_10__fold=0/run_id=1001",
+          "version": 1001,
+          "wandb_config": {
+            "checkpoint_path": null,
+            "checkpoint_run_id": null,
+            "data": {
+              "data_path": "<tmp>/data/EntryPointTask",
+              "fold": 0,
+              "test_split": "TEST_75_15_10",
+              "train_split": "split_75_15_10"
+            },
+            "hardware": {
+              "accelerator": "auto",
+              "compile_mode": "default",
+              "num_devices": 1,
+              "num_nodes": 1,
+              "num_workers": 40,
+              "precision": "bf16-mixed",
+              "strategy": "auto"
+            },
+            "hf_model_id": null,
+            "hf_weight_format": "asparagus.functional.huggingface.HuggingFaceWeightMapper",
+            "lightning": {
+              "_data_module": {
+                "_target_": "asparagus.modules.data_modules.ClsRegDataModule",
+                "batch_size": 4,
+                "num_workers": 40
+              },
+              "_lightning_module": {
+                "_target_": "asparagus.modules.lightning_modules.LinearProbeModule",
+                "compile_mode": "default",
+                "warmup_epochs": 0
+              },
+              "_trainer": {
+                "_target_": "lightning.Trainer",
+                "accelerator": "auto",
+                "default_root_dir": "<tmp>/models/EntryPointTask/unet_clsreg_tiny__3D/script=linear_probe/root=base__stem=None_last.ckpt/leaf=default_linear_probe__clargs=training.seed=0/split_75_15_10__fold=0/run_id=1001",
+                "devices": 1,
+                "enable_progress_bar": true,
+                "num_nodes": 1,
+                "precision": "bf16-mixed"
+              },
+              "data_module": "ClsRegDataModule",
+              "lightning_module": "LinearProbeModule"
+            },
+            "load_checkpoint_name": "last.ckpt",
+            "logger": {
+              "log_every_n_steps": 25,
+              "log_images_every_n_epoch": 9999999,
+              "mlflow_logging": false,
+              "progress_bar": true,
+              "wandb_entity": "test-entity",
+              "wandb_logging": true,
+              "wandb_project": "LinearProbe"
+            },
+            "model": {
+              "_cls_net": {
+                "_target_": "asparagus.modules.networks.unet.unet_clsreg_tiny",
+                "dimensions": "3D"
+              },
+              "_plugin_seg_net": {
+                "_target_": "asparagus.modules.networks.unet.None",
+                "dimensions": "3D"
+              },
+              "_pretrain_net": {
+                "_target_": "asparagus.modules.networks.unet.unet_tiny",
+                "dimensions": "3D",
+                "input_channels": 1,
+                "output_channels": 1,
+                "use_skip_connections": true
+              },
+              "_seg_net": {
+                "_target_": "asparagus.modules.networks.unet.unet_tiny",
+                "deep_supervision": false,
+                "dimensions": "3D"
+              },
+              "cls_net": "unet_clsreg_tiny",
+              "deep_supervision": false,
+              "dimensions": "3D",
+              "finetune_lr": 0.001,
+              "finetune_optim": "SGD",
+              "momentum": 0.99,
+              "nesterov": true,
+              "net": "unet_clsreg_tiny",
+              "patch_embed_size": 4,
+              "plugin_seg_net": null,
+              "plugin_seg_train_n_last_params": 10,
+              "pretrain_lr": 0.01,
+              "pretrain_net": "unet_tiny",
+              "pretrain_optim": "SGD",
+              "seg_net": "unet_tiny",
+              "train_lr": 0.01,
+              "train_optim": "SGD",
+              "use_skip_connections": true,
+              "weight_decay": 3e-05
+            },
+            "plugins": null,
+            "profiler": {
+              "_callback": {
+                "_target_": "asparagus.modules.callbacks.ProfileCallback",
+                "profile_every_n_steps": 500,
+                "warmup_steps": 10
+              },
+              "enabled": false
+            },
+            "resume_training": true,
+            "root": "base",
+            "run_dir": "<tmp>/models/EntryPointTask/unet_clsreg_tiny__3D/script=linear_probe/root=base__stem=None_last.ckpt/leaf=default_linear_probe__clargs=training.seed=0/split_75_15_10__fold=0",
+            "run_id": 1001,
+            "stem": "None_last.ckpt",
+            "task": "EntryPointTask",
+            "test_split_path": "<tmp>/data/EntryPointTask/TEST_75_15_10.json",
+            "test_task": "EntryPointTask",
+            "train_split_path": "<tmp>/data/EntryPointTask/split_75_15_10.json",
+            "training": {
+              "accumulate_grad_batches": 2,
+              "batch_size": 4,
+              "check_val_every_n_epoch": 2,
+              "epochs": 15,
+              "limit_train_batches": 1.0,
+              "limit_val_batches": 1.0,
+              "mask_ratio": null,
+              "patch_size": null,
+              "pretrained_target_size": null,
+              "probing": {
+                "learning_rates": [
+                  5e-05,
+                  0.0001,
+                  0.0005,
+                  0.001,
+                  0.005,
+                  0.01,
+                  0.05,
+                  0.1
+                ]
+              },
+              "seed": 0,
+              "target_size": [
+                160,
+                160,
+                160
+              ],
+              "warmup_epochs": 0
+            },
+            "transforms": {
+              "_cpu_tr_transforms": {
+                "_target_": "asparagus.modules.transforms.presets.CPU_clsreg_val_test_transforms_crop"
+              },
+              "_cpu_val_transforms": {
+                "_target_": "asparagus.modules.transforms.presets.CPU_clsreg_val_test_transforms_crop"
+              },
+              "_gpu_tr_transforms": {
+                "_target_": "asparagus.modules.transforms.presets.none"
+              },
+              "_gpu_val_transforms": {
+                "_target_": "asparagus.modules.transforms.presets.none"
+              },
+              "cpu_tr_transforms": "CPU_clsreg_val_test_transforms_crop",
+              "cpu_val_transforms": "CPU_clsreg_val_test_transforms_crop",
+              "gpu_tr_transforms": "none",
+              "gpu_val_transforms": "none",
+              "normalize": true
+            }
+          },
+          "wandb_experiment": "default_linear_probe",
+          "wandb_logging": true,
+          "wandb_project": "LinearProbe"
+        }
+      }
+    ],
+    "model._cls_net": [
+      {
+        "args": [],
+        "kwargs": {
+          "input_channels": 4,
+          "late_fusion": true,
+          "output_channels": 3
+        }
+      }
+    ],
+    "transforms._cpu_tr_transforms": [
+      {
+        "args": [],
+        "kwargs": {
+          "target_size": [
+            160,
+            160,
+            160
+          ]
+        }
+      }
+    ],
+    "transforms._cpu_val_transforms": [
+      {
+        "args": [],
+        "kwargs": {
+          "target_size": [
+            160,
+            160,
+            160
+          ]
+        }
+      }
+    ],
+    "transforms._gpu_tr_transforms": [
+      {
+        "args": [],
+        "kwargs": {
+          "ndim": 3
+        }
+      }
+    ]
+  },
+  "calls": [
+    {
+      "args": [
+        "fit"
+      ],
+      "call": "lightning._data_module.setup",
+      "kwargs": {}
+    },
+    {
+      "args": [],
+      "call": "lightning._trainer.validate",
+      "kwargs": {
+        "datamodule": "<lightning._data_module>",
+        "model": "<LinearProbeModule>"
+      }
+    },
+    {
+      "args": [],
+      "call": "lightning._trainer.fit",
+      "kwargs": {
+        "datamodule": "<lightning._data_module>",
+        "model": "<LinearProbeModule>"
+      }
+    },
+    {
+      "args": [],
+      "call": "lightning._trainer.test",
+      "kwargs": {
+        "datamodule": "<lightning._data_module>",
+        "model": "<LinearProbeModule>"
+      }
+    }
+  ],
+  "configs": {
+    "lightning._data_module": {
+      "_target_": "asparagus.modules.data_modules.ClsRegDataModule",
+      "batch_size": 4,
+      "num_workers": 40
+    },
+    "lightning._trainer": {
+      "_target_": "lightning.Trainer",
+      "accelerator": "auto",
+      "default_root_dir": "<tmp>/models/EntryPointTask/unet_clsreg_tiny__3D/script=linear_probe/root=base__stem=None_last.ckpt/leaf=default_linear_probe__clargs=training.seed=0/split_75_15_10__fold=0/run_id=1001",
+      "devices": 1,
+      "enable_progress_bar": true,
+      "num_nodes": 1,
+      "precision": "bf16-mixed"
+    },
+    "model._cls_net": {
+      "_target_": "asparagus.modules.networks.unet.unet_clsreg_tiny",
+      "dimensions": "3D"
+    },
+    "transforms._cpu_tr_transforms": {
+      "_target_": "asparagus.modules.transforms.presets.CPU_clsreg_val_test_transforms_crop"
+    },
+    "transforms._cpu_val_transforms": {
+      "_target_": "asparagus.modules.transforms.presets.CPU_clsreg_val_test_transforms_crop"
+    },
+    "transforms._gpu_tr_transforms": {
+      "_target_": "asparagus.modules.transforms.presets.none"
+    }
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "built": {
+    "CPU_clsreg_val_test_transforms_crop": [
+      {
+        "args": [],
+        "kwargs": {
+          "target_size": [
+            128,
+            128,
+            128
+          ]
+        }
+      }
+    ],
+    "lightning._data_module": [
+      {
+        "args": [],
+        "kwargs": {
+          "batch_size": 1,
+          "num_workers": 12,
+          "test_samples": [
+            "test_0.pt"
+          ],
+          "test_transforms": "<CPU_clsreg_val_test_transforms_crop>",
+          "train_split": null,
+          "val_split": null
+        }
+      }
+    ],
+    "lightning._lightning_module": [
+      {
+        "args": [],
+        "kwargs": {
+          "model": "<model._cls_net>",
+          "test_output_path": "<tmp>/models/EntryPointTask/unet_clsreg_tiny__3D/script=train_cls/root=base__stem=None/leaf=default_train_cls__clargs=training.seed=0/split_75_15_10__fold=0/run_id=1001/predictions/EntryPointTask__TEST_40_10_50__best.json",
+          "weights": "<load_checkpoint_state_dict>"
+        }
+      }
+    ],
+    "lightning._trainer": [
+      {
+        "args": [],
+        "kwargs": {
+          "callbacks": null,
+          "default_root_dir": "<tmp>/cwd",
+          "enable_progress_bar": true,
+          "log_every_n_steps": 250,
+          "logger": null,
+          "profiler": null
+        }
+      }
+    ],
+    "load_checkpoint_state_dict": [
+      {
+        "args": [
+          "<tmp>/models/EntryPointTask/unet_clsreg_tiny__3D/script=train_cls/root=base__stem=None/leaf=default_train_cls__clargs=training.seed=0/split_75_15_10__fold=0/run_id=1001/checkpoints/best.ckpt"
+        ],
+        "kwargs": {}
+      }
+    ],
+    "model._cls_net": [
+      {
+        "args": [],
+        "kwargs": {
+          "input_channels": 1,
+          "output_channels": 2
+        }
+      }
+    ]
+  },
+  "calls": [
+    {
+      "args": [],
+      "call": "lightning._trainer.test",
+      "kwargs": {
+        "datamodule": "<lightning._data_module>",
+        "model": "<lightning._lightning_module>"
+      }
+    }
+  ],
+  "configs": {
+    "lightning._data_module": {
+      "_target_": "asparagus.modules.data_modules.ClsRegDataModule",
+      "batch_size": 2,
+      "num_workers": 12
+    },
+    "lightning._lightning_module": {
+      "_target_": "asparagus.modules.lightning_modules.ClassificationModule",
+      "compile_mode": "default",
+      "warmup_epochs": 50
+    },
+    "lightning._trainer": {
+      "_target_": "lightning.Trainer",
+      "accelerator": "auto",
+      "default_root_dir": ".",
+      "devices": 1,
+      "enable_progress_bar": true,
+      "num_nodes": 1,
+      "precision": "bf16-mixed"
+    },
+    "model._cls_net": {
+      "_target_": "asparagus.modules.networks.unet.unet_clsreg_tiny",
+      "dimensions": "3D"
+    }
+  }
+}
