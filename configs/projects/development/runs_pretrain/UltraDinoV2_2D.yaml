@@ -24,7 +24,6 @@ transforms:
 
 model:
   dimensions: 2D
-  img_size: ${training.global_crop_size}
   hidden_size: 768
   ibot_separate_head: False
   projection_dim: 65536

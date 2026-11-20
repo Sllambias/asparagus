@@ -1,4 +1,3 @@
-import torch
 from asparagus.modules.losses.ibot import IBOTPatchLoss3D
 from lightly.loss import DINOLoss, KoLeoLoss
 from lightly.utils.scheduler import linear_warmup_schedule
@@ -16,8 +15,6 @@ class DINOv2Loss(nn.Module):
         output_dim: int = 65536,
         ibot_loss_weight: float = 1.0,
         koleo_loss_weight: float = 0.1,
-        max_steps: int = 1000,
-        max_epochs: int = 500,
     ):
         super().__init__()
         self.student_temp = student_temp
@@ -28,8 +25,6 @@ class DINOv2Loss(nn.Module):
         self.output_dim = output_dim
         self.w_ibot = ibot_loss_weight
         self.w_koleo = koleo_loss_weight
-        self.max_steps = max_steps
-        self.max_epochs = max_epochs
         # Initialize loss functions with dynamic temperature
         self.dino_loss_fn = DINOLoss(
             output_dim=self.output_dim,
@@ -80,17 +75,6 @@ class DINOv2Loss(nn.Module):
         student_patches = input_dict.get("masked_student_global_patch_tokens_after_head", None)
         student_global_cls_features = input_dict.get("student_global_cls_token_before_head", None)
         mask = input_dict.get("mask", None)
-        n_local_views = input_dict.get("n_local_views", 0)
-
-        if mask is not None:
-            # Flatten any spatial mask to patch grid [B, num_patches]
-            if mask.dim() > 2:
-                mask = mask.flatten(start_dim=1)
-            n_masked = int(mask.sum())
-            if teacher_patches is not None and teacher_patches.shape[0] != n_masked:
-                raise ValueError(f"Got {teacher_patches.shape[0]} teacher patch tokens for {n_masked} masked patches")
-            if student_patches is not None and student_patches.shape[0] != n_masked:
-                raise ValueError(f"Got {student_patches.shape[0]} student patch tokens for {n_masked} masked patches")
 
         if student_outputs is None or teacher_outputs is None:
             raise ValueError("Both student_outputs and teacher_outputs must be provided.")
@@ -102,10 +86,6 @@ class DINOv2Loss(nn.Module):
         self.dino_loss_fn.teacher_temp = teacher_temp
         if self.ibot_loss_fn is not None:
             self.ibot_loss_fn.teacher_temp = teacher_temp
-
-        # Convert n_local_views to int if it's a tensor
-        if isinstance(n_local_views, torch.Tensor):
-            n_local_views = n_local_views.item()
 
         # DINO loss - proper chunking based on views
         dino_loss = self.dino_loss_fn(

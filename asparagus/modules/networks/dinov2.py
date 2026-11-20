@@ -6,7 +6,7 @@ from lightly.models.modules.heads import DINOv2ProjectionHead
 from lightly.utils.scheduler import cosine_schedule
 from monai.networks.nets.vit import ViT
 from torch import nn
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 
 @torch.no_grad()
@@ -34,9 +34,7 @@ class DINOv2(nn.Module):
         img_size: tuple = (64, 64, 64),
         patch_size: tuple = (16, 16, 16),
         hidden_size: int = 768,
-        norm_last_layer: bool = False,
         ibot_separate_head: bool = False,
-        freeze_last_layer: int = -1,
         projection_dim: int = 65536,
         num_layers: int = 8,
         num_heads: int = 12,
@@ -53,7 +51,6 @@ class DINOv2(nn.Module):
         """
         super().__init__()
         self.projection_dim = projection_dim
-        self.norm_last_layer = norm_last_layer
         self.ibot_separate_head = ibot_separate_head
 
         self.hidden_size = hidden_size
@@ -92,11 +89,7 @@ class DINOv2(nn.Module):
             self.teacher_ibot_head = self.teacher_dino_head
 
         # The teacher starts as a copy of the student, as in the official implementation
-        for student, teacher in [
-            (self.student_backbone, self.teacher_backbone),
-            (self.student_dino_head, self.teacher_dino_head),
-            (self.student_ibot_head, self.teacher_ibot_head),
-        ]:
+        for student, teacher in self.student_teacher_pairs():
             teacher.load_state_dict(student.state_dict())
             freeze_eval_module(teacher)
 
@@ -122,20 +115,18 @@ class DINOv2(nn.Module):
     def update_teacher(self, global_step: int, max_steps: int) -> None:
         """Update teacher using EMA with cosine momentum schedule."""
         momentum = cosine_schedule(step=global_step, max_steps=max_steps, start_value=0.992, end_value=1.0)
+        for student, teacher in self.student_teacher_pairs():
+            update_momentum(student, teacher, m=momentum)
 
-        # Remove problematic device movement logic
-        # In DDP, parameters should already be on correct devices
-        update_momentum(self.student_backbone, self.teacher_backbone, m=momentum)
-        update_momentum(self.student_dino_head, self.teacher_dino_head, m=momentum)
+    def student_teacher_pairs(self) -> List[Tuple[nn.Module, nn.Module]]:
+        """The student submodules and the teacher submodules that follow them."""
+        pairs = [
+            (self.student_backbone, self.teacher_backbone),
+            (self.student_dino_head, self.teacher_dino_head),
+        ]
         if self.ibot_separate_head:
-            update_momentum(self.student_ibot_head, self.teacher_ibot_head, m=momentum)
-
-    def student_modules(self) -> List[nn.Module]:
-        """Student submodules, which the official implementation clips separately."""
-        modules = [self.student_backbone, self.student_dino_head]
-        if self.ibot_separate_head:
-            modules.append(self.student_ibot_head)
-        return modules
+            pairs.append((self.student_ibot_head, self.teacher_ibot_head))
+        return pairs
 
     def forward(
         self,
@@ -211,40 +202,16 @@ def vit_test(input_channels=1, img_size=(1, 1, 1), patch_size=(0, 0, 0), hidden_
         img_size=img_size,
         patch_size=patch_size,
         hidden_size=hidden_size,
-        norm_last_layer=False,
         ibot_separate_head=False,
         projection_dim=1024,
     )
 
 
 def vit_x(
-    input_channels: int = 1,
     img_size: tuple = (92, 92, 92),
     patch_size: tuple = (8, 8, 8),
     hidden_size: int = 192,
-    ibot_separate_head: bool = False,
-    projection_dim: int = 65536,
-    num_layers: int = 8,
-    num_heads: int = 12,
-    mlp_dim: int = 3072,
-    qkv_bias: bool = False,
-    layer_scale_init: Optional[float] = None,
-    drop_path_rate: float = 0.0,
-    num_register_tokens: int = 0,
+    **kwargs: Any,
 ) -> DINOv2:
-    return DINOv2(
-        input_channels=input_channels,
-        img_size=img_size,
-        patch_size=patch_size,
-        hidden_size=hidden_size,
-        norm_last_layer=False,
-        ibot_separate_head=ibot_separate_head,
-        projection_dim=projection_dim,
-        num_layers=num_layers,
-        num_heads=num_heads,
-        mlp_dim=mlp_dim,
-        qkv_bias=qkv_bias,
-        layer_scale_init=layer_scale_init,
-        drop_path_rate=drop_path_rate,
-        num_register_tokens=num_register_tokens,
-    )
+    """DINOv2 with smaller default sizes. The other arguments go to DINOv2."""
+    return DINOv2(img_size=img_size, patch_size=patch_size, hidden_size=hidden_size, **kwargs)

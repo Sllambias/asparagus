@@ -226,9 +226,10 @@ class DINOv2Augmentation(nn.Module):
             global_view_scale = [0.32, 1.0]
         if local_view_scale is None:
             local_view_scale = [0.05, 0.32]
-        self.global_view_scale = global_view_scale
+        # Copies, as the global scale may be changed below
+        self.global_view_scale = list(global_view_scale)
         self.global_view_size = global_view_size
-        self.local_view_scale = local_view_scale
+        self.local_view_scale = list(local_view_scale)
         self.local_view_size = local_view_size
         self.num_local_views = num_local_views
         self.resize_mode = resize_mode

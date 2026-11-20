@@ -6,11 +6,13 @@ Handles optimizer, scheduler, training/validation steps, and teacher-student upd
 import lightning as L
 import math
 import re
+from asparagus.functional.lr_scheduling import get_optimizer_steps_per_epoch
 from asparagus.modules.losses.dinov2 import DINOv2Loss
 from lightly.utils.optim import update_param_groups
 from lightly.utils.scheduler import CosineWarmupScheduler, cosine_schedule
 from torch import Tensor, nn
 from torch.optim import AdamW, Optimizer
+from typing import Any, Callable, Optional
 
 
 class DINOv2Module(L.LightningModule):
@@ -62,7 +64,6 @@ class DINOv2Module(L.LightningModule):
         self.teacher_temp_min = teacher_temp_min
         self.teacher_temp_max = teacher_temp_max
         self.freeze_last_layer_epochs = freeze_last_layer_epochs
-        self.last_teacher_update_step = 0
         self.metrics = {"train": None, "val": None}
         self.warmup_epochs = warmup_epochs
         self.model = model
@@ -93,18 +94,12 @@ class DINOv2Module(L.LightningModule):
 
         log_dict = {}
         for key, value in loss_dict.items():
-            log_dict[f"train_{key}"] = value if value is not None else 0.0
-
-        self.log(
-            "train_loss",
-            loss_dict["total_loss"],
-            prog_bar=True,
-            sync_dist=True,
-            batch_size=batch_size,
-        )
+            if key != "total_loss":
+                log_dict[f"train_{key}"] = value if value is not None else 0.0
 
         log_dict["global_step"] = float(self.trainer.global_step)
         self.log_dict(log_dict, prog_bar=False, sync_dist=True, batch_size=batch_size)
+        self.log("train_total_loss", loss_dict["total_loss"], prog_bar=True, sync_dist=True, batch_size=batch_size)
         return loss_dict["total_loss"]
 
     def validation_step(self, batch: tuple[Tensor, Tensor, list[str]], batch_idx: int) -> Tensor:
@@ -203,12 +198,7 @@ class DINOv2Module(L.LightningModule):
         else:
             raise ValueError(f"Unknown optimizer: {self.optimizer}")
 
-        # Fix: Ensure proper scheduler configuration
-        if self.trainer.max_epochs <= 0:
-            optimizer_steps_per_epoch = self.trainer.limit_train_batches // self.trainer.accumulate_grad_batches
-        else:
-            optimizer_steps_per_epoch = self.trainer.estimated_stepping_batches // self.trainer.max_epochs
-
+        optimizer_steps_per_epoch = get_optimizer_steps_per_epoch(self.trainer)
         warmup_steps = self.warmup_epochs * optimizer_steps_per_epoch
 
         max_steps = max(self.trainer.estimated_stepping_batches, 1)
@@ -222,9 +212,7 @@ class DINOv2Module(L.LightningModule):
             "interval": "step",
         }
 
-        self.criterion.max_steps = max_steps
         self.criterion.teacher_temp_warmup_steps = self.teacher_temp_warmup_epochs * optimizer_steps_per_epoch
-        self.criterion.max_epochs = self.trainer.max_epochs
         return [optimizer], [scheduler]
 
     def configure_gradient_clipping(
@@ -235,8 +223,8 @@ class DINOv2Module(L.LightningModule):
     ) -> None:
         # Official DINOv2 clips the backbone and each head separately
         if self.gradient_clip_val:
-            for module in self.model.student_modules():
-                nn.utils.clip_grad_norm_(module.parameters(), self.gradient_clip_val)
+            for student, _ in self.model.student_teacher_pairs():
+                nn.utils.clip_grad_norm_(student.parameters(), self.gradient_clip_val)
 
     def on_before_optimizer_step(self, optimizer: AdamW, *args) -> None:
         # Apply weight decay schedule
@@ -260,10 +248,15 @@ class DINOv2Module(L.LightningModule):
                 if group["is_last_layer"]:
                     group["lr"] = 0.0
 
-    def on_train_batch_end(self, outputs, batch, batch_idx):
-        # Update the teacher once per optimizer step, not once per accumulated batch
-        if self.trainer.global_step > self.last_teacher_update_step:
-            max_steps = max(self.trainer.estimated_stepping_batches, 1000)
-            self.model.update_teacher(global_step=self.trainer.global_step, max_steps=max_steps)
-            self.last_teacher_update_step = self.trainer.global_step
-        return super().on_train_batch_end(outputs, batch, batch_idx)
+    def optimizer_step(
+        self,
+        epoch: int,
+        batch_idx: int,
+        optimizer: Optimizer,
+        optimizer_closure: Optional[Callable[[], Any]] = None,
+    ) -> None:
+        super().optimizer_step(epoch, batch_idx, optimizer, optimizer_closure)
+        # Lightning calls this once per optimizer step, also under gradient accumulation, and only counts the step in
+        # global_step after it returns
+        max_steps = max(self.trainer.estimated_stepping_batches, 1000)
+        self.model.update_teacher(global_step=self.trainer.global_step + 1, max_steps=max_steps)

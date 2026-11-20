@@ -6,13 +6,16 @@ Three tests cover:
   3. Forward-structure test  — verifies output keys/shapes match the official DinoV2 spec
 """
 
+import datetime
 import lightning as L
 import pytest
 import torch
+import torch.distributed as dist
 import torch.nn as nn
 from asparagus.modules.data_modules.pretraining import PretrainDataModule
 from asparagus.modules.data_modules.training import ClsRegDataModule
 from asparagus.modules.lightning_modules.dinov2 import DINOv2Module
+from asparagus.modules.losses.ibot import IBOTPatchLoss3D
 from asparagus.modules.networks.dinov2 import vit_x
 from asparagus.modules.transforms.blockmask import DINOv2Collate
 from asparagus.modules.transforms.DinoV2 import DINOv2Augmentation
@@ -283,6 +286,31 @@ def test_teacher_updates_once_per_optimizer_step(pretrain_files_2d, make_trainer
     model.update_teacher = counting_update_teacher
     make_trainer(limit_val_batches=0, limit_train_batches=4, accumulate_grad_batches=2).fit(module, datamodule=data_module)
     assert steps == [1, 2]
+
+
+def update_ibot_center_on_rank(rank: int, store_file: str) -> None:
+    dist.init_process_group(
+        "gloo", init_method=f"file://{store_file}", rank=rank, world_size=2, timeout=datetime.timedelta(seconds=30)
+    )
+    # Rank 0 has no masked patches, rank 1 has three
+    mask = torch.zeros(2, 4, dtype=torch.bool)
+    if rank == 1:
+        mask[0, :3] = True
+    tokens = torch.ones(int(mask.sum()), 8)
+    loss_fn = IBOTPatchLoss3D(output_dim=8, center_momentum=0.9)
+    loss = loss_fn(tokens, tokens.clone(), mask)
+    torch.save((loss, loss_fn.center.center), f"{store_file}_{rank}.pt")
+    dist.destroy_process_group()
+
+
+def test_ibot_center_syncs_when_a_rank_has_no_masked_patches(tmp_path):
+    store_file = str(tmp_path / "store")
+    torch.multiprocessing.spawn(update_ibot_center_on_rank, args=(store_file,), nprocs=2)
+    for rank in range(2):
+        loss, center = torch.load(f"{store_file}_{rank}.pt")
+        assert torch.isfinite(loss)
+        # Both ranks move to the mean token of rank 1: 0.9 * 0 + 0.1 * 1
+        assert torch.allclose(center, torch.full((1, 8), 0.1)), rank
 
 
 def test_teacher_temperature_warms_up_over_epochs(pretrain_files_2d, make_trainer):
