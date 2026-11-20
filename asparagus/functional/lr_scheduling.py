@@ -30,6 +30,18 @@ def separate_encoder_decoder_weights(named_parameters) -> List[Dict[str, Any]]:
     ]
 
 
+def merge_param_groups(param_groups: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Merge parameter groups whose settings (everything except params and name) are equal."""
+    merged = {}
+    for group in param_groups:
+        settings = {key: value for key, value in group.items() if key not in ["params", "name"]}
+        settings_key = tuple(sorted(settings.items()))
+        if settings_key not in merged:
+            merged[settings_key] = {"name": f"group_{len(merged)}", "params": [], **settings}
+        merged[settings_key]["params"].extend(group["params"])
+    return list(merged.values())
+
+
 def sawtooth_warmup_cosine_decay_schedule(
     optimizer,
     decoder_warmup_epochs,

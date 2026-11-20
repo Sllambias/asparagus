@@ -6,6 +6,7 @@ Handles optimizer, scheduler, training/validation steps, and teacher-student upd
 import lightning as L
 import math
 import re
+from asparagus.functional.lr_scheduling import merge_param_groups
 from asparagus.modules.losses.dinov2 import DINOv2Loss
 from lightly.utils.optim import update_param_groups
 from lightly.utils.scheduler import CosineWarmupScheduler, cosine_schedule
@@ -176,10 +177,15 @@ class DINOv2Module(L.LightningModule):
         print(f"Found {len(param_groups)} parameter groups for optimization")
         print(f"Total parameters: {sum(len(group['params']) for group in param_groups)}")
 
+        # One group per tensor makes AdamW launch its kernels once per tensor, so merge groups with equal settings
+        param_groups = merge_param_groups(param_groups)
+        print(f"Merged into {len(param_groups)} optimizer groups")
+
         if self.optimizer == "AdamW":
             optimizer = AdamW(
                 param_groups,
                 lr=lr,
+                fused=True,
             )
         else:
             raise ValueError(f"Unknown optimizer: {self.optimizer}")
