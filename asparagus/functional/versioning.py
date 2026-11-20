@@ -99,7 +99,3 @@ def detect_id(id: str, model_dir: str = get_models_path()):
         raise ValueError(f"Found {len(all_cases)} matches for ID: {id} in {model_dir}")
 
     return all_cases[0]
-
-
-if __name__ == "__main__":
-    print(detect_id("582109"))

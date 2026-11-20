@@ -1,4 +1,3 @@
-import torch
 from gardening_tools.modules.networks.components.blocks import MultiLayerConvDropoutNormNonlin
 from gardening_tools.modules.networks.unet import UNet, UNetCLSREG
 
@@ -110,11 +109,3 @@ def unet_clsreg_tiny(
         starting_filters=2,
         encoder_basic_block=MultiLayerConvDropoutNormNonlin.get_block_constructor(1),
     )
-
-
-if __name__ == "__main__":
-    model = unet_b_lw_dec(input_channels=1, output_channels=1)
-    print(model)
-    x = torch.randn(1, 1, 64, 64, 64)
-    y = model(x)
-    print(y.shape)

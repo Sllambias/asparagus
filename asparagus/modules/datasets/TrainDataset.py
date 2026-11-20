@@ -54,7 +54,6 @@ class ClsRegDataset(Dataset):
         super().__init__()
 
         self.files = files
-        self.composed_transforms = transforms
         self.transforms = transforms
 
     def __len__(self):

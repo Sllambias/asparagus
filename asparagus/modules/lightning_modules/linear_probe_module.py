@@ -57,7 +57,6 @@ class LinearProbeModule(BaseModule):
         self.test_output_path = test_output_path
         self.optimizer_momentum = optimizer_momentum
         self.optimizer_weight_decay = optimizer_weight_decay
-        self.learning_rates = learning_rates
         self.dimensions = dimensions
 
         for param in self.model.parameters():
