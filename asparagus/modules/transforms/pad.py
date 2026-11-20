@@ -179,19 +179,7 @@ def torch_pad_2D_case_from_3D(
         ),
     )
 
-    return (
-        image_out,
-        label_out,
-        [
-            pad_lb_x,
-            pad_ub_x,
-            pad_lb_y,
-            pad_ub_y,
-            pad_lb_z,
-            pad_ub_z,
-        ],
-        pad_dict,
-    )
+    return image_out, label_out, pad_dict
 
 
 def torch_pad_2D_case_from_2D(

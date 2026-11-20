@@ -6,6 +6,7 @@ loads from ASPARAGUS_RAW_LABELS which is unavailable in CI.
 Covers: unet_tiny 3D, ResidualEncoderUNet 3D, unet_tiny 2D.
 """
 
+import torch
 from asparagus.modules.data_modules.training import SegDataModule
 from asparagus.modules.lightning_modules import SegmentationModule
 from asparagus.modules.networks.primus import primus_debug
@@ -86,3 +87,10 @@ def test_seg_train_transforms_scale_probability():
     spatial = next(transform for transform in transforms if isinstance(transform, Torch_Spatial))
     assert spatial.p_scale_all_channel == 0.2
 
+
+def test_seg_train_transforms_2d_patch_from_3d_volume():
+    """2D patches can be drawn from labelled 3D volumes, also ones smaller than the patch."""
+    data = {"image": torch.randn(1, 6, 10, 12), "label": torch.zeros(1, 6, 10, 12), "foreground_locations": []}
+    data = CPU_seg_train_transforms([16, 16])(data)
+    assert data["image"].shape == (1, 16, 16)
+    assert data["label"].shape == (1, 16, 16)
