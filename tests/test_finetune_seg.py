@@ -11,7 +11,8 @@ from asparagus.modules.lightning_modules import SegmentationModule
 from asparagus.modules.networks.primus import primus_debug
 from asparagus.modules.networks.resenc_unet import resenc_unet_debug
 from asparagus.modules.networks.unet import unet_tiny
-from asparagus.modules.transforms.presets import GPU_all_train_transforms
+from asparagus.modules.transforms.presets import CPU_seg_train_transforms, GPU_all_train_transforms
+from gardening_tools.modules.transforms.spatial import Torch_Spatial
 
 
 def make_seg_data_module(files):
@@ -77,3 +78,11 @@ def test_finetune_seg_unet_2d_fit(seg_files_2d, make_trainer):
         inference_patch_size=[32, 32],
     )
     make_trainer().fit(module, datamodule=make_seg_data_module(seg_files_2d))
+
+
+def test_seg_train_transforms_scale_probability():
+    """Seg training scales a fifth of the patches, like the cls/reg presets."""
+    transforms = CPU_seg_train_transforms([32, 32, 32]).transforms
+    spatial = next(transform for transform in transforms if isinstance(transform, Torch_Spatial))
+    assert spatial.p_scale_all_channel == 0.2
+
