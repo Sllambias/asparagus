@@ -136,21 +136,23 @@ def run_script(script, overrides, monkeypatch):
             OmegaConf.clear_resolver(resolver)
     sys.modules.pop(f"asparagus.pipeline.run.{script}", None)
     module = importlib.import_module(f"asparagus.pipeline.run.{script}")
+    run_setup = importlib.import_module("asparagus.pipeline.auto_configuration.run_setup")
 
     log = {"configs": {}, "built": {}, "calls": []}
     monkeypatch.setattr(asparagus.functional.hydra, "instantiate", make_instantiate(log))
-    for name in (
-        "logging",
-        "ModelCheckpoint",
-        "TQDMProgressBar",
-        "LearningRateMonitor",
-        "LinearProbeModule",
-        "load_checkpoint_state_dict",
-        "CPU_clsreg_val_test_transforms_crop",
-        "CPU_seg_test_transforms",
-    ):
-        if hasattr(module, name):
-            monkeypatch.setattr(module, name, make_builder(name, log))
+    for patched_module in (module, run_setup):
+        for name in (
+            "logging",
+            "ModelCheckpoint",
+            "TQDMProgressBar",
+            "LearningRateMonitor",
+            "LinearProbeModule",
+            "load_checkpoint_state_dict",
+            "CPU_clsreg_val_test_transforms_crop",
+            "CPU_seg_test_transforms",
+        ):
+            if hasattr(patched_module, name):
+                monkeypatch.setattr(patched_module, name, make_builder(name, log))
 
     GlobalHydra.instance().clear()
     monkeypatch.setattr(sys, "argv", [script, *overrides])
