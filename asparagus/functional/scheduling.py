@@ -2,35 +2,20 @@ import asparagus
 import subprocess
 
 
-def check_if_slurm_installed() -> bool:
-    check_1 = subprocess.run(["which", "srun"], capture_output=True, text=True)
-    check_2 = subprocess.run(["which", "squeue"], capture_output=True, text=True)
-    if check_1.returncode == 0 and check_2.returncode == 0:
-        return True
-
-
-def check_if_torque_installed() -> bool:
-    check_1 = subprocess.run(["which", "qsub"], capture_output=True, text=True)
-    check_2 = subprocess.run(["which", "pbsnodes"], capture_output=True, text=True)
-    if check_1.returncode == 0 and check_2.returncode == 0:
-        return True
-
-
-def check_if_lsf_installed() -> bool:
-    check_1 = subprocess.run(["which", "bsub"], capture_output=True, text=True)
-    check_2 = subprocess.run(["which", "bjobs"], capture_output=True, text=True)
-    if check_1.returncode == 0 and check_2.returncode == 0:
-        return True
+def commands_exist(first_command, second_command) -> bool:
+    check_1 = subprocess.run(["which", first_command], capture_output=True, text=True)
+    check_2 = subprocess.run(["which", second_command], capture_output=True, text=True)
+    return check_1.returncode == 0 and check_2.returncode == 0
 
 
 def get_scheduler(mode: str = "auto"):
     if mode != "auto":
         return mode
-    if check_if_slurm_installed():
+    if commands_exist("srun", "squeue"):
         return "slurm"
-    if check_if_torque_installed():
+    if commands_exist("qsub", "pbsnodes"):
         return "torque"
-    if check_if_lsf_installed():
+    if commands_exist("bsub", "bjobs"):
         return "lsf"
     return "local"
 
