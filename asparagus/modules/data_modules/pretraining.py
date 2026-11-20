@@ -97,21 +97,3 @@ class PretrainDataModule(pl.LightningDataModule):
             batch_size=1,
             collate_fn=collate_return,
         )
-
-
-if __name__ == "__main__":
-    from gardening_tools.functional.paths.read import load_json
-
-    splits = load_json(
-        "/Users/zcr545/Desktop/Projects/repos/asparagus_data/preprocessed_data/PT000_LauritSSL_PNG/split_80_10_10.json"
-    )
-    train_split = splits[0]["train"]
-    val_split = splits[0]["val"]
-    data_module = PretrainDataModule(
-        train_split=train_split,
-        val_split=val_split,
-        batch_size=2,
-        num_workers=6,
-    )
-    data_module.setup("fit")
-    print(data_module.train_dataset[0]["image"].shape)

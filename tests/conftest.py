@@ -38,21 +38,6 @@ def seg_files(tmp_path):
 
 
 @pytest.fixture
-def clsreg_files(tmp_path):
-    """Three .pt files containing (image[1,32,32,32], label_scalar) tuples.
-    32^3 prevents single-element BatchNorm errors in the 4-stage UNet encoder.
-    Labels are 0-dim int tensors; ClassificationModule.on_before_batch_transfer
-    squeezes and converts to long before the training step.
-    """
-    files = []
-    for i in range(3):
-        path = tmp_path / f"cls_{i:03d}.pt"
-        torch.save((torch.randn(1, 32, 32, 32), torch.tensor(i % 2)), path)
-        files.append(str(path))
-    return {"train": files[:2], "val": [files[2]], "test": [files[2]]}
-
-
-@pytest.fixture
 def reg_files(tmp_path):
     """Three .pt files containing (image[1,32,32,32], label[1]) tuples.
     Labels are 1D float tensors so they collate to [B, 1], matching the

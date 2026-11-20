@@ -212,7 +212,6 @@ class BaseModule(L.LightningModule):
 
         # Lists used to inform master of our whereabouts
         rejected_keys_new = [k for k in state_dict.keys() if k not in old_params]
-        state_dict = {k: v for k, v in state_dict.items() if k in old_params}
         rejected_keys_shape = [k for k in state_dict.keys() if old_params[k].shape != state_dict[k].shape]
         rejected_keys_decoder = [k for k in state_dict.keys() if not load_decoder and k.startswith("model.decoder")]
 

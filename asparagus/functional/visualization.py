@@ -16,20 +16,6 @@ FPS = 4
 DPI = 100
 
 
-def finish():
-    wandb.finish()
-
-
-def update_config(dct):
-    wandb.config.update(dct)
-
-
-def save_tensor(x, name):
-    torch.save(x, name)
-    wandb.save(name)
-    print(f"Saved {name} to wandb")
-
-
 def normalize_array_to_pil(img: np.ndarray) -> Image.Image:
     """
     Normalize numpy array to 0-255 range and convert to PIL Image.

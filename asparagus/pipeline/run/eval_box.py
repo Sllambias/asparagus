@@ -541,9 +541,3 @@ def resolve_hardware_config(hardware):
 
 if __name__ == "__main__":
     main()
-
-
-# %%
-
-
-# %%
