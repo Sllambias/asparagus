@@ -27,7 +27,6 @@ training:
   batch_size: 16
   patch_size: [160, 160, 160]
   seed: ${random:0,1000000}
-  mask_patch_size: ${model.patch_embed_size}
   mask_ratio: 0.6
   train_batches_per_epoch_per_device: ${eval:"${training.max_samples} // ${training.epochs} // ${training.batch_size} // ${hardware.num_devices} // ${hardware.num_nodes}"}
   val_batches_per_epoch_per_device: ${eval:"${training.train_batches_per_epoch_per_device} // 10"}  
@@ -46,8 +45,6 @@ transforms:
 
 logger:
   progress_bar: True
-  profile: False
-  wandb_log_model: False
   wandb_logging: True
   wandb_entity: ${oc.env:WANDB_ENTITY, "team-asparagus"}
   wandb_project: Pretrain
@@ -58,5 +55,3 @@ logger:
 
 profiler:
   enabled: False
-  profile_every_n_steps: 500
-  warmup_steps: 10
