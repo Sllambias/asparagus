@@ -142,10 +142,7 @@ class LinearProbeModule(BaseModule):
     def on_train_epoch_end(self):
         for lr in self.learning_rates:
             head_name = self.lr_to_linear_head_name(lr)
-            metrics = self.train_metrics[head_name].compute()
-            formatted = format_multilabel_metrics(metrics, ignore_index=self.ignore_index_in_metrics)
-            self.log_dict(formatted, sync_dist=True)
-            self.train_metrics[head_name].reset()
+            self.log_and_reset_metrics(self.train_metrics[head_name])
 
     def validation_step(self, batch, batch_idx):
         x, y = batch["image"], batch["CLSREG_label"]

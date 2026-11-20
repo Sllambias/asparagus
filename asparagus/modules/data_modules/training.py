@@ -15,7 +15,56 @@ from torchvision.transforms import Compose
 from typing import Literal, Optional
 
 
-class SegDataModule(pl.LightningDataModule):
+class TrainingDataModule(pl.LightningDataModule):
+    """Setup shared by the segmentation and classification/regression data modules."""
+
+    dataset_class = None
+    test_dataset_class = None
+
+    def setup(self, stage: Literal["fit", "test", "predict"]):
+        if stage == "fit":
+            self.setup_fit()
+        elif stage == "test":
+            self.setup_test()
+        elif stage == "predict":
+            self.setup_predict()
+
+    def setup_fit(self):
+        self.train_dataset = self.dataset_class(
+            self.train_split,
+            transforms=self.train_transforms,
+        )
+
+        self.val_dataset = self.dataset_class(
+            self.val_split,
+            transforms=self.val_transforms,
+        )
+
+    def setup_test(self):
+        self.test_dataset = self.test_dataset_class(
+            self.test_samples,
+            transforms=self.test_transforms,
+        )
+
+    def setup_predict(self):
+        self.predict_dataset = SingleSubjectPredictDataset(
+            self.predict_samples,
+            transforms=self.predict_transforms,
+        )
+
+    def predict_dataloader(self):
+        return DataLoader(
+            self.predict_dataset,
+            num_workers=self.num_workers,
+            batch_size=1,
+            collate_fn=collate_return,
+        )
+
+
+class SegDataModule(TrainingDataModule):
+    dataset_class = SegDataset
+    test_dataset_class = SegTestDataset
+
     def __init__(
         self,
         batch_size: int,
@@ -42,37 +91,6 @@ class SegDataModule(pl.LightningDataModule):
         self.predict_transforms = predict_transforms
 
         logging.info(f"Using {self.num_workers} workers")
-
-    def setup(self, stage: Literal["fit", "test", "predict"]):
-        if stage == "fit":
-            self.setup_fit()
-        elif stage == "test":
-            self.setup_test()
-        elif stage == "predict":
-            self.setup_predict()
-
-    def setup_fit(self):
-        self.train_dataset = SegDataset(
-            self.train_split,
-            transforms=self.train_transforms,
-        )
-
-        self.val_dataset = SegDataset(
-            self.val_split,
-            transforms=self.val_transforms,
-        )
-
-    def setup_test(self):
-        self.test_dataset = SegTestDataset(
-            self.test_samples,
-            transforms=self.test_transforms,
-        )
-
-    def setup_predict(self):
-        self.predict_dataset = SingleSubjectPredictDataset(
-            self.predict_samples,
-            transforms=self.predict_transforms,
-        )
 
     def train_dataloader(self):
         sampler = RandomSampler(self.train_dataset, num_samples=999999, replacement=True)
@@ -115,16 +133,11 @@ class SegDataModule(pl.LightningDataModule):
             collate_fn=collate_return,
         )
 
-    def predict_dataloader(self):
-        return DataLoader(
-            self.predict_dataset,
-            num_workers=self.num_workers,
-            batch_size=1,
-            collate_fn=collate_return,
-        )
 
+class ClsRegDataModule(TrainingDataModule):
+    dataset_class = ClsRegDataset
+    test_dataset_class = ClsRegTestDataset
 
-class ClsRegDataModule(pl.LightningDataModule):
     def __init__(
         self,
         batch_size: int,
@@ -152,37 +165,6 @@ class ClsRegDataModule(pl.LightningDataModule):
         self.predict_samples = predict_samples
         self.predict_transforms = predict_transforms
         logging.info(f"Using {self.num_workers} workers")
-
-    def setup(self, stage: Literal["fit", "test", "predict"]):
-        if stage == "fit":
-            self.setup_fit()
-        elif stage == "test":
-            self.setup_test()
-        elif stage == "predict":
-            self.setup_predict()
-
-    def setup_fit(self):
-        self.train_dataset = ClsRegDataset(
-            self.train_split,
-            transforms=self.train_transforms,
-        )
-
-        self.val_dataset = ClsRegDataset(
-            self.val_split,
-            transforms=self.val_transforms,
-        )
-
-    def setup_test(self):
-        self.test_dataset = ClsRegTestDataset(
-            self.test_samples,
-            transforms=self.test_transforms,
-        )
-
-    def setup_predict(self):
-        self.predict_dataset = SingleSubjectPredictDataset(
-            self.predict_samples,
-            transforms=self.predict_transforms,
-        )
 
     def train_dataloader(self):
         sampler = None
@@ -225,13 +207,5 @@ class ClsRegDataModule(pl.LightningDataModule):
             batch_size=1,
             pin_memory=False,
             persistent_workers=True,
-            collate_fn=collate_return,
-        )
-
-    def predict_dataloader(self):
-        return DataLoader(
-            self.predict_dataset,
-            num_workers=self.num_workers,
-            batch_size=1,
             collate_fn=collate_return,
         )
