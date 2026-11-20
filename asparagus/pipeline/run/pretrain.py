@@ -1,6 +1,7 @@
 import hydra
 import lightning as pl
 import random
+import torch
 from asparagus.functional.hydra import fast_instantiate
 from asparagus.functional.versioning import generate_unused_run_id
 from asparagus.modules.hydra.plugins.searchpath_plugins import PretrainSearchpathPlugin
@@ -33,6 +34,8 @@ Plugins.instance().register(PretrainSearchpathPlugin)
 )
 def main(cfg: DictConfig) -> None:
     assert cfg.task is not None, "No task set. Pass task=<task name> or set it in the config."
+    # The default strategy keeps a file open per tensor in every prefetched batch, which runs past ulimit -n
+    torch.multiprocessing.set_sharing_strategy("file_system")
     print(f"{OmegaConf.to_yaml(cfg)}\n Version: {cfg.run_id}\n Run dir: {HydraConfig.get().run.dir}\n")
     logging_safe_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     file_store, path_store, version_store = prepare_standard_experiment(cfg)

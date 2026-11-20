@@ -62,6 +62,12 @@ def test_views_have_the_requested_sizes(global_size, local_size):
     assert [tuple(view.shape[1:]) for view in data["local_views"]] == [local_size] * 3
 
 
+def test_views_are_plain_tensors():
+    augmentation = DINOv2Augmentation(global_view_size=(32, 32), local_view_size=(16, 16), num_local_views=2)
+    data = augmentation({"image": torch.rand(1, 64, 64)})
+    assert all(type(view) is torch.Tensor for view in data["image"] + data["local_views"])
+
+
 def test_blur_matches_torchvision():
     image = torch.rand(1, 40, 56)
     torch.manual_seed(1)

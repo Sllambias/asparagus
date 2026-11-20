@@ -10,6 +10,7 @@ from monai.transforms import (
     RandScaleCrop,
     Resize,
     ScaleIntensityRange,
+    ToTensor,
     Transform,
 )
 from torchvision.transforms import Compose
@@ -307,6 +308,8 @@ class DINOv2Augmentation(nn.Module):
         if self.normalize_mean is not None or self.normalize_std is not None:
             assert self.normalize_mean is not None and self.normalize_std is not None, "Set both normalize_mean and _std"
             transforms.append(NormalizeIntensity(subtrahend=self.normalize_mean, divisor=self.normalize_std))
+        # Drop MONAI's metadata, which nothing reads and which more than doubles the tensors each batch shares
+        transforms.append(ToTensor(track_meta=False))
         return Compose(transforms)
 
     def forward(self, data: Dict[str, Any]) -> Dict[str, Any]:
