@@ -6,7 +6,7 @@
 defaults:
   - /core/base@
   - /default_pretrain@
-  - /hardware/2nodes2gpus@hardware
+  - /hardware/1gpu32cpu@hardware
   - /model/dinov2_test@model
   - _self_
 
@@ -14,9 +14,6 @@ task: PT400_DeepFetalV1
 root: base
 stem: dinus
 
-hardware:
-  # Dinus trains in fp16 with a gradient scaler
-  precision: 16-mixed
 
 transforms:
   cpu_tr_transforms: dinov2
