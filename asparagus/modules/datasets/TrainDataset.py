@@ -10,7 +10,9 @@ from torch.utils.data import Dataset
 from typing import Optional
 
 
-class SegDataset(Dataset):
+class FileDataset(Dataset):
+    """Samples loaded from a list of files, each passed through the optional transforms."""
+
     def __init__(
         self,
         files: list,
@@ -24,6 +26,13 @@ class SegDataset(Dataset):
     def __len__(self):
         return len(self.files)
 
+    def _transform(self, data_dict):
+        if self.transforms is not None:
+            data_dict = self.transforms(data_dict)
+        return data_dict
+
+
+class SegDataset(FileDataset):
     def __getitem__(self, idx):
         file = self.files[idx]
         data = torch.load(file)
@@ -39,26 +48,12 @@ class SegDataset(Dataset):
         return self._transform(data_dict)
 
     def _transform(self, data_dict):
-        if self.transforms is not None:
-            data_dict = self.transforms(data_dict)
+        data_dict = super()._transform(data_dict)
         data_dict.pop("foreground_locations")
         return data_dict
 
 
-class ClsRegDataset(Dataset):
-    def __init__(
-        self,
-        files: list,
-        transforms: Optional[torchvision.transforms.Compose] = None,
-    ):
-        super().__init__()
-
-        self.files = files
-        self.transforms = transforms
-
-    def __len__(self):
-        return len(self.files)
-
+class ClsRegDataset(FileDataset):
     def __getitem__(self, idx):
         file = self.files[idx]
         data = torch.load(file)
@@ -71,26 +66,8 @@ class ClsRegDataset(Dataset):
 
         return self._transform(data_dict)
 
-    def _transform(self, data_dict):
-        if self.transforms is not None:
-            data_dict = self.transforms(data_dict)
-        return data_dict
 
-
-class SegTestDataset(Dataset):
-    def __init__(
-        self,
-        files: list,
-        transforms: Optional[torchvision.transforms.Compose] = None,
-    ):
-        super().__init__()
-
-        self.files = files
-        self.transforms = transforms
-
-    def __len__(self):
-        return len(self.files)
-
+class SegTestDataset(FileDataset):
     def __getitem__(self, idx):
         file = self.files[idx]
         data = torch.load(file)
@@ -109,11 +86,6 @@ class SegTestDataset(Dataset):
 
         return self._transform(data_dict)
 
-    def _transform(self, data_dict):
-        if self.transforms is not None:
-            data_dict = self.transforms(data_dict)
-        return data_dict
-
     def _get_src_label(self, file, properties):
         # source label is the label from the original dataset without any preprocessing
         src_label_path = file.replace(get_data_path(), get_source_labels_path()).replace(".pt", "_label.nii.gz")
@@ -127,20 +99,7 @@ class SegTestDataset(Dataset):
         return torch.from_numpy(src_label_npy).float().unsqueeze(0).unsqueeze(0)
 
 
-class ClsRegTestDataset(Dataset):
-    def __init__(
-        self,
-        files: list,
-        transforms: Optional[torchvision.transforms.Compose] = None,
-    ):
-        super().__init__()
-
-        self.files = files
-        self.transforms = transforms
-
-    def __len__(self):
-        return len(self.files)
-
+class ClsRegTestDataset(FileDataset):
     def __getitem__(self, idx):
         file = self.files[idx]
         data = torch.load(file)
@@ -152,23 +111,8 @@ class ClsRegTestDataset(Dataset):
 
         return self._transform(data_dict)
 
-    def _transform(self, data_dict):
-        if self.transforms is not None:
-            data_dict = self.transforms(data_dict)
-        return data_dict
 
-
-class SingleSubjectPredictDataset(Dataset):
-    def __init__(
-        self,
-        files: list,
-        transforms: Optional[torchvision.transforms.Compose] = None,
-    ):
-        super().__init__()
-
-        self.files = files
-        self.transforms = transforms
-
+class SingleSubjectPredictDataset(FileDataset):
     def __len__(self):
         return 1
 
@@ -202,8 +146,3 @@ class SingleSubjectPredictDataset(Dataset):
         }
 
         return self._transform(data_dict)
-
-    def _transform(self, data_dict):
-        if self.transforms is not None:
-            data_dict = self.transforms(data_dict)
-        return data_dict

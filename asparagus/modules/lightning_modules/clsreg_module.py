@@ -2,9 +2,7 @@ import logging
 import os
 import torch
 import torch.nn as nn
-import wandb
 from abc import abstractmethod
-from asparagus.functional.metrics.utils import format_multilabel_metrics
 from asparagus.modules.lightning_modules.base_module import BaseModule
 from gardening_tools.functional.paths.write import save_json
 from torchmetrics import MetricCollection
@@ -84,30 +82,12 @@ class ClsRegBase(BaseModule):
 
         self.train_metrics.update(pred, y)
 
-        if (
-            self.current_epoch > 0
-            and batch_idx == 0
-            and wandb.run is not None
-            and self.current_epoch % self.log_image_every_n_epochs == 0
-        ):
-            self._log_dict_of_images_to_wandb(
-                {
-                    "input": x.detach().cpu().to(torch.float32).numpy(),
-                    "target": y.detach().cpu().to(torch.float32).numpy(),
-                    "output": pred.detach().cpu().to(torch.float32).numpy(),
-                    "file": batch["file_path"],
-                },
-                log_key="train",
-                task_type=self.task_type,
-            )
+        self.log_example_images(batch, batch_idx, x, y, pred, log_key="train", task_type=self.task_type)
 
         return loss
 
     def on_train_epoch_end(self):
-        metrics_results = self.train_metrics.compute()
-        formatted_metrics = format_multilabel_metrics(metrics_results, ignore_index=self.ignore_index_in_metrics)
-        self.log_dict(formatted_metrics, sync_dist=True)
-        self.train_metrics.reset()
+        self.log_and_reset_metrics(self.train_metrics)
 
     def validation_step(self, batch, batch_idx):
         x, y = batch["image"], batch["CLSREG_label"]
@@ -118,28 +98,10 @@ class ClsRegBase(BaseModule):
 
         self.val_metrics.update(pred, y)
 
-        if (
-            self.current_epoch > 0
-            and batch_idx == 0
-            and wandb.run is not None
-            and self.current_epoch % self.log_image_every_n_epochs == 0
-        ):
-            self._log_dict_of_images_to_wandb(
-                {
-                    "input": x.detach().cpu().to(torch.float32).numpy(),
-                    "target": y.detach().cpu().to(torch.float32).numpy(),
-                    "output": pred.detach().cpu().to(torch.float32).numpy(),
-                    "file": batch["file_path"],
-                },
-                log_key="val",
-                task_type=self.task_type,
-            )
+        self.log_example_images(batch, batch_idx, x, y, pred, log_key="val", task_type=self.task_type)
 
     def on_validation_epoch_end(self):
-        metrics_results = self.val_metrics.compute()
-        formatted_metrics = format_multilabel_metrics(metrics_results, ignore_index=self.ignore_index_in_metrics)
-        self.log_dict(formatted_metrics, sync_dist=True)
-        self.val_metrics.reset()
+        self.log_and_reset_metrics(self.val_metrics)
 
     def on_test_epoch_start(self):
         self.results = {}
