@@ -1,5 +1,6 @@
 import lightning as pl
 import logging
+import torch
 import torch.distributed as dist
 from asparagus.functional.collate import collate_return
 from asparagus.modules.datasets.PretrainDataset import PretrainDataset
@@ -70,7 +71,7 @@ class PretrainDataModule(pl.LightningDataModule):
             self.train_dataset,
             num_workers=self.num_workers,
             batch_size=self.batch_size,
-            pin_memory=False,
+            pin_memory=torch.cuda.is_available(),
             persistent_workers=True,
             drop_last=True,
             sampler=sampler,
@@ -83,7 +84,7 @@ class PretrainDataModule(pl.LightningDataModule):
             self.val_dataset,
             num_workers=self.num_workers,
             batch_size=self.batch_size,
-            pin_memory=False,
+            pin_memory=torch.cuda.is_available(),
             shuffle=False,
             persistent_workers=True,
             drop_last=True,
