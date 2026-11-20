@@ -45,8 +45,6 @@ transforms:
 
 logger:
   progress_bar: True
-  profile: False
-  wandb_log_model: False
   wandb_logging: True
   wandb_entity: ${oc.env:WANDB_ENTITY, "team-asparagus"}
   wandb_project: Asparagus

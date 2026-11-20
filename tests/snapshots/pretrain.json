@@ -141,10 +141,8 @@
               "log_images_every_n_epoch": 5,
               "log_to_stdout": false,
               "mlflow_logging": false,
-              "profile": false,
               "progress_bar": true,
               "wandb_entity": "test-entity",
-              "wandb_log_model": false,
               "wandb_logging": true,
               "wandb_project": "Pretrain"
             },
@@ -175,8 +173,6 @@
               "dimensions": "3D",
               "finetune_lr": 0.001,
               "finetune_optim": "SGD",
-              "momentum": 0.99,
-              "nesterov": true,
               "net": "unet_tiny",
               "patch_embed_size": 4,
               "plugin_seg_net": null,
@@ -197,9 +193,7 @@
                 "profile_every_n_steps": 500,
                 "warmup_steps": 10
               },
-              "enabled": false,
-              "profile_every_n_steps": 500,
-              "warmup_steps": 10
+              "enabled": false
             },
             "resume_training": true,
             "root": "base",
@@ -216,7 +210,6 @@
               "check_val_every_n_epoch": 3,
               "decoder_warmup_epochs": 0,
               "epochs": 1000,
-              "mask_patch_size": 4,
               "mask_ratio": 0.6,
               "max_samples": 10000000,
               "patch_size": [
