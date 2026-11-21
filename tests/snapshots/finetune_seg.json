@@ -165,6 +165,7 @@
               "_trainer": {
                 "_target_": "lightning.Trainer",
                 "accelerator": "auto",
+                "benchmark": true,
                 "default_root_dir": "<tmp>/models/EntryPointTask/unet_tiny__3D/script=finetune_seg/root=base__stem=None_last.ckpt/leaf=default_finetune_seg__clargs=training.seed=0/split_40_10_50__fold=0/run_id=1001",
                 "devices": 1,
                 "enable_progress_bar": true,
@@ -374,6 +375,7 @@
     "lightning._trainer": {
       "_target_": "lightning.Trainer",
       "accelerator": "auto",
+      "benchmark": true,
       "default_root_dir": "<tmp>/models/EntryPointTask/unet_tiny__3D/script=finetune_seg/root=base__stem=None_last.ckpt/leaf=default_finetune_seg__clargs=training.seed=0/split_40_10_50__fold=0/run_id=1001",
       "devices": 1,
       "enable_progress_bar": true,

@@ -97,6 +97,7 @@
     "lightning._trainer": {
       "_target_": "lightning.Trainer",
       "accelerator": "auto",
+      "benchmark": true,
       "default_root_dir": ".",
       "devices": 1,
       "enable_progress_bar": true,
