@@ -2,6 +2,7 @@ import lightning as L
 import pickle
 import pytest
 import torch
+from PIL import Image
 
 
 @pytest.fixture
@@ -76,6 +77,30 @@ def pretrain_files_2d(tmp_path):
     for i in range(3):
         path = tmp_path / f"pre2d_{i:03d}.pt"
         torch.save(torch.randn(1, 32, 32), path)
+        files.append(str(path))
+    return {"train": files[:2], "val": [files[2]]}
+
+
+@pytest.fixture
+def pretrain_uint8_volumes(tmp_path):
+    """Three .pt files of 8-bit volumes of shape [1, 32, 32, 32] for 3D DINOv2 pretraining."""
+    files = []
+    generator = torch.Generator().manual_seed(0)
+    for i in range(3):
+        path = tmp_path / f"pre3d_{i:03d}.pt"
+        torch.save(torch.randint(0, 256, (1, 32, 32, 32), dtype=torch.uint8, generator=generator), path)
+        files.append(str(path))
+    return {"train": files[:2], "val": [files[2]]}
+
+
+@pytest.fixture
+def pretrain_pngs_2d(tmp_path):
+    """Three 8-bit grayscale 32x32 PNGs for 2D DINOv2 pretraining, like the ultrasound frames."""
+    files = []
+    generator = torch.Generator().manual_seed(0)
+    for i in range(3):
+        path = tmp_path / f"pre2d_{i:03d}.png"
+        Image.fromarray(torch.randint(0, 256, (32, 32), dtype=torch.uint8, generator=generator).numpy()).save(path)
         files.append(str(path))
     return {"train": files[:2], "val": [files[2]]}
 

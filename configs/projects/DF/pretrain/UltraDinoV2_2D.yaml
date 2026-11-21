@@ -1,0 +1,40 @@
+# @package _global_
+# UltraDino as Dinus trains it: dinov2/configs/train/vitb16_dinus_FIXED_2m.yaml launched by
+# run/ngc/FUS2M/pretrain_multi_node.bash, which is the official DINOv2 recipe in core/dinov2_official with a ViT-B/16 with
+# 4 registers and UltraDino's augmentation (the ultradino preset). Dinus trains on 4 GPUs; this runs on 1.
+defaults:
+  - /core/base@
+  - /default_pretrain@
+  - /hardware/1gpu40cpu@hardware
+  - /model/dinov2_test@model
+  - /core/dinov2_official@
+  - _self_
+
+task: PT400_DeepFetalV1
+root: base
+stem: dinus
+
+hardware:
+  num_workers: 32
+
+transforms:
+  cpu_tr_transforms: ultradino
+  cpu_val_transforms: ultradino
+
+model:
+  hidden_size: 768
+  # ViT-B/16 with 4 registers
+  _pretrain_net:
+    num_layers: 12
+    num_heads: 12
+    mlp_dim: 3072
+    num_register_tokens: 4
+
+data:
+  train_split: split_manual
+
+training:
+  # Dinus runs 4 GPUs x 256 = 1024 per step. On 1 GPU the step is 256, so the learning rate scales to 0.002
+  batch_size: 256
+  # Dinus's epoch length; on 1 GPU an epoch is a quarter of Dinus's 2M images
+  train_batches_per_epoch_per_device: 1953

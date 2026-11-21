@@ -6,6 +6,7 @@ defaults:
 task:
 root: base
 stem:
+resume_training: False
 
 model:
   net: ${model.cls_net}
@@ -31,7 +32,6 @@ training:
   val_batches_per_epoch_per_device: 50
   target_size: [128, 128, 128]
   seed: ${random:0,1000000}
-  resume_training: False
   check_val_every_n_epoch: 3
   label_smoothing: 0.0
   accumulate_grad_batches: 1

@@ -43,6 +43,7 @@ def CPU_seg_train_transforms(patch_size, normalize=True):
                 p_deform_all_channel=0.0,
                 p_rot_all_channel=p_rot_all_channel,
                 p_rot_per_axis=0.3,
+                p_scale_all_channel=p_scale_all_channel,
                 x_rot_in_degrees=(-30.0, 30.0),
                 y_rot_in_degrees=(-30.0, 30.0),
                 z_rot_in_degrees=(-30.0, 30.0),
