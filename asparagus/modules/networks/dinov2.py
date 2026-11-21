@@ -11,8 +11,10 @@ from typing import Any, Dict, List, Optional, Tuple
 
 @torch.no_grad()
 def update_momentum(model: nn.Module, model_ema: nn.Module, m: float):
-    for model_ema, model in zip(model_ema.parameters(), model.parameters()):
-        model_ema.data = model_ema.data * m + model.data * (1.0 - m)
+    # One in-place call for all parameters: ema = m * ema + (1 - m) * model
+    ema_params = list(model_ema.parameters())
+    params = list(model.parameters())
+    torch._foreach_lerp_(ema_params, params, 1.0 - m)
 
 
 def freeze_eval_module(module: nn.Module) -> None:

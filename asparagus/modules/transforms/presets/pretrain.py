@@ -22,8 +22,6 @@ def CPU_val_transforms(patch_size):
             Torch_Normalize(normalize=True),
             Torch_Pad(patch_size=patch_size),
             Torch_Crop(patch_size=patch_size, p_oversample_foreground=0.0),
-            Torch_CopyImageToLabel(copy=True),
-            Torch_ClampTarget(clamp=True, min_value=-2.0, max_value=4.0),
         ]
     )
 
@@ -51,16 +49,18 @@ def CPU_train_transforms(patch_size):
                 clip_to_input_range=False,
                 skip_label=False,
             ),
-            Torch_CopyImageToLabel(copy=True),
-            Torch_ClampTarget(clamp=True, min_value=-2.0, max_value=4.0),
         ]
     )
 
 
 def GPU_train_transforms(masking=False, ndim=3, mask_ratio=0.6):
     axes = (0, ndim)
+    # The target is the image before the intensity augmentations and masking.
+    # It is copied here on the GPU so the data loader only sends the image.
     tforms = transforms.Compose(
         [
+            Torch_CopyImageToLabel(copy=True),
+            Torch_ClampTarget(clamp=True, min_value=-2.0, max_value=4.0),
             Torch_Blur(p_per_channel=0.1),
             Torch_BiasField(p_per_channel=0.2),
             Torch_Gamma(p_all_channel=0.2),
@@ -79,10 +79,12 @@ def GPU_train_transforms(masking=False, ndim=3, mask_ratio=0.6):
 
 
 def GPU_val_transforms(masking=False, mask_ratio=0.6):
+    tforms = transforms.Compose(
+        [
+            Torch_CopyImageToLabel(copy=True),
+            Torch_ClampTarget(clamp=True, min_value=-2.0, max_value=4.0),
+        ]
+    )
     if masking:
-        return transforms.Compose(
-            [
-                Torch_Mask(ratio=mask_ratio),
-            ]
-        )
-    return None
+        tforms.transforms.append(Torch_Mask(ratio=mask_ratio))
+    return tforms

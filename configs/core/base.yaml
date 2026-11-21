@@ -49,6 +49,7 @@ lightning:
     compile_mode: ${hardware.compile_mode}
   _trainer:
     _target_: lightning.Trainer
+    benchmark: true # let cuDNN pick the fastest conv algorithms for the fixed patch size
     accelerator: ${hardware.accelerator}
     default_root_dir: ${hydra:run.dir}
     devices: ${hardware.num_devices}

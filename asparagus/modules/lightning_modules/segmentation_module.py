@@ -4,7 +4,6 @@ import os
 import torch
 import torch.nn as nn
 import torchmetrics.functional
-from asparagus.functional.metrics.utils import format_multilabel_metrics
 from asparagus.functional.reverse_preprocessing import reverse_preprocessing
 from asparagus.modules.lightning_modules.base_module import BaseModule
 from gardening_tools.functional.metrics import (
@@ -47,6 +46,7 @@ class SegmentationModule(BaseModule):
         val_transforms: Optional[transforms.Compose] = None,
         optimizer: str = "SGD",
         inference_patch_size: list = [],
+        inference_batch_size: int = 4,
         test_output_path: str = None,
         log_image_every_n_epochs: int = 50,
         weight_decay: float = 3e-5,
@@ -74,6 +74,7 @@ class SegmentationModule(BaseModule):
             repeat_stem_weights=repeat_stem_weights,
         )
         self.inference_patch_size = inference_patch_size
+        self.inference_batch_size = inference_batch_size
         self.test_output_path = test_output_path
         self.num_classes = model.num_classes
         self.log_image_every_n_epochs = log_image_every_n_epochs
@@ -126,14 +127,8 @@ class SegmentationModule(BaseModule):
             pred = pred[0]
             y = y[0]
 
-        metrics = self.train_metrics(pred, y.squeeze(1))
-        self.log_dict(
-            format_multilabel_metrics(metrics, ignore_index=self.ignore_index_in_metrics),
-            on_step=False,
-            on_epoch=True,
-            sync_dist=True,
-            batch_size=self.trainer.datamodule.batch_size,
-        )
+        # Only accumulate here, the metrics are computed once per epoch
+        self.train_metrics.update(pred, y.squeeze(1))
         self.log_example_images(batch, batch_idx, x, y, pred, log_key="train", task_type="segmentation")
 
         return loss
@@ -151,15 +146,14 @@ class SegmentationModule(BaseModule):
             batch_size=self.trainer.datamodule.batch_size,
         )
 
-        metrics = self.val_metrics(pred, y.squeeze(1))
-        self.log_dict(
-            format_multilabel_metrics(metrics, ignore_index=self.ignore_index_in_metrics),
-            on_step=False,
-            on_epoch=True,
-            sync_dist=True,
-            batch_size=self.trainer.datamodule.batch_size,
-        )
+        self.val_metrics.update(pred, y.squeeze(1))
         self.log_example_images(batch, batch_idx, x, y, pred, log_key="val", task_type="segmentation")
+
+    def on_train_epoch_end(self):
+        self.log_and_reset_metrics(self.train_metrics)
+
+    def on_validation_epoch_end(self):
+        self.log_and_reset_metrics(self.val_metrics)
 
     def on_test_epoch_start(self):
         self.test_metrics = [
@@ -186,6 +180,7 @@ class SegmentationModule(BaseModule):
             data=x,
             patch_size=self.inference_patch_size,
             overlap=0.5,
+            batch_size=self.inference_batch_size,
         )
 
         src_logits = reverse_preprocessing(logits, batch["properties"])
@@ -214,6 +209,7 @@ class SegmentationModule(BaseModule):
             data=x,
             patch_size=self.inference_patch_size,
             overlap=0.5,
+            batch_size=self.inference_batch_size,
         )
         src_logits = reverse_preprocessing(logits, batch["properties"])
         return src_logits, batch["properties"]

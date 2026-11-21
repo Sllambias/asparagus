@@ -1,5 +1,6 @@
 import lightning as pl
 import logging
+import torch
 import torch.distributed as dist
 from asparagus.functional.collate import collate_return
 from asparagus.modules.datasets.TrainDataset import (
@@ -101,7 +102,7 @@ class SegDataModule(TrainingDataModule):
             self.train_dataset,
             num_workers=self.num_workers,
             batch_size=self.batch_size,
-            pin_memory=False,
+            pin_memory=torch.cuda.is_available(),
             persistent_workers=True,
             drop_last=True,
             sampler=sampler,
@@ -116,7 +117,7 @@ class SegDataModule(TrainingDataModule):
             self.val_dataset,
             num_workers=self.num_workers,
             batch_size=self.batch_size,
-            pin_memory=False,
+            pin_memory=torch.cuda.is_available(),
             shuffle=False,
             persistent_workers=True,
             drop_last=True,
@@ -128,7 +129,7 @@ class SegDataModule(TrainingDataModule):
             self.test_dataset,
             num_workers=self.num_workers,
             batch_size=1,
-            pin_memory=False,
+            pin_memory=torch.cuda.is_available(),
             persistent_workers=True,
             collate_fn=collate_return,
         )
@@ -176,7 +177,7 @@ class ClsRegDataModule(TrainingDataModule):
             self.train_dataset,
             num_workers=self.num_workers,
             batch_size=self.batch_size,
-            pin_memory=False,
+            pin_memory=torch.cuda.is_available(),
             persistent_workers=True,
             drop_last=True,
             shuffle=sampler is None,
@@ -193,7 +194,7 @@ class ClsRegDataModule(TrainingDataModule):
             self.val_dataset,
             num_workers=self.num_workers // 2,
             batch_size=self.batch_size,
-            pin_memory=False,
+            pin_memory=torch.cuda.is_available(),
             persistent_workers=True,
             drop_last=False,
             sampler=sampler,
@@ -205,7 +206,7 @@ class ClsRegDataModule(TrainingDataModule):
             self.test_dataset,
             num_workers=1,
             batch_size=1,
-            pin_memory=False,
+            pin_memory=torch.cuda.is_available(),
             persistent_workers=True,
             collate_fn=collate_return,
         )

@@ -361,7 +361,10 @@ def test_layer_scale_is_decayed_per_block_without_weight_decay(pretrain_pngs_2d,
     module = DINOv2Module(model=model, teacher_temp_warmup_epochs=0, warmup_epochs=0)
     trainer = make_trainer(limit_val_batches=0, limit_train_batches=2)
     trainer.fit(module, datamodule=data_module)
-    groups = {group["name"]: group for group in trainer.optimizers[0].param_groups}
+    groups = {}
+    for group in trainer.optimizers[0].param_groups:
+        for name in group["merged_names"]:
+            groups[name] = group
     gamma = groups["model.student_backbone.vit.blocks.1.ls1.gamma"]
     qkv = groups["model.student_backbone.vit.blocks.1.attn.qkv.weight"]
     assert gamma["lr"] == qkv["lr"] < groups["model.student_dino_head.layers.0.weight"]["lr"]

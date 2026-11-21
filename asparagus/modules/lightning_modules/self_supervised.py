@@ -1,4 +1,3 @@
-import logging
 import torch
 import torch.nn as nn
 from asparagus.functional.metrics import (
@@ -54,23 +53,27 @@ class SelfSupervisedModule(BaseModule):
             weights=weights,
         )
 
+        # Keep the uncompiled model so checkpoint keys stay free of _orig_mod.
+        # The steps call forward_with_features, which torch.compile(model) would not compile, so compile it here.
         self.model = model
+        self.forward_with_features = model.forward_with_features
+        if compile_mode is not None:
+            self.forward_with_features = torch.compile(model.forward_with_features, mode=compile_mode)
         self.rec_loss_fn = ReconstructionLoss(nn.MSELoss(reduction="mean"), rec_loss_masked_only=rec_loss_masked_only)
         self.log_images_every_n_epoch = log_images_every_n_epoch
         self.mlflow_logging = mlflow_logging
         self.log_every_n_steps = log_every_n_steps
 
-    def training_step(self, batch: Dict[str, Any], batch_idx: int) -> Optional[torch.Tensor]:
+    def training_step(self, batch: Dict[str, Any], batch_idx: int) -> torch.Tensor:
         x, y = batch["image"], batch["label"]
 
-        if torch.isnan(y).any():
-            logging.warning(f"Skipping batch {batch_idx} due to NaNs in input")
-            return None
-
         mask = batch.get("mask", None)
-        pred, encoder_features = self.model.forward_with_features(x)
+        pred, encoder_features = self.forward_with_features(x)
         loss = self.rec_loss_fn(pred, y, mask)
-        assert not torch.isnan(loss), "Reconstruction loss is NaN"
+
+        # Checking the loss waits for the GPU, so only do it on logging steps
+        if self.global_step % self.log_every_n_steps == 0:
+            assert torch.isfinite(loss), "Reconstruction loss is not finite"
 
         self.log_train_metrics(batch, pred, encoder_features, loss)
         if batch_idx == 0 and self.current_epoch % self.log_images_every_n_epoch == 0:
@@ -81,14 +84,9 @@ class SelfSupervisedModule(BaseModule):
     def validation_step(self, batch: Dict[str, Any], batch_idx: int) -> None:
         x, y = batch["image"], batch["label"]
 
-        if torch.isnan(y).any():
-            logging.warning(f"Skipping batch {batch_idx} due to NaNs in input")
-            return
-
         mask = batch.get("mask", None)
-        pred, encoder_features = self.model.forward_with_features(x)
+        pred, encoder_features = self.forward_with_features(x)
         loss = self.rec_loss_fn(pred, y, mask)
-        assert not torch.isnan(loss), "Reconstruction loss is NaN"
 
         self.log_val_metrics(batch, pred, encoder_features, loss)
         if batch_idx == 0:
@@ -97,7 +95,8 @@ class SelfSupervisedModule(BaseModule):
     def log_train_metrics(
         self, batch: Dict[str, Any], pred: torch.Tensor, encoder_features: List[torch.Tensor], loss: torch.Tensor
     ) -> None:
-        self.log("train/loss", loss, on_step=True, sync_dist=True, batch_size=self.trainer.datamodule.batch_size)
+        # No sync_dist: syncing a per-step value costs a cross-GPU reduce at every step
+        self.log("train/loss", loss, on_step=True, sync_dist=False, batch_size=self.trainer.datamodule.batch_size)
 
     def log_val_metrics(
         self, batch: Dict[str, Any], pred: torch.Tensor, encoder_features: List[torch.Tensor], loss: torch.Tensor
