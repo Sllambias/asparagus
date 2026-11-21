@@ -3,12 +3,14 @@ import os
 from asparagus.functional.hydra import fast_instantiate
 from asparagus.modules.transforms.presets import CPU_clsreg_val_test_transforms_crop
 from asparagus.pipeline.auto_configuration.checkpoint import load_checkpoint_state_dict
+from asparagus.pipeline.auto_configuration.run_setup import register_resolvers
 from dotenv import load_dotenv
 from lightning import Trainer
 from omegaconf import OmegaConf
 from torch.nn.functional import softmax
 
 load_dotenv()
+register_resolvers()
 
 
 MODEL_DIR = None
