@@ -1,4 +1,5 @@
 import torch
+import torch.distributed as dist
 import torch.nn.functional as F
 from lightly.models.modules.center import Center
 from torch import Tensor, nn
@@ -6,7 +7,7 @@ from torch import Tensor, nn
 
 class IBOTPatchLoss3D(nn.Module):
     """
-    Patch-level iBOT loss with 3D mask support.
+    Patch-level iBOT loss on the masked patch tokens, with 2D or 3D masks.
 
     Args:
         output_dim: Dimension of the projection head output.
@@ -42,8 +43,8 @@ class IBOTPatchLoss3D(nn.Module):
     ) -> Tensor:
         """
         Args:
-            teacher_out: Teacher patch tokens. Shape [B, P, C] (full grid) or [B*N, C] (masked tokens).
-            student_out: Student patch tokens, same shape semantics as teacher_out.
+            teacher_out: Teacher logits of the masked patches [N_masked, C].
+            student_out: Student logits of the masked patches [N_masked, C].
             mask: Boolean patch mask, shape [B, P] or [B, D, H, W]. True indicates masked tokens.
             teacher_temp: Optional override for teacher temperature.
         Returns:
@@ -54,46 +55,36 @@ class IBOTPatchLoss3D(nn.Module):
             device=teacher_out.device,
             dtype=teacher_out.dtype,
         )
+        mask = mask.flatten(start_dim=1).to(torch.bool)
 
-        if mask.dim() > 2:
-            mask_flat = mask.flatten(start_dim=1)
-        else:
-            mask_flat = mask
-        mask_flat = mask_flat.to(torch.bool)
-        B = mask_flat.shape[0]
-
-        # Handle two input shapes:
-        # 1) [B, P, C]: select masked tokens using mask.
-        # 2) [B*N, C]: assume inputs already filtered to masked tokens.
-        if teacher_out.dim() == 3:
-            if teacher_out.shape != student_out.shape:
-                raise ValueError(f"Teacher/student patch shapes differ: {teacher_out.shape} vs {student_out.shape}")
-            if teacher_out.shape[:2] != mask_flat.shape:
-                raise ValueError(f"Mask shape {mask_flat.shape} does not match patch tokens {teacher_out.shape[:2]}")
-            teacher_sel = teacher_out[mask_flat]
-            student_sel = student_out[mask_flat]
-        elif teacher_out.dim() == 2:
-            if teacher_out.shape != student_out.shape:
-                raise ValueError(f"Teacher/student patch shapes differ: {teacher_out.shape} vs {student_out.shape}")
-            if teacher_out.shape[0] != mask_flat.sum():
-                raise ValueError(
-                    f"Number of masked tokens {mask_flat.sum()} does not match provided logits {teacher_out.shape[0]}"
-                )
-            teacher_sel = teacher_out
-            student_sel = student_out
-        else:
-            raise ValueError("teacher_out must be 2D or 3D (got dim={})".format(teacher_out.dim()))
+        if teacher_out.shape != student_out.shape:
+            raise ValueError(f"Teacher/student patch shapes differ: {teacher_out.shape} vs {student_out.shape}")
+        if teacher_out.shape[0] != mask.sum():
+            raise ValueError(f"Got {teacher_out.shape[0]} patch tokens for {mask.sum()} masked patches")
 
         # Cross-entropy between centered teacher and student distributions
-        teacher_softmax = F.softmax((teacher_sel - self.center.value.to(teacher_sel.device)) / teacher_temperature, dim=-1)
-        student_log_softmax = F.log_softmax(student_sel / self.student_temp, dim=-1)
+        teacher_softmax = F.softmax((teacher_out - self.center.value.to(teacher_out.device)) / teacher_temperature, dim=-1)
+        student_log_softmax = F.log_softmax(student_out / self.student_temp, dim=-1)
 
         loss = -torch.sum(teacher_softmax * student_log_softmax, dim=-1)
 
         # Per-image weighting as in the reference implementation
-        num_masked_per_image = mask_flat.sum(dim=1, keepdim=True).clamp(min=1.0)
-        weight = (1.0 / num_masked_per_image).expand_as(mask_flat)[mask_flat]
-        loss = (loss * weight).sum() / B
+        num_masked_per_image = mask.sum(dim=1, keepdim=True).clamp(min=1.0)
+        weight = (1.0 / num_masked_per_image).expand_as(mask)[mask]
+        loss = (loss * weight).sum() / mask.shape[0]
 
-        self.center.update(teacher_sel)
+        self.update_center(teacher_out)
         return loss
+
+    @torch.no_grad()
+    def update_center(self, teacher_out: Tensor) -> None:
+        """Move the center towards the mean masked teacher token of all devices."""
+        total = teacher_out.float().sum(dim=0, keepdim=True)
+        count = torch.tensor(float(teacher_out.shape[0]), device=total.device)
+        # Every device joins the all-reduce, also with no masked patches, or the others wait for it forever
+        if dist.is_available() and dist.is_initialized():
+            dist.all_reduce(total)
+            dist.all_reduce(count)
+        if count > 0:
+            momentum = self.center.momentum
+            self.center.center = self.center.center * momentum + total / count * (1 - momentum)
