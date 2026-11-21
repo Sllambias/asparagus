@@ -6,6 +6,7 @@ import torch.nn as nn
 from abc import abstractmethod
 from asparagus.functional.lr_scheduling import (
     cosine_decay_schedule,
+    get_optimizer_steps_per_epoch,
     sawtooth_warmup_cosine_decay_schedule,
     separate_encoder_decoder_weights,
     simple_warmup_cosine_decay_schedule,
@@ -110,13 +111,7 @@ class BaseModule(L.LightningModule):
 
         print(f"Using optimizer {optimizer.__class__.__name__} with learning rate {self.learning_rate}")
 
-        # Calculate steps per epoch based on trainer configuration
-        # if max_epochs is *not* set (i.e., set to -1), we are probably using max_steps
-        # if max_epochs is set, we can calculate steps per epoch based on estimated_stepping_batches
-        if self.trainer.max_epochs <= 0:
-            optimizer_steps_per_epoch = self.trainer.limit_train_batches // self.trainer.accumulate_grad_batches
-        else:
-            optimizer_steps_per_epoch = self.trainer.estimated_stepping_batches // self.trainer.max_epochs
+        optimizer_steps_per_epoch = get_optimizer_steps_per_epoch(self.trainer)
 
         # Scheduler option 1: Three-phase schedule with separate decoder/joint warmup
         if self.decoder_warmup_epochs > 0:

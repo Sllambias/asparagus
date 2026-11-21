@@ -1,143 +1,103 @@
 import torch
 import torch.nn as nn
-from monai.transforms import (
-    RandAffine,
-    RandGaussianSmooth,
-    RandHistogramShift,
-    RandScaleCrop,
-    Resize,
-    SpatialPad,
-    Transform,
-)
-from torchvision.transforms import Compose
-from typing import List, Optional, Tuple, Union
-
-
-class RandomResizedCropND(Transform):
-    """
-    Combines monai's random spatial crop followed by resize to the desired size.
-
-    Modification:
-    1. The spatial crop is done with same dimensions for all the axes
-    2. Handles cases where the image_size is less than the crop_size by choosing
-        the smallest dimension as the random scale.
-
-    """
-
-    def __init__(
-        self,
-        prob: float = 1,
-        size: Union[Tuple[int, int], Tuple[int, int, int]] = (50, 50, 50),
-        scale: Tuple[float, float] = (0.5, 1.0),
-    ):
-        """
-        Args:
-            prob (float): Probability of applying the random resized crop.
-            size (Union[int, Tuple[int, int, int]]): Desired output size after resizing.
-                If an int is provided, it will be used for all three dimensions.
-            scale (List[int]): Specifies the lower and upper bounds for the random area of the crop,
-             before resizing. The scale is defined with respect to the area of the original image.
-        """
-        super().__init__()
-        self.prob = prob
-        self.scale = scale
-        self.size = size
-        if len(size) == 3:
-            self.mode = "trilinear"
-        elif len(size) == 2:
-            self.mode = "bilinear"
-        else:
-            print(f"Got size: {size} with len: {len(size)}. Expected length 2 or 3")
-
-    def __call__(self, image):
-        if torch.rand(1) < self.prob:
-            random_scale = torch.empty(1).uniform_(*self.scale).item()
-            rand_cropper = RandScaleCrop(random_scale, random_size=False)
-            resizer = Resize(self.size, mode=self.mode)
-
-            for transform in [rand_cropper, resizer]:
-                image = transform(image)
-
-        return image
+from asparagus.modules.transforms.as_image import Torch_AsImage
+from asparagus.modules.transforms.gaussian_blur import Torch_GaussianBlur
+from asparagus.modules.transforms.random_resized_crop import Torch_RandomResizedCrop
+from gardening_tools.modules.transforms.mirror import Torch_Mirror
+from torchvision import transforms
+from typing import Any, Dict, Sequence, Tuple, Union
 
 
 class DINOv2Augmentation(nn.Module):
     """
-    3D data augmentation for DINOv2: global and local views, affine, histogram, smoothing, cropping.
+    The official DINOv2 multi-crop augmentation (DataAugmentationDINO in dinov2/data/augmentations.py) for 8-bit 2D images
+    (C, H, W) and volumes (C, D, H, W). Both go through the same transforms: the official ones, from Gardening Tools,
+    torchvision or asparagus where torchvision's work only in 2D. The flips act on H and W.
     """
 
     def __init__(
         self,
-        global_view_scale: Optional[List[float]] = None,
-        global_view_size: Union[int, Tuple[int, int, int]] = 48,
-        local_view_scale: Optional[List[float]] = None,
-        local_view_size: Union[int, Tuple[int, int, int]] = 24,
-        num_local_views: int = 2,
-    ):
+        global_view_size: Union[Tuple[int, int], Tuple[int, int, int]] = (224, 224),
+        local_view_size: Union[Tuple[int, int], Tuple[int, int, int]] = (96, 96),
+        global_view_scale: Tuple[float, float] = (0.32, 1.0),
+        local_view_scale: Tuple[float, float] = (0.05, 0.32),
+        num_local_views: int = 8,
+        vertical_flip: bool = False,
+        hue: float = 0.1,
+        grayscale_prob: float = 0.2,
+        normalize_mean: Sequence[float] = (0.449,),
+        normalize_std: Sequence[float] = (0.226,),
+    ) -> None:
         """
-        Initialize 3D DINOv2 augmentation pipeline.
         Args:
-            global_view_scale: Scale range for global crops
-            global_view_size: Output size for global crops
-            local_view_scale: Scale range for local crops
-            local_view_size: Output size for local crops
-            num_local_views: Number of local views
+            global_view_size: Size of the global crops, (H, W) or (D, H, W).
+            local_view_size: Size of the local crops, likewise.
+            global_view_scale: Range of the global crops' share of the image area or volume.
+            local_view_scale: Range of the local crops' share of the image area or volume.
+            num_local_views: Number of local crops.
+            vertical_flip: Flip up-down instead of left-right.
+            hue: Hue jitter strength. Hue does nothing to grayscale images, but the jitter draws it.
+            grayscale_prob: Probability of RandomGrayscale, left out at 0.
+            normalize_mean: Mean per channel. The default is ImageNet's, averaged over RGB for grayscale images.
+            normalize_std: Standard deviation per channel, likewise.
         """
         super().__init__()
-        if global_view_scale is None:
-            global_view_scale = [0.3, 1.0]
-        if local_view_scale is None:
-            local_view_scale = [0.1, 0.3]
-        self.global_view_scale = global_view_scale
-        self.global_view_size = global_view_size
-        self.local_view_scale = local_view_scale
-        self.local_view_size = local_view_size
+        self.spatial_dims = len(global_view_size)
         self.num_local_views = num_local_views
+        flip_axis = self.spatial_dims - 2 if vertical_flip else self.spatial_dims - 1
+        flip = Torch_Mirror(p_per_sample=1.0, axes=(flip_axis,), p_mirror_per_axis=0.5)
 
-        if self.num_local_views == 0 and min(self.global_view_scale) > 0.4:
-            self.global_view_scale[0] = sum(self.local_view_scale) / 2 if self.local_view_scale else 0.25
-
-        self.global_aug = Compose(
-            [
-                RandAffine(
-                    prob=0.5,
-                    rotate_range=(22 / 7) / 180 * 10,
-                    shear_range=0.1,
-                    padding_mode="zeros",
-                ),
-                RandomResizedCropND(prob=1, size=self.global_view_size, scale=self.global_view_scale),
-                RandHistogramShift(prob=0.5),
-                RandGaussianSmooth(prob=0.5),
-                SpatialPad(spatial_size=self.global_view_size),
-            ]
+        self.geometric_augmentation_global = transforms.Compose(
+            [Torch_RandomResizedCrop(global_view_size, scale=global_view_scale), flip]
         )
-        if self.num_local_views > 0:
-            self.local_aug = Compose(
-                [
-                    RandAffine(
-                        prob=0.5,
-                        rotate_range=(22 / 7) / 180 * 10,
-                        shear_range=0.1,
-                        padding_mode="zeros",
-                    ),
-                    RandomResizedCropND(prob=1, size=self.local_view_size, scale=self.local_view_scale),
-                    RandHistogramShift(prob=0.5),
-                    RandGaussianSmooth(prob=0.5),
-                    SpatialPad(spatial_size=self.local_view_size),
-                ]
-            )
-        else:
-            self.local_aug = None
+        self.geometric_augmentation_local = transforms.Compose(
+            [Torch_RandomResizedCrop(local_view_size, scale=local_view_scale), flip]
+        )
 
-    def forward(self, data: torch.Tensor) -> List[torch.Tensor]:
+        color_jittering = [
+            Torch_AsImage(
+                transforms.RandomApply(
+                    [transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.2, hue=hue)],
+                    p=0.8,
+                )
+            )
+        ]
+        if grayscale_prob > 0:
+            color_jittering.append(Torch_AsImage(transforms.RandomGrayscale(p=grayscale_prob)))
+        normalize = [
+            Torch_AsImage(transforms.ConvertImageDtype(torch.float32)),
+            Torch_AsImage(transforms.Normalize(mean=list(normalize_mean), std=list(normalize_std))),
+        ]
+
+        # Official GaussianBlur(p) blurs with probability 1 - p, so its p = 1.0, 0.1 and 0.5 blur 0%, 90% and 50% of the views
+        self.global_transfo1 = transforms.Compose(color_jittering + [Torch_GaussianBlur(p_per_sample=0.0)] + normalize)
+        self.global_transfo2 = transforms.Compose(
+            color_jittering
+            + [Torch_GaussianBlur(p_per_sample=0.9), Torch_AsImage(transforms.RandomSolarize(threshold=128, p=0.2))]
+            + normalize
+        )
+        self.local_transfo = transforms.Compose(color_jittering + [Torch_GaussianBlur(p_per_sample=0.5)] + normalize)
+
+    def forward(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Apply global and local augmentations to the input tensor.
         Args:
-            x (torch.Tensor): Input tensor of shape (B, D, H, W).
+            data: Sample dict with a uint8 image (C, H, W) or volume (C, D, H, W) under "image".
         Returns:
-            List[torch.Tensor]: List containing N augmented tensors for global (2) and local (N) views.
+            The sample dict with the two global views under "image" and the local views under "local_views".
         """
-        if self.local_aug is not None:
-            data["local_views"] = [self.local_aug(data["image"].clone()) for _ in range(self.num_local_views)]
-        data["image"] = [self.global_aug(data["image"].clone()) for _ in range(2)]
+        image = data["image"]
+        if image.dtype != torch.uint8 or image.ndim != self.spatial_dims + 1:
+            raise ValueError(
+                f"DINOv2Augmentation takes 8-bit {self.spatial_dims}D images with a channel axis, as official, "
+                f"got {image.dtype} {tuple(image.shape)}"
+            )
+        data["image"] = [
+            self.global_transfo1(self.geometric_augmentation_global({"image": image}))["image"],
+            self.global_transfo2(self.geometric_augmentation_global({"image": image}))["image"],
+        ]
+        if self.num_local_views > 0:
+            data["local_views"] = [
+                self.local_transfo(self.geometric_augmentation_local({"image": image}))["image"]
+                for _ in range(self.num_local_views)
+            ]
         return data

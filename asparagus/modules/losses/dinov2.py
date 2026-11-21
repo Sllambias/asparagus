@@ -1,4 +1,3 @@
-import torch
 from asparagus.modules.losses.ibot import IBOTPatchLoss3D
 from lightly.loss import DINOLoss, KoLeoLoss
 from lightly.utils.scheduler import linear_warmup_schedule
@@ -8,7 +7,7 @@ from torch import nn
 class DINOv2Loss(nn.Module):
     def __init__(
         self,
-        teacher_temp_warmup_steps: int,
+        teacher_temp_warmup_steps: int = 0,
         student_temp: float = 0.1,
         teacher_temp_min: float = 0.04,
         teacher_temp_max: float = 0.07,
@@ -16,8 +15,6 @@ class DINOv2Loss(nn.Module):
         output_dim: int = 65536,
         ibot_loss_weight: float = 1.0,
         koleo_loss_weight: float = 0.1,
-        max_steps: int = 1000,
-        max_epochs: int = 500,
     ):
         super().__init__()
         self.student_temp = student_temp
@@ -28,8 +25,6 @@ class DINOv2Loss(nn.Module):
         self.output_dim = output_dim
         self.w_ibot = ibot_loss_weight
         self.w_koleo = koleo_loss_weight
-        self.max_steps = max_steps
-        self.max_epochs = max_epochs
         # Initialize loss functions with dynamic temperature
         self.dino_loss_fn = DINOLoss(
             output_dim=self.output_dim,
@@ -66,9 +61,9 @@ class DINOv2Loss(nn.Module):
         input_dict: {
             "teacher_cls_out": Tensor,
             "student_cls_out": Tensor,
-            "teacher_mask_patches": Tensor (optional),
-            "student_mask_glob_patches": Tensor (optional),
-            "student_glob_cls_token": Tensor (optional),
+            "masked_teacher_patch_tokens_after_head": Tensor [N_masked, C] (optional),
+            "masked_student_global_patch_tokens_after_head": Tensor [N_masked, C] (optional),
+            "student_global_cls_token_before_head": Tensor (optional),
             "mask": Tensor (optional, for patch loss),
         }
         Computes the DINOV2 loss for 3D data with dynamic teacher temperature
@@ -76,20 +71,10 @@ class DINOv2Loss(nn.Module):
 
         teacher_outputs = input_dict.get("teacher_cls_token", None)
         student_outputs = input_dict.get("student_cls_token", None)
-        teacher_patches = input_dict.get("teacher_patch_tokens", None)
-        student_patches = input_dict.get("student_patch_tokens", None)
-        student_glob_cls_token = input_dict.get("student_glob_cls_token", None)
+        teacher_patches = input_dict.get("masked_teacher_patch_tokens_after_head", None)
+        student_patches = input_dict.get("masked_student_global_patch_tokens_after_head", None)
+        student_global_cls_features = input_dict.get("student_global_cls_token_before_head", None)
         mask = input_dict.get("mask", None)
-        n_local_views = input_dict.get("n_local_views", 0)
-
-        if mask is not None:
-            # Flatten any spatial mask to patch grid [B, num_patches]
-            if mask.dim() > 2:
-                mask = mask.flatten(start_dim=1)
-            if teacher_patches is not None and teacher_patches.shape[:2] != mask.shape:
-                raise ValueError(f"Teacher patch shape {teacher_patches.shape[:2]} does not match mask shape {mask.shape}")
-            if student_patches is not None and student_patches.shape[:2] != mask.shape:
-                raise ValueError(f"Student patch shape {student_patches.shape[:2]} does not match mask shape {mask.shape}")
 
         if student_outputs is None or teacher_outputs is None:
             raise ValueError("Both student_outputs and teacher_outputs must be provided.")
@@ -102,10 +87,6 @@ class DINOv2Loss(nn.Module):
         if self.ibot_loss_fn is not None:
             self.ibot_loss_fn.teacher_temp = teacher_temp
 
-        # Convert n_local_views to int if it's a tensor
-        if isinstance(n_local_views, torch.Tensor):
-            n_local_views = n_local_views.item()
-
         # DINO loss - proper chunking based on views
         dino_loss = self.dino_loss_fn(
             teacher_out=teacher_outputs.chunk(teacher_outputs.size(0) // batch_size),  # 2 global teacher views
@@ -115,7 +96,7 @@ class DINOv2Loss(nn.Module):
         # Patch-level iBOT loss
         if self.ibot_loss_fn is not None:
             if teacher_patches is None or student_patches is None or mask is None:
-                raise ValueError("iBOT loss requires teacher_patch_tokens, student_patch_tokens, and mask.")
+                raise ValueError("iBOT loss requires the masked teacher and student patch tokens and the mask.")
 
             ibot_loss = self.ibot_loss_fn(
                 teacher_out=teacher_patches,
@@ -126,9 +107,9 @@ class DINOv2Loss(nn.Module):
         else:
             ibot_loss = 0
 
-        # Koleo loss - only on global views
+        # KoLeo on the backbone CLS tokens of the global views, one view at a time, as in the official implementation
         koleo_loss = (
-            sum(self.koleo_loss_fn(s) for s in student_glob_cls_token.chunk(2)) if self.koleo_loss_fn is not None else 0
+            sum(self.koleo_loss_fn(s) for s in student_global_cls_features.chunk(2)) if self.koleo_loss_fn is not None else 0
         )
 
         losses = {
