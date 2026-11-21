@@ -6,11 +6,11 @@ import multiprocessing
 import numpy as np
 import pytest
 import torch
-from asparagus.functional.resize import antialiased_resize
 from asparagus.functional.seeding import seed_worker
 from asparagus.modules.transforms import Torch_AsImage, Torch_GaussianBlur, Torch_RandomResizedCrop
 from asparagus.modules.transforms.DinoV2 import DINOv2Augmentation
 from asparagus.modules.transforms.presets import dinov2, ultradino
+from gardening_tools.functional.transforms.sampling import torch_resize
 from monai.transforms import RandAffine
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
@@ -132,11 +132,16 @@ def test_crop_of_a_constant_image_stays_constant(shape, size):
         assert torch.equal(cropped, torch.full((1, *size), 200, dtype=torch.uint8))
 
 
+def antialiased_bicubic(image, size):
+    """The resize of Torch_RandomResizedCrop."""
+    return torch_resize(image, target_size=size, clip_to_input_range=False, antialias=True, mode="bicubic")
+
+
 def test_2d_resize_is_torchvisions_antialiased_bicubic():
     # torchvision's tensor resize is its match to PIL's
     image = random_8_bit_image(1, 300, 400)
     for size in [(224, 224), (96, 96), (400, 500)]:
-        resized = antialiased_resize(image.float(), size).round().clamp(0, 255).to(torch.uint8)
+        resized = antialiased_bicubic(image, size).round().clamp(0, 255).to(torch.uint8)
         reference = TF.resize(image, list(size), transforms.InterpolationMode.BICUBIC, antialias=True)
         assert torch.equal(resized, reference)
 
@@ -191,8 +196,8 @@ def test_a_depth_constant_volume_is_jittered_like_its_slices():
 
 def test_a_depth_constant_volume_is_resized_like_its_slices():
     image, volume = depth_constant_volume()
-    resized_volume = antialiased_resize(volume.float(), (6, 20, 24))
-    resized_image = antialiased_resize(image.float(), (20, 24))
+    resized_volume = antialiased_bicubic(volume, (6, 20, 24))
+    resized_image = antialiased_bicubic(image, (20, 24))
     assert torch.allclose(resized_volume, resized_image.unsqueeze(1).expand_as(resized_volume), atol=1e-3)
 
 

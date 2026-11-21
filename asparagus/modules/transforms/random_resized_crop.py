@@ -1,7 +1,7 @@
 import math
 import torch
-from asparagus.functional.resize import antialiased_resize
 from gardening_tools.functional.transforms.cropping_and_padding import torch_croppad
+from gardening_tools.functional.transforms.sampling import torch_resize
 from gardening_tools.modules.transforms.BaseTransform import BaseTransform
 from typing import Any, Dict, List, Sequence, Tuple
 
@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Sequence, Tuple
 class Torch_RandomResizedCrop(BaseTransform):
     """torchvision's RandomResizedCrop for 2D images (C, H, W) and volumes (C, D, H, W) of 8-bit intensities: a crop with
     a random share of the area or volume and log-uniform aspect ratios between neighbouring sides, resized to size.
-    Gardening Tools cuts the crop; the bicubic resize is antialiased like PIL's, in 3D one axis pair at a time."""
+    Gardening Tools cuts the crop and resizes it, bicubic and antialiased like PIL's."""
 
     def __init__(
         self,
@@ -53,7 +53,7 @@ class Torch_RandomResizedCrop(BaseTransform):
             mode="constant",
             value=0,
         )
-        resized = antialiased_resize(crop, self.size)
+        resized = torch_resize(crop, target_size=self.size, clip_to_input_range=False, antialias=True, mode="bicubic")
         # Saturated at 8 bits, as PIL does with the bicubic overshoot
         data_dict[self.data_key] = resized.round().clamp(0, 255).to(image.dtype)
         return data_dict
