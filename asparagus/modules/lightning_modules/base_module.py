@@ -3,13 +3,16 @@ import lightning as L
 import numpy as np
 import torch
 import torch.nn as nn
+import wandb
 from abc import abstractmethod
 from asparagus.functional.lr_scheduling import (
     cosine_decay_schedule,
+    get_optimizer_steps_per_epoch,
     sawtooth_warmup_cosine_decay_schedule,
     separate_encoder_decoder_weights,
     simple_warmup_cosine_decay_schedule,
 )
+from asparagus.functional.metrics.utils import format_multilabel_metrics
 from asparagus.functional.pos_embed import resize_pos_embed_3d
 from asparagus.functional.visualization import (
     get_logger_compatible_image_output_target,
@@ -110,13 +113,7 @@ class BaseModule(L.LightningModule):
 
         print(f"Using optimizer {optimizer.__class__.__name__} with learning rate {self.learning_rate}")
 
-        # Calculate steps per epoch based on trainer configuration
-        # if max_epochs is *not* set (i.e., set to -1), we are probably using max_steps
-        # if max_epochs is set, we can calculate steps per epoch based on estimated_stepping_batches
-        if self.trainer.max_epochs <= 0:
-            optimizer_steps_per_epoch = self.trainer.limit_train_batches // self.trainer.accumulate_grad_batches
-        else:
-            optimizer_steps_per_epoch = self.trainer.estimated_stepping_batches // self.trainer.max_epochs
+        optimizer_steps_per_epoch = get_optimizer_steps_per_epoch(self.trainer)
 
         # Scheduler option 1: Three-phase schedule with separate decoder/joint warmup
         if self.decoder_warmup_epochs > 0:
@@ -212,7 +209,6 @@ class BaseModule(L.LightningModule):
 
         # Lists used to inform master of our whereabouts
         rejected_keys_new = [k for k in state_dict.keys() if k not in old_params]
-        state_dict = {k: v for k, v in state_dict.items() if k in old_params}
         rejected_keys_shape = [k for k in state_dict.keys() if old_params[k].shape != state_dict[k].shape]
         rejected_keys_decoder = [k for k in state_dict.keys() if not load_decoder and k.startswith("model.decoder")]
 
@@ -262,27 +258,49 @@ class BaseModule(L.LightningModule):
         )
         for logger in self.trainer.loggers:
             if "WandbLogger" in logger.__class__.__name__:
-                log_image_output_target_to_wandb(
-                    logger=logger,
-                    image=image,
-                    output=output,
-                    target=target,
-                    log_key=log_key,
-                    fig_title=imagedict["file"][batch_idx].split("/Task")[-1],
-                    step=self.global_step,
-                    task_type=task_type,
-                )
-            if "MLFlowLogger" in logger.__class__.__name__:
-                log_image_output_target_to_mlflow(
-                    logger=logger,
-                    image=image,
-                    output=output,
-                    target=target,
-                    log_key=log_key,
-                    fig_title=imagedict["file"][batch_idx].split("/Task")[-1],
-                    step=self.global_step,
-                    task_type=task_type,
-                )
+                log_image = log_image_output_target_to_wandb
+            elif "MLFlowLogger" in logger.__class__.__name__:
+                log_image = log_image_output_target_to_mlflow
+            else:
+                continue
+            log_image(
+                logger=logger,
+                image=image,
+                output=output,
+                target=target,
+                log_key=log_key,
+                fig_title=imagedict["file"][batch_idx].split("/Task")[-1],
+                step=self.global_step,
+                task_type=task_type,
+            )
+
+    def log_example_images(self, batch, batch_idx, x, y, pred, log_key, task_type):
+        """Log one example of the first batch every log_image_every_n_epochs epochs, when wandb is running."""
+        should_log = (
+            self.current_epoch > 0
+            and batch_idx == 0
+            and wandb.run is not None
+            and self.current_epoch % self.log_image_every_n_epochs == 0
+        )
+        if not should_log:
+            return
+        self._log_dict_of_images_to_wandb(
+            {
+                "input": x.detach().cpu().to(torch.float32).numpy(),
+                "target": y.detach().cpu().to(torch.float32).numpy(),
+                "output": pred.detach().cpu().to(torch.float32).numpy(),
+                "file": batch["file_path"],
+            },
+            log_key=log_key,
+            task_type=task_type,
+        )
+
+    def log_and_reset_metrics(self, metrics):
+        """Log a metric collection's results for the epoch, then reset it."""
+        metrics_results = metrics.compute()
+        formatted_metrics = format_multilabel_metrics(metrics_results, ignore_index=self.ignore_index_in_metrics)
+        self.log_dict(formatted_metrics, sync_dist=True)
+        metrics.reset()
 
     def on_after_batch_transfer(self, batch, dataloader_idx):
         if self.trainer.training and self.train_transforms is not None:

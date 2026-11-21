@@ -2,7 +2,7 @@ import logging
 import numpy as np
 import torch
 import wandb
-from asparagus.functional.decorators import depends_on_mlflow
+from asparagus.functional.decorators import depends_on
 from math import ceil, floor
 from PIL import Image
 from typing import Any, Dict, List, Optional, Tuple
@@ -14,20 +14,6 @@ except ImportError:
 
 FPS = 4
 DPI = 100
-
-
-def finish():
-    wandb.finish()
-
-
-def update_config(dct):
-    wandb.config.update(dct)
-
-
-def save_tensor(x, name):
-    torch.save(x, name)
-    wandb.save(name)
-    print(f"Saved {name} to wandb")
 
 
 def normalize_array_to_pil(img: np.ndarray) -> Image.Image:
@@ -116,14 +102,9 @@ def log_images_to_logger(loggers, images, step, prefix=""):
     if not images:
         return
 
-    for i, img_dict in enumerate(images):
-        image0 = normalize_array_to_pil(img_dict["images"][0]["array"])
-        image1 = normalize_array_to_pil(img_dict["images"][1]["array"])
-        image2 = normalize_array_to_pil(img_dict["images"][2]["array"])
-
-        title0 = img_dict["images"][0]["title"]
-        title1 = img_dict["images"][1]["title"]
-        title2 = img_dict["images"][2]["title"]
+    for img_dict in images:
+        pil_images = [normalize_array_to_pil(entry["array"]) for entry in img_dict["images"][:3]]
+        titles = [entry["title"] for entry in img_dict["images"][:3]]
 
         for logger in loggers:
             logger_type = type(logger).__name__
@@ -135,9 +116,7 @@ def log_images_to_logger(loggers, images, step, prefix=""):
                 # Batch all images into a single log call to avoid hanging
                 log_data = {}
                 log_data[f"{prefix}/slice_{img_dict['slice_idx']}"] = [
-                    wandb.Image(image0, caption=title0),
-                    wandb.Image(image1, caption=title1),
-                    wandb.Image(image2, caption=title2),
+                    wandb.Image(image, caption=title) for image, title in zip(pil_images, titles)
                 ]
 
                 logger.experiment.log(log_data, commit=False)
@@ -145,41 +124,25 @@ def log_images_to_logger(loggers, images, step, prefix=""):
             # MLFLOW
             if "MLFlowLogger" in logger_type:
                 prefix = prefix.replace("/", "_")
-                slice_idx = img_dict["slice_idx"]
                 _log_images_to_mlflow(
                     logger=logger,
                     prefix=prefix,
-                    slice_idx=slice_idx,
+                    slice_idx=img_dict["slice_idx"],
                     step=step,
-                    image0=image0,
-                    image1=image1,
-                    image2=image2,
-                    title0=title0,
-                    title1=title1,
-                    title2=title2,
+                    images=pil_images,
+                    titles=titles,
                 )
 
 
-@depends_on_mlflow()
-def _log_images_to_mlflow(logger, prefix, slice_idx, step, image0, image1, image2, title0, title1, title2):
-    logger.experiment.log_image(
-        run_id=logger.run_id,
-        image=mlflow.Image(image0),
-        key=f"{prefix}_{title0}_slice_{slice_idx}",
-        step=step,
-    )
-    logger.experiment.log_image(
-        run_id=logger.run_id,
-        image=mlflow.Image(image1),
-        key=f"{prefix}_{title1}_slice_{slice_idx}",
-        step=step,
-    )
-    logger.experiment.log_image(
-        run_id=logger.run_id,
-        image=mlflow.Image(image2),
-        key=f"{prefix}_{title2}_slice_{slice_idx}",
-        step=step,
-    )
+@depends_on("mlflow")
+def _log_images_to_mlflow(logger, prefix, slice_idx, step, images, titles):
+    for image, title in zip(images, titles):
+        logger.experiment.log_image(
+            run_id=logger.run_id,
+            image=mlflow.Image(image),
+            key=f"{prefix}_{title}_slice_{slice_idx}",
+            step=step,
+        )
 
 
 def get_logger_compatible_image_output_target(image, output, target, task_type: str = "segmentation"):
@@ -288,43 +251,21 @@ def log_image_output_target_to_mlflow(
             step=step,
         )
     elif task_type == "segmentation":
-        logger.experiment.log_image(
-            run_id=logger.run_id,
-            image=mlflow.Image(image),
-            key=f"{log_key}_input",
-            step=step,
-        )
-        logger.experiment.log_image(
-            run_id=logger.run_id,
-            image=mlflow.Image(output),
-            key=f"{log_key}_output",
-            step=step,
-        )
-        logger.experiment.log_image(
-            run_id=logger.run_id,
-            image=mlflow.Image(target),
-            key=f"{log_key}_target",
-            step=step,
-        )
+        for array, name in ((image, "input"), (output, "output"), (target, "target")):
+            logger.experiment.log_image(
+                run_id=logger.run_id,
+                image=mlflow.Image(array),
+                key=f"{log_key}_{name}",
+                step=step,
+            )
     elif task_type == "self-supervised":
-        logger.experiment.log_image(
-            run_id=logger.run_id,
-            image=image,
-            key=f"{fig_title}",
-            step=step,
-        )
-        logger.experiment.log_image(
-            run_id=logger.run_id,
-            image=output,
-            key="output",
-            step=step,
-        )
-        logger.experiment.log_image(
-            run_id=logger.run_id,
-            image=target,
-            key="target",
-            step=step,
-        )
+        for array, key in ((image, fig_title), (output, "output"), (target, "target")):
+            logger.experiment.log_image(
+                run_id=logger.run_id,
+                image=array,
+                key=key,
+                step=step,
+            )
 
 
 def create_ssl_visualizations(

@@ -6,12 +6,14 @@ loads from ASPARAGUS_RAW_LABELS which is unavailable in CI.
 Covers: unet_tiny 3D, ResidualEncoderUNet 3D, unet_tiny 2D.
 """
 
+import torch
 from asparagus.modules.data_modules.training import SegDataModule
 from asparagus.modules.lightning_modules import SegmentationModule
 from asparagus.modules.networks.primus import primus_debug
 from asparagus.modules.networks.resenc_unet import resenc_unet_debug
 from asparagus.modules.networks.unet import unet_tiny
-from asparagus.modules.transforms.presets import GPU_all_train_transforms
+from asparagus.modules.transforms.presets import CPU_seg_train_transforms, GPU_all_train_transforms
+from gardening_tools.modules.transforms.spatial import Torch_Spatial
 
 
 def make_seg_data_module(files):
@@ -77,3 +79,18 @@ def test_finetune_seg_unet_2d_fit(seg_files_2d, make_trainer):
         inference_patch_size=[32, 32],
     )
     make_trainer().fit(module, datamodule=make_seg_data_module(seg_files_2d))
+
+
+def test_seg_train_transforms_scale_probability():
+    """Seg training scales a fifth of the patches, like the cls/reg presets."""
+    transforms = CPU_seg_train_transforms([32, 32, 32]).transforms
+    spatial = next(transform for transform in transforms if isinstance(transform, Torch_Spatial))
+    assert spatial.p_scale_all_channel == 0.2
+
+
+def test_seg_train_transforms_2d_patch_from_3d_volume():
+    """2D patches can be drawn from labelled 3D volumes, also ones smaller than the patch."""
+    data = {"image": torch.randn(1, 6, 10, 12), "label": torch.zeros(1, 6, 10, 12), "foreground_locations": []}
+    data = CPU_seg_train_transforms([16, 16])(data)
+    assert data["image"].shape == (1, 16, 16)
+    assert data["label"].shape == (1, 16, 16)

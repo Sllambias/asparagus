@@ -1,5 +1,14 @@
+import lightning as L
 from torch.optim.lr_scheduler import CosineAnnealingLR, LambdaLR, LinearLR, SequentialLR
 from typing import Any, Dict, List
+
+
+def get_optimizer_steps_per_epoch(trainer: L.Trainer) -> int:
+    """Number of optimizer steps in one training epoch."""
+    # Without max_epochs the run is probably set by max_steps, so count from limit_train_batches
+    if trainer.max_epochs <= 0:
+        return trainer.limit_train_batches // trainer.accumulate_grad_batches
+    return trainer.estimated_stepping_batches // trainer.max_epochs
 
 
 def separate_encoder_decoder_weights(named_parameters) -> List[Dict[str, Any]]:

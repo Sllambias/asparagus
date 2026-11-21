@@ -3,13 +3,14 @@ import logging
 import torch
 import torch.distributed as dist
 from asparagus.functional.collate import collate_return
+from asparagus.functional.seeding import seed_worker
 from asparagus.modules.datasets.PretrainDataset import PretrainDataset
 from asparagus.modules.datasets.TrainDataset import SingleSubjectPredictDataset
 from asparagus.modules.transforms.presets import pretrain_CPU_train_transforms, pretrain_CPU_val_transforms
 from lightning.fabric.utilities.distributed import DistributedSamplerWrapper
 from torch.utils.data import DataLoader, RandomSampler, Sampler
 from torchvision.transforms import Compose
-from typing import Literal, Optional
+from typing import Callable, Literal, Optional
 
 
 class PretrainDataModule(pl.LightningDataModule):
@@ -24,6 +25,8 @@ class PretrainDataModule(pl.LightningDataModule):
         val_transforms: Optional[Compose] = pretrain_CPU_val_transforms,
         predict_transforms: Optional[Compose] = None,
         num_samples: Optional[int] = None,
+        collate_fn: Optional[Callable] = None,
+        sample_with_replacement: bool = True,
     ):
         super().__init__()
         self.batch_size = batch_size
@@ -35,6 +38,8 @@ class PretrainDataModule(pl.LightningDataModule):
         self.num_samples = num_samples
         self.predict_transforms = predict_transforms
         self.predict_samples = predict_samples
+        self.collate_fn = collate_fn
+        self.sample_with_replacement = sample_with_replacement
 
         logging.info(f"Using {self.num_workers} workers")
 
@@ -57,9 +62,14 @@ class PretrainDataModule(pl.LightningDataModule):
         )
 
     def random_sampler(self, dataset: PretrainDataset, batches_per_device: int) -> Sampler:
-        """Draw with replacement exactly the samples one epoch needs across all devices."""
+        """Draw exactly the samples one epoch needs across all devices. Without replacement, every sample is drawn once
+        before any is drawn again, as the official infinite sampler does within an epoch."""
         world_size = dist.get_world_size() if dist.is_initialized() else 1
-        sampler = RandomSampler(dataset, num_samples=batches_per_device * self.batch_size * world_size, replacement=True)
+        sampler = RandomSampler(
+            dataset,
+            num_samples=batches_per_device * self.batch_size * world_size,
+            replacement=self.sample_with_replacement,
+        )
         if dist.is_initialized():
             sampler = DistributedSamplerWrapper(sampler)
         return sampler
@@ -75,6 +85,8 @@ class PretrainDataModule(pl.LightningDataModule):
             persistent_workers=True,
             drop_last=True,
             sampler=sampler,
+            collate_fn=self.collate_fn,
+            worker_init_fn=seed_worker,
         )
 
     def val_dataloader(self):
@@ -89,6 +101,8 @@ class PretrainDataModule(pl.LightningDataModule):
             persistent_workers=True,
             drop_last=True,
             sampler=sampler,
+            collate_fn=self.collate_fn,
+            worker_init_fn=seed_worker,
         )
 
     def predict_dataloader(self):
@@ -98,21 +112,3 @@ class PretrainDataModule(pl.LightningDataModule):
             batch_size=1,
             collate_fn=collate_return,
         )
-
-
-if __name__ == "__main__":
-    from gardening_tools.functional.paths.read import load_json
-
-    splits = load_json(
-        "/Users/zcr545/Desktop/Projects/repos/asparagus_data/preprocessed_data/PT000_LauritSSL_PNG/split_80_10_10.json"
-    )
-    train_split = splits[0]["train"]
-    val_split = splits[0]["val"]
-    data_module = PretrainDataModule(
-        train_split=train_split,
-        val_split=val_split,
-        batch_size=2,
-        num_workers=6,
-    )
-    data_module.setup("fit")
-    print(data_module.train_dataset[0]["image"].shape)

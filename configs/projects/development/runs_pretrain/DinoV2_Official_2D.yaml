@@ -1,0 +1,20 @@
+# @package _global_
+# The official DINOv2 recipe in core/dinov2_official on 8 GPUs.
+defaults:
+  - /core/base@
+  - /default_pretrain@
+  - /hardware/1node8gpus@hardware
+  - /model/dinov2_test@model
+  - /core/dinov2_official@
+  - _self_
+
+task: PT000_LauritSSL_PNG
+root: base
+stem: official
+
+hardware:
+  # Official trains in fp16 with a gradient scaler
+  precision: 16-mixed
+
+data:
+  train_split: split_80_10_10

@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from asparagus.functional.decorators import depends_on_timm
+from asparagus.functional.decorators import depends_on
 from einops import rearrange
 from gardening_tools.modules.networks.BaseNet import BaseNet
 from gardening_tools.modules.networks.components.eva import Eva
@@ -153,7 +153,7 @@ class PrimusCLSREG(BaseNet):
 
     def _encode(self, x):
         if not self.late_fusion:
-            return self.encoder(x)  # early-fusion of modalities
+            return self._encode_single(x)  # early-fusion of modalities
 
         # late-fusion of modalities
         B, N = x.shape[:2]
@@ -175,7 +175,7 @@ class PrimusCLSREG(BaseNet):
         self.eva.eval()
 
 
-@depends_on_timm()
+@depends_on("timm")
 def primus_s(input_channels, output_channels, patch_size, patch_embed_size=8, patch_drop_rate=0.0):
     model = Primus(
         input_channels=input_channels,
@@ -192,7 +192,7 @@ def primus_s(input_channels, output_channels, patch_size, patch_embed_size=8, pa
     return model
 
 
-@depends_on_timm()
+@depends_on("timm")
 def primus_b(input_channels, output_channels, patch_size, patch_embed_size=8, patch_drop_rate=0.0):
     model = Primus(
         input_channels=input_channels,
@@ -210,7 +210,7 @@ def primus_b(input_channels, output_channels, patch_size, patch_embed_size=8, pa
     return model
 
 
-@depends_on_timm()
+@depends_on("timm")
 def primus_m(input_channels, output_channels, patch_size, patch_embed_size=8, patch_drop_rate=0.0):
     model = Primus(
         input_channels=input_channels,
@@ -228,7 +228,7 @@ def primus_m(input_channels, output_channels, patch_size, patch_embed_size=8, pa
     return model
 
 
-@depends_on_timm()
+@depends_on("timm")
 def primus_l(input_channels, output_channels, patch_size, patch_embed_size=8, patch_drop_rate=0.0):
     model = Primus(
         input_channels=input_channels,
@@ -246,7 +246,7 @@ def primus_l(input_channels, output_channels, patch_size, patch_embed_size=8, pa
     return model
 
 
-@depends_on_timm()
+@depends_on("timm")
 def primus_h(input_channels, output_channels, patch_size, patch_embed_size=8, patch_drop_rate=0.0):
     model = Primus(
         input_channels=input_channels,
@@ -264,7 +264,7 @@ def primus_h(input_channels, output_channels, patch_size, patch_embed_size=8, pa
     return model
 
 
-@depends_on_timm()
+@depends_on("timm")
 def primus_g(input_channels, output_channels, patch_size, patch_embed_size=8, patch_drop_rate=0.0):
     model = Primus(
         input_channels=input_channels,
@@ -282,7 +282,7 @@ def primus_g(input_channels, output_channels, patch_size, patch_embed_size=8, pa
     return model
 
 
-@depends_on_timm()
+@depends_on("timm")
 def primus_m_clsreg(
     input_channels, output_channels, patch_size, patch_embed_size=8, dropout_rate=0.0, late_fusion: bool = False
 ):
@@ -301,7 +301,7 @@ def primus_m_clsreg(
     )
 
 
-@depends_on_timm()
+@depends_on("timm")
 def primus_debug(input_channels, output_channels, input_shape=[32, 32, 32]):
     return Primus(
         input_channels=input_channels,

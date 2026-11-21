@@ -4,8 +4,6 @@ import os
 import torch
 import torch.nn as nn
 import torchmetrics.functional
-import wandb
-from asparagus.functional.metrics.utils import format_multilabel_metrics
 from asparagus.functional.reverse_preprocessing import reverse_preprocessing
 from asparagus.modules.lightning_modules.base_module import BaseModule
 from gardening_tools.functional.metrics import (
@@ -131,22 +129,7 @@ class SegmentationModule(BaseModule):
 
         # Only accumulate here, the metrics are computed once per epoch
         self.train_metrics.update(pred, y.squeeze(1))
-        if (
-            self.current_epoch > 0
-            and batch_idx == 0
-            and wandb.run is not None
-            and self.current_epoch % self.log_image_every_n_epochs == 0
-        ):
-            self._log_dict_of_images_to_wandb(
-                {
-                    "input": x.detach().cpu().to(torch.float32).numpy(),
-                    "target": y.detach().cpu().to(torch.float32).numpy(),
-                    "output": pred.detach().cpu().to(torch.float32).numpy(),
-                    "file": batch["file_path"],
-                },
-                log_key="train",
-                task_type="segmentation",
-            )
+        self.log_example_images(batch, batch_idx, x, y, pred, log_key="train", task_type="segmentation")
 
         return loss
 
@@ -164,32 +147,13 @@ class SegmentationModule(BaseModule):
         )
 
         self.val_metrics.update(pred, y.squeeze(1))
-        if (
-            self.current_epoch > 0
-            and batch_idx == 0
-            and wandb.run is not None
-            and self.current_epoch % self.log_image_every_n_epochs == 0
-        ):
-            self._log_dict_of_images_to_wandb(
-                {
-                    "input": x.detach().cpu().to(torch.float32).numpy(),
-                    "target": y.detach().cpu().to(torch.float32).numpy(),
-                    "output": pred.detach().cpu().to(torch.float32).numpy(),
-                    "file": batch["file_path"],
-                },
-                log_key="val",
-                task_type="segmentation",
-            )
+        self.log_example_images(batch, batch_idx, x, y, pred, log_key="val", task_type="segmentation")
 
     def on_train_epoch_end(self):
-        metrics = self.train_metrics.compute()
-        self.log_dict(format_multilabel_metrics(metrics, ignore_index=self.ignore_index_in_metrics), sync_dist=True)
-        self.train_metrics.reset()
+        self.log_and_reset_metrics(self.train_metrics)
 
     def on_validation_epoch_end(self):
-        metrics = self.val_metrics.compute()
-        self.log_dict(format_multilabel_metrics(metrics, ignore_index=self.ignore_index_in_metrics), sync_dist=True)
-        self.val_metrics.reset()
+        self.log_and_reset_metrics(self.val_metrics)
 
     def on_test_epoch_start(self):
         self.test_metrics = [

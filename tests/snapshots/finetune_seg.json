@@ -1,0 +1,399 @@
+{
+  "built": {
+    "CPU_seg_test_transforms": [
+      {
+        "args": [],
+        "kwargs": {
+          "patch_size": [
+            160,
+            160,
+            160
+          ]
+        }
+      }
+    ],
+    "LearningRateMonitor": [
+      {
+        "args": [],
+        "kwargs": {
+          "log_momentum": true,
+          "logging_interval": "epoch"
+        }
+      }
+    ],
+    "ModelCheckpoint[best]": [
+      {
+        "args": [],
+        "kwargs": {
+          "dirpath": "<tmp>/models/EntryPointTask/unet_tiny__3D/script=finetune_seg/root=base__stem=None_last.ckpt/leaf=default_finetune_seg__clargs=training.seed=0/split_40_10_50__fold=0/run_id=1001/checkpoints",
+          "enable_version_counter": false,
+          "filename": "best",
+          "mode": "min",
+          "monitor": "val/loss",
+          "save_top_k": 1
+        }
+      }
+    ],
+    "ModelCheckpoint[last]": [
+      {
+        "args": [],
+        "kwargs": {
+          "dirpath": "<tmp>/models/EntryPointTask/unet_tiny__3D/script=finetune_seg/root=base__stem=None_last.ckpt/leaf=default_finetune_seg__clargs=training.seed=0/split_40_10_50__fold=0/run_id=1001/checkpoints",
+          "enable_version_counter": false,
+          "every_n_epochs": 25,
+          "filename": "last",
+          "save_top_k": 1
+        }
+      }
+    ],
+    "TQDMProgressBar": [
+      {
+        "args": [],
+        "kwargs": {
+          "refresh_rate": 50
+        }
+      }
+    ],
+    "lightning._data_module": [
+      {
+        "args": [],
+        "kwargs": {
+          "test_samples": [
+            "test_0.pt"
+          ],
+          "test_transforms": "<CPU_seg_test_transforms>",
+          "train_split": [
+            "train_0.pt"
+          ],
+          "train_transforms": "<transforms._cpu_tr_transforms>",
+          "val_split": [
+            "val_0.pt"
+          ],
+          "val_transforms": "<transforms._cpu_val_transforms>"
+        }
+      }
+    ],
+    "lightning._lightning_module": [
+      {
+        "args": [],
+        "kwargs": {
+          "decoder_warmup_epochs": 50,
+          "deep_supervision": false,
+          "inference_patch_size": [
+            160,
+            160,
+            160
+          ],
+          "learning_rate": 0.001,
+          "load_decoder": false,
+          "model": "<model._seg_net>",
+          "optimizer": "SGD",
+          "repeat_stem_weights": true,
+          "test_output_path": "<tmp>/models/EntryPointTask/unet_tiny__3D/script=finetune_seg/root=base__stem=None_last.ckpt/leaf=default_finetune_seg__clargs=training.seed=0/split_40_10_50__fold=0/run_id=1001/predictions/EntryPointTask__TEST_40_10_50__best.json",
+          "train_transforms": "<transforms._gpu_tr_transforms>",
+          "val_transforms": null,
+          "warmup_epochs": 50,
+          "weights": null
+        }
+      }
+    ],
+    "lightning._trainer": [
+      {
+        "args": [],
+        "kwargs": {
+          "accumulate_grad_batches": 1,
+          "callbacks": [
+            "<ModelCheckpoint[last]>",
+            "<ModelCheckpoint[best]>",
+            "<TQDMProgressBar>",
+            "<LearningRateMonitor>"
+          ],
+          "check_val_every_n_epoch": 3,
+          "default_root_dir": "<tmp>/models/EntryPointTask/unet_tiny__3D/script=finetune_seg/root=base__stem=None_last.ckpt/leaf=default_finetune_seg__clargs=training.seed=0/split_40_10_50__fold=0/run_id=1001",
+          "limit_train_batches": 250,
+          "limit_val_batches": 50,
+          "log_every_n_steps": 50,
+          "logger": "<logging>",
+          "max_epochs": 1000,
+          "profiler": null,
+          "use_distributed_sampler": false
+        }
+      }
+    ],
+    "logging": [
+      {
+        "args": [],
+        "kwargs": {
+          "ckpt_mlflow_id": null,
+          "ckpt_wandb_id": null,
+          "log_file_name": "finetune_seg",
+          "log_to_stdout": true,
+          "mlflow_logging": false,
+          "run_dir": "<tmp>/models/EntryPointTask/unet_tiny__3D/script=finetune_seg/root=base__stem=None_last.ckpt/leaf=default_finetune_seg__clargs=training.seed=0/split_40_10_50__fold=0/run_id=1001",
+          "version": 1001,
+          "wandb_config": {
+            "checkpoint_path": null,
+            "checkpoint_run_id": null,
+            "data": {
+              "data_path": "<tmp>/data/EntryPointTask",
+              "fold": 0,
+              "test_split": "TEST_40_10_50",
+              "train_split": "split_40_10_50"
+            },
+            "hardware": {
+              "accelerator": "auto",
+              "compile_mode": "default",
+              "num_devices": 1,
+              "num_nodes": 1,
+              "num_workers": 40,
+              "precision": "bf16-mixed",
+              "strategy": "auto"
+            },
+            "hf_model_id": null,
+            "hf_weight_format": "asparagus.functional.huggingface.HuggingFaceWeightMapper",
+            "lightning": {
+              "_data_module": {
+                "_target_": "asparagus.modules.data_modules.SegDataModule",
+                "batch_size": 2,
+                "num_workers": 40
+              },
+              "_lightning_module": {
+                "_target_": "asparagus.modules.lightning_modules.SegmentationModule",
+                "compile_mode": "default",
+                "warmup_epochs": 50
+              },
+              "_trainer": {
+                "_target_": "lightning.Trainer",
+                "accelerator": "auto",
+                "default_root_dir": "<tmp>/models/EntryPointTask/unet_tiny__3D/script=finetune_seg/root=base__stem=None_last.ckpt/leaf=default_finetune_seg__clargs=training.seed=0/split_40_10_50__fold=0/run_id=1001",
+                "devices": 1,
+                "enable_progress_bar": true,
+                "num_nodes": 1,
+                "precision": "bf16-mixed",
+                "strategy": "auto"
+              },
+              "data_module": "SegDataModule",
+              "lightning_module": "SegmentationModule"
+            },
+            "load_checkpoint_name": "last.ckpt",
+            "logger": {
+              "log_every_n_steps": 50,
+              "log_images_every_n_epoch": 5,
+              "log_to_stdout": true,
+              "mlflow_logging": false,
+              "progress_bar": true,
+              "wandb_entity": "test-entity",
+              "wandb_logging": true,
+              "wandb_project": "EntryPointTask"
+            },
+            "model": {
+              "_cls_net": {
+                "_target_": "asparagus.modules.networks.unet.unet_clsreg_tiny",
+                "dimensions": "3D"
+              },
+              "_plugin_seg_net": {
+                "_target_": "asparagus.modules.networks.unet.None",
+                "dimensions": "3D"
+              },
+              "_pretrain_net": {
+                "_target_": "asparagus.modules.networks.unet.unet_tiny",
+                "dimensions": "3D",
+                "input_channels": 1,
+                "output_channels": 1,
+                "use_skip_connections": true
+              },
+              "_seg_net": {
+                "_target_": "asparagus.modules.networks.unet.unet_tiny",
+                "deep_supervision": false,
+                "dimensions": "3D"
+              },
+              "ckpt_every_n_epoch": 25,
+              "cls_net": "unet_clsreg_tiny",
+              "deep_supervision": false,
+              "dimensions": "3D",
+              "finetune_lr": 0.001,
+              "finetune_optim": "SGD",
+              "net": "unet_tiny",
+              "patch_embed_size": 4,
+              "plugin_seg_net": null,
+              "plugin_seg_train_n_last_params": 10,
+              "pretrain_lr": 0.01,
+              "pretrain_net": "unet_tiny",
+              "pretrain_optim": "SGD",
+              "seg_net": "unet_tiny",
+              "train_lr": 0.01,
+              "train_optim": "SGD",
+              "use_skip_connections": true,
+              "weight_decay": 3e-05
+            },
+            "plugins": null,
+            "profiler": {
+              "_callback": {
+                "_target_": "asparagus.modules.callbacks.ProfileCallback",
+                "profile_every_n_steps": 500,
+                "warmup_steps": 10
+              },
+              "enabled": false
+            },
+            "resume_training": true,
+            "root": "base",
+            "run_dir": "<tmp>/models/EntryPointTask/unet_tiny__3D/script=finetune_seg/root=base__stem=None_last.ckpt/leaf=default_finetune_seg__clargs=training.seed=0/split_40_10_50__fold=0",
+            "run_id": 1001,
+            "stem": "None_last.ckpt",
+            "task": "EntryPointTask",
+            "test_checkpoint": "best",
+            "test_split_path": "<tmp>/data/EntryPointTask/TEST_40_10_50.json",
+            "test_task": "EntryPointTask",
+            "train_split_path": "<tmp>/data/EntryPointTask/split_40_10_50.json",
+            "training": {
+              "accumulate_grad_batches": 1,
+              "batch_size": 2,
+              "check_val_every_n_epoch": 3,
+              "decoder_warmup_epochs": 50,
+              "epochs": 1000,
+              "load_decoder": false,
+              "mask_ratio": null,
+              "patch_size": [
+                160,
+                160,
+                160
+              ],
+              "repeat_stem_weights": true,
+              "seed": 0,
+              "train_batches_per_epoch_per_device": 250,
+              "val_batches_per_epoch_per_device": 50,
+              "warmup_epochs": 50
+            },
+            "transforms": {
+              "_cpu_tr_transforms": {
+                "_target_": "asparagus.modules.transforms.presets.CPU_seg_train_transforms"
+              },
+              "_cpu_val_transforms": {
+                "_target_": "asparagus.modules.transforms.presets.CPU_seg_val_transforms"
+              },
+              "_gpu_tr_transforms": {
+                "_target_": "asparagus.modules.transforms.presets.GPU_all_train_transforms"
+              },
+              "_gpu_val_transforms": {
+                "_target_": "asparagus.modules.transforms.presets.None"
+              },
+              "cpu_tr_transforms": "CPU_seg_train_transforms",
+              "cpu_val_transforms": "CPU_seg_val_transforms",
+              "gpu_tr_transforms": "GPU_all_train_transforms",
+              "gpu_val_transforms": null,
+              "masking": false,
+              "normalize": true
+            }
+          },
+          "wandb_experiment": "default_finetune_seg",
+          "wandb_logging": true,
+          "wandb_project": "EntryPointTask"
+        }
+      }
+    ],
+    "model._seg_net": [
+      {
+        "args": [],
+        "kwargs": {
+          "input_channels": 4,
+          "output_channels": 3
+        }
+      }
+    ],
+    "transforms._cpu_tr_transforms": [
+      {
+        "args": [],
+        "kwargs": {
+          "patch_size": [
+            160,
+            160,
+            160
+          ]
+        }
+      }
+    ],
+    "transforms._cpu_val_transforms": [
+      {
+        "args": [],
+        "kwargs": {
+          "patch_size": [
+            160,
+            160,
+            160
+          ]
+        }
+      }
+    ],
+    "transforms._gpu_tr_transforms": [
+      {
+        "args": [],
+        "kwargs": {
+          "deep_supervision": false,
+          "ndim": 3
+        }
+      }
+    ]
+  },
+  "calls": [
+    {
+      "args": [],
+      "call": "lightning._trainer.fit",
+      "kwargs": {
+        "datamodule": "<lightning._data_module>",
+        "model": "<lightning._lightning_module>"
+      }
+    },
+    {
+      "args": [
+        "gardening_tools.modules.networks.components.weight_init.set_params_to_zero"
+      ],
+      "call": "lightning._lightning_module.model.apply",
+      "kwargs": {}
+    },
+    {
+      "args": [],
+      "call": "lightning._trainer.test",
+      "kwargs": {
+        "ckpt_path": "<ModelCheckpoint[best].best_model_path>",
+        "datamodule": "<lightning._data_module>",
+        "model": "<lightning._lightning_module>"
+      }
+    }
+  ],
+  "configs": {
+    "lightning._data_module": {
+      "_target_": "asparagus.modules.data_modules.SegDataModule",
+      "batch_size": 2,
+      "num_workers": 40
+    },
+    "lightning._lightning_module": {
+      "_target_": "asparagus.modules.lightning_modules.SegmentationModule",
+      "compile_mode": "default",
+      "warmup_epochs": 50
+    },
+    "lightning._trainer": {
+      "_target_": "lightning.Trainer",
+      "accelerator": "auto",
+      "default_root_dir": "<tmp>/models/EntryPointTask/unet_tiny__3D/script=finetune_seg/root=base__stem=None_last.ckpt/leaf=default_finetune_seg__clargs=training.seed=0/split_40_10_50__fold=0/run_id=1001",
+      "devices": 1,
+      "enable_progress_bar": true,
+      "num_nodes": 1,
+      "precision": "bf16-mixed",
+      "strategy": "auto"
+    },
+    "model._seg_net": {
+      "_target_": "asparagus.modules.networks.unet.unet_tiny",
+      "deep_supervision": false,
+      "dimensions": "3D"
+    },
+    "transforms._cpu_tr_transforms": {
+      "_target_": "asparagus.modules.transforms.presets.CPU_seg_train_transforms"
+    },
+    "transforms._cpu_val_transforms": {
+      "_target_": "asparagus.modules.transforms.presets.CPU_seg_val_transforms"
+    },
+    "transforms._gpu_tr_transforms": {
+      "_target_": "asparagus.modules.transforms.presets.GPU_all_train_transforms"
+    }
+  }
+}

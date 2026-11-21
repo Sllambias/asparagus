@@ -2,12 +2,14 @@ import os
 from asparagus.functional.hydra import fast_instantiate
 from asparagus.modules.transforms.presets import CPU_seg_test_transforms
 from asparagus.pipeline.auto_configuration.checkpoint import load_checkpoint_state_dict
+from asparagus.pipeline.auto_configuration.run_setup import register_resolvers
 from dotenv import load_dotenv
 from gardening_tools.functional.paths.write import save_prediction_from_logits
 from lightning import Trainer
 from omegaconf import OmegaConf
 
 load_dotenv()
+register_resolvers()
 
 
 MODEL_DIR = None
