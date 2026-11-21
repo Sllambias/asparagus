@@ -169,7 +169,8 @@
                 "devices": 1,
                 "enable_progress_bar": true,
                 "num_nodes": 1,
-                "precision": "bf16-mixed"
+                "precision": "bf16-mixed",
+                "strategy": "auto"
               },
               "data_module": "SegDataModule",
               "lightning_module": "SegmentationModule"
@@ -377,7 +378,8 @@
       "devices": 1,
       "enable_progress_bar": true,
       "num_nodes": 1,
-      "precision": "bf16-mixed"
+      "precision": "bf16-mixed",
+      "strategy": "auto"
     },
     "model._seg_net": {
       "_target_": "asparagus.modules.networks.unet.unet_tiny",

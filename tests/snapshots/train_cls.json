@@ -164,7 +164,8 @@
                 "devices": 1,
                 "enable_progress_bar": true,
                 "num_nodes": 1,
-                "precision": "bf16-mixed"
+                "precision": "bf16-mixed",
+                "strategy": "auto"
               },
               "data_module": "ClsRegDataModule",
               "lightning_module": "ClassificationModule"
@@ -229,7 +230,7 @@
               },
               "enabled": false
             },
-            "resume_training": true,
+            "resume_training": false,
             "root": "base",
             "run_dir": "<tmp>/models/EntryPointTask/unet_clsreg_tiny__3D/script=train_cls/root=base__stem=None/leaf=default_train_cls__clargs=training.seed=0/split_75_15_10__fold=0",
             "run_id": 1001,
@@ -247,7 +248,6 @@
               "label_smoothing": 0.0,
               "mask_ratio": null,
               "patch_size": null,
-              "resume_training": false,
               "seed": 0,
               "target_size": [
                 128,
@@ -374,7 +374,8 @@
       "devices": 1,
       "enable_progress_bar": true,
       "num_nodes": 1,
-      "precision": "bf16-mixed"
+      "precision": "bf16-mixed",
+      "strategy": "auto"
     },
     "model._cls_net": {
       "_target_": "asparagus.modules.networks.unet.unet_clsreg_tiny",
