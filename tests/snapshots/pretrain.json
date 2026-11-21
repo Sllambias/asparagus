@@ -69,6 +69,7 @@
           "callbacks": [
             "<TQDMProgressBar>",
             "<ModelCheckpoint[last]>",
+            "<lightning.pytorch.callbacks.model_summary.ModelSummary>",
             "<LearningRateMonitor>"
           ],
           "check_val_every_n_epoch": 3,
@@ -131,7 +132,8 @@
                 "devices": 1,
                 "enable_progress_bar": true,
                 "num_nodes": 1,
-                "precision": "bf16-mixed"
+                "precision": "bf16-mixed",
+                "strategy": "auto"
               },
               "data_module": "PretrainDataModule",
               "lightning_module": "SelfSupervisedModule"
@@ -331,7 +333,8 @@
       "devices": 1,
       "enable_progress_bar": true,
       "num_nodes": 1,
-      "precision": "bf16-mixed"
+      "precision": "bf16-mixed",
+      "strategy": "auto"
     },
     "model._pretrain_net": {
       "_target_": "asparagus.modules.networks.unet.unet_tiny",
