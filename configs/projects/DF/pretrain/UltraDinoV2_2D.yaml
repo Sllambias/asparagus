@@ -1,7 +1,7 @@
 # @package _global_
 # UltraDino as Dinus trains it: dinov2/configs/train/vitb16_dinus_FIXED_2m.yaml launched by
 # run/ngc/FUS2M/pretrain_multi_node.bash, which is the official DINOv2 recipe in core/dinov2_official with a ViT-B/16 with
-# 4 registers, vertical flips and FUS13M normalization. Dinus trains on 4 GPUs; this runs on 1.
+# 4 registers and UltraDino's augmentation (the ultradino preset). Dinus trains on 4 GPUs; this runs on 1.
 defaults:
   - /core/base@
   - /default_pretrain@
@@ -18,12 +18,8 @@ hardware:
   num_workers: 32
 
 transforms:
-  _cpu_tr_transforms:
-    # Vertical flip
-    flip_axis: 0
-    # FUS13M mean and std, which Dinus uses for the FUS datasets
-    normalize_mean: 0.1842924807
-    normalize_std: 0.2187705424
+  cpu_tr_transforms: ultradino
+  cpu_val_transforms: ultradino
 
 model:
   hidden_size: 768

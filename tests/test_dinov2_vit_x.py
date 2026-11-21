@@ -55,7 +55,7 @@ class DINOv2LinearHead(L.LightningModule):
         return torch.optim.SGD(self.head.parameters(), lr=0.1)
 
 
-def test_2d_dinov2_pretrain_vit_x(pretrain_files_2d, make_trainer):
+def test_2d_dinov2_pretrain_vit_x(pretrain_pngs_2d, make_trainer):
     """DINOv2Module fits on synthetic pretrain data using a tiny vit_x backbone.
 
     Uses img_size=(32,32) / patch_size=(8,8) which is
@@ -79,8 +79,8 @@ def test_2d_dinov2_pretrain_vit_x(pretrain_files_2d, make_trainer):
     data_module = PretrainDataModule(
         batch_size=4,
         num_workers=1,
-        train_split=pretrain_files_2d["train"],
-        val_split=pretrain_files_2d["val"],
+        train_split=pretrain_pngs_2d["train"],
+        val_split=pretrain_pngs_2d["val"],
         train_transforms=augmentation,
         val_transforms=None,
         collate_fn=DINOv2Collate(global_view_size=(32, 32), patch_size=(8, 8)),
@@ -93,41 +93,26 @@ def test_2d_dinov2_pretrain_vit_x(pretrain_files_2d, make_trainer):
     make_trainer(limit_val_batches=0).fit(module, datamodule=data_module)
 
 
-def test_3d_dinov2_pretrain_vit_x(pretrain_files, make_trainer):
-    """DINOv2Module fits on synthetic pretrain data using a tiny vit_x backbone.
-
-    Uses img_size=(32,32,32) / patch_size=(8,8,8) → 4³=64 patches, which is
-    small enough to run on CPU in ~seconds while exercising the full pipeline:
-    DINOv2Augmentation → PretrainDataModule → DINOv2Module (DINO + iBOT + KoLeo
-    losses, layer-wise LR, teacher EMA update).
-    """
+def test_3d_dinov2_pretrain_vit_x(pretrain_uint8_volumes, make_trainer):
+    """DINOv2Module fits on synthetic 8-bit volumes using a tiny vit_x backbone (4^3 = 64 patches)."""
     model = vit_x(img_size=(32, 32, 32), patch_size=(8, 8, 8))
-
-    # DINOv2Augmentation is used as a CPU transform: converts each raw image
-    # dict into {"image": [global_view1, global_view2], "local_views": [lv1, lv2]}.
-    # PyTorch's default collate then stacks per-sample lists into batched tensors.
     augmentation = DINOv2Augmentation(
         global_view_size=(32, 32, 32),
         global_view_scale=[0.5, 1.0],
-        local_view_size=(32, 32, 32),
+        local_view_size=(16, 16, 16),
         local_view_scale=[0.1, 0.5],
         num_local_views=2,
     )
-
     data_module = PretrainDataModule(
         batch_size=1,
         num_workers=1,
-        train_split=pretrain_files["train"],
-        val_split=pretrain_files["val"],
+        train_split=pretrain_uint8_volumes["train"],
+        val_split=pretrain_uint8_volumes["val"],
         train_transforms=augmentation,
         val_transforms=None,
         collate_fn=DINOv2Collate(global_view_size=(32, 32, 32), patch_size=(8, 8, 8)),
     )
-
     module = DINOv2Module(model=model, learning_rate=1e-3, teacher_temp_warmup_epochs=0, warmup_epochs=0)
-
-    # limit_val_batches=0: DINOv2Module.validation_step raises NotImplementedError
-    # by design ("set training.val_batches_per_epoch_per_device to 0").
     make_trainer(limit_val_batches=0).fit(module, datamodule=data_module)
 
 
@@ -186,7 +171,7 @@ def test_3d_dinov2_vit_x_forward_structure():
     assert feat.shape == (B, hidden_size)
 
 
-def test_2d_dinov2_pretrain_without_ibot(pretrain_files_2d, make_trainer):
+def test_2d_dinov2_pretrain_without_ibot(pretrain_pngs_2d, make_trainer):
     """With ibot_loss_weight=0 the patch heads are skipped and training still runs."""
     model = vit_x(img_size=(32, 32), patch_size=(8, 8), projection_dim=256)
     out = model(global_views=[torch.randn(2, 1, 32, 32)] * 2, ibot=False)["pred"]
@@ -196,8 +181,8 @@ def test_2d_dinov2_pretrain_without_ibot(pretrain_files_2d, make_trainer):
     data_module = PretrainDataModule(
         batch_size=4,
         num_workers=1,
-        train_split=pretrain_files_2d["train"],
-        val_split=pretrain_files_2d["val"],
+        train_split=pretrain_pngs_2d["train"],
+        val_split=pretrain_pngs_2d["val"],
         train_transforms=augmentation,
         val_transforms=None,
         collate_fn=DINOv2Collate(global_view_size=(32, 32), patch_size=(8, 8)),
@@ -207,14 +192,14 @@ def test_2d_dinov2_pretrain_without_ibot(pretrain_files_2d, make_trainer):
     make_trainer(limit_val_batches=0).fit(module, datamodule=data_module)
 
 
-def tiny_2d_setup(pretrain_files_2d, **module_kwargs):
+def tiny_2d_setup(pretrain_pngs_2d, **module_kwargs):
     model = vit_x(img_size=(32, 32), patch_size=(8, 8), projection_dim=256)
     augmentation = DINOv2Augmentation(global_view_size=(32, 32), local_view_size=(16, 16), num_local_views=2)
     data_module = PretrainDataModule(
         batch_size=4,
         num_workers=1,
-        train_split=pretrain_files_2d["train"],
-        val_split=pretrain_files_2d["val"],
+        train_split=pretrain_pngs_2d["train"],
+        val_split=pretrain_pngs_2d["val"],
         train_transforms=augmentation,
         val_transforms=None,
         collate_fn=DINOv2Collate(global_view_size=(32, 32), patch_size=(8, 8)),
@@ -264,9 +249,9 @@ def test_koleo_uses_backbone_cls_tokens():
     assert out["student_global_cls_token_before_head"].shape == (4, 192)
 
 
-def test_last_layer_is_frozen_during_the_first_epoch(pretrain_files_2d, make_trainer):
+def test_last_layer_is_frozen_during_the_first_epoch(pretrain_pngs_2d, make_trainer):
     for freeze_last_layer_epochs, expect_frozen in [(1, True), (0, False)]:
-        model, data_module, module = tiny_2d_setup(pretrain_files_2d, freeze_last_layer_epochs=freeze_last_layer_epochs)
+        model, data_module, module = tiny_2d_setup(pretrain_pngs_2d, freeze_last_layer_epochs=freeze_last_layer_epochs)
         last_layer = model.student_dino_head.last_layer.weight_v.detach().clone()
         first_layer = model.student_dino_head.layers[0].weight.detach().clone()
         make_trainer(limit_val_batches=0).fit(module, datamodule=data_module)
@@ -274,8 +259,8 @@ def test_last_layer_is_frozen_during_the_first_epoch(pretrain_files_2d, make_tra
         assert not torch.equal(first_layer, model.student_dino_head.layers[0].weight)
 
 
-def test_teacher_updates_once_per_optimizer_step(pretrain_files_2d, make_trainer):
-    model, data_module, module = tiny_2d_setup(pretrain_files_2d)
+def test_teacher_updates_once_per_optimizer_step(pretrain_pngs_2d, make_trainer):
+    model, data_module, module = tiny_2d_setup(pretrain_pngs_2d)
     steps = []
     update_teacher = model.update_teacher
 
@@ -313,8 +298,8 @@ def test_ibot_center_syncs_when_a_rank_has_no_masked_patches(tmp_path):
         assert torch.allclose(center, torch.full((1, 8), 0.1)), rank
 
 
-def test_teacher_temperature_warms_up_over_epochs(pretrain_files_2d, make_trainer):
-    model, data_module, module = tiny_2d_setup(pretrain_files_2d)
+def test_teacher_temperature_warms_up_over_epochs(pretrain_pngs_2d, make_trainer):
+    model, data_module, module = tiny_2d_setup(pretrain_pngs_2d)
     module.teacher_temp_warmup_epochs = 2
     make_trainer(limit_val_batches=0, limit_train_batches=4, accumulate_grad_batches=2).fit(module, datamodule=data_module)
     # 2 optimizer steps per epoch
@@ -360,14 +345,14 @@ def test_official_backbone_options(img_size):
     assert student(torch.randn(2, 1, *img_size)).shape == (2, student.sequence_length, 96)
 
 
-def test_layer_scale_is_decayed_per_block_without_weight_decay(pretrain_files_2d, make_trainer):
+def test_layer_scale_is_decayed_per_block_without_weight_decay(pretrain_pngs_2d, make_trainer):
     model = vit_x(img_size=(32, 32), patch_size=(8, 8), hidden_size=96, projection_dim=256, **OFFICIAL_BACKBONE)
     augmentation = DINOv2Augmentation(global_view_size=(32, 32), local_view_size=(16, 16), num_local_views=2)
     data_module = PretrainDataModule(
         batch_size=4,
         num_workers=1,
-        train_split=pretrain_files_2d["train"],
-        val_split=pretrain_files_2d["val"],
+        train_split=pretrain_pngs_2d["train"],
+        val_split=pretrain_pngs_2d["val"],
         train_transforms=augmentation,
         val_transforms=None,
         collate_fn=DINOv2Collate(global_view_size=(32, 32), patch_size=(8, 8)),
