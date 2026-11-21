@@ -2,19 +2,18 @@ import hydra
 import logging
 import numpy as np
 import os
-import random
 import re
 import subprocess
 import yaml
 from asparagus.functional.scheduling import get_run_cmd_for_scheduler, get_scheduler
 from asparagus.functional.utils import find_run_dirs
-from asparagus.functional.versioning import generate_unused_run_id
 from asparagus.modules.hydra.plugins.searchpath_plugins import (
     EvalBoxesSearchpathPlugin,
     FinetuneSearchpathPlugin,
     TrainSearchpathPlugin,
 )
 from asparagus.paths import get_config_path, get_models_path
+from asparagus.pipeline.auto_configuration.run_setup import register_resolvers
 from dotenv import load_dotenv
 from gardening_tools.functional.paths.read import load_json
 from hydra import compose
@@ -23,13 +22,7 @@ from hydra.core.plugins import Plugins
 from omegaconf import DictConfig, OmegaConf
 
 load_dotenv()
-
-OmegaConf.register_new_resolver("random", lambda min, max: random.randint(min, max))
-OmegaConf.register_new_resolver(
-    "version",
-    lambda resume_training, run_dir: generate_unused_run_id(resume_training=resume_training, run_dir=run_dir),
-    use_cache=True,
-)
+register_resolvers()
 Plugins.instance().register(EvalBoxesSearchpathPlugin)
 Plugins.instance().register(FinetuneSearchpathPlugin)
 Plugins.instance().register(TrainSearchpathPlugin)
@@ -49,75 +42,31 @@ def main(cfg: DictConfig) -> None:
     test_checkpoint = cfg.get("test_checkpoint", "best")
     print(OmegaConf.to_yaml(cfg), hydra_cfg, scheduler, env_cmd, sep="\n")
 
-    for task in cfg.get("segmentation_tasks", []):
-        if task is None:
-            continue
+    for group, task_type, command in (
+        ("segmentation_tasks", "segmentation", "asp_finetune_seg"),
+        ("classification_tasks", "classification", "asp_finetune_cls"),
+        ("regression_tasks", "regression", "asp_finetune_reg"),
+    ):
+        for task in box_tasks(cfg, group):
+            hardware_cfg = task.get("hardware", cfg.default_hardware)
+            for fold in resolve_folds(task, cfg):
+                asparagus_cmd = (
+                    f"{command} "
+                    f"--config-name={task.get('task')} "
+                    f"checkpoint_run_id={cfg.checkpoint_run_id} "
+                    f"load_checkpoint_name={cfg.load_checkpoint_name} "
+                    f"test_checkpoint={test_checkpoint} "
+                    f"+model={hydra_cfg_runtime_choices.model} "
+                    f"+hardware={hardware_cfg} "
+                    f"root={hydra_cfg.job.config_name} "
+                )
+                if fold is not None:
+                    asparagus_cmd += f"data.fold={fold} "
 
-        hardware_cfg = task.get("hardware", cfg.default_hardware)
-
-        for fold in resolve_folds(task, cfg):
-            asparagus_cmd = (
-                f"asp_finetune_seg "
-                f"--config-name={task.get('task')} "
-                f"checkpoint_run_id={cfg.checkpoint_run_id} "
-                f"load_checkpoint_name={cfg.load_checkpoint_name} "
-                f"test_checkpoint={test_checkpoint} "
-                f"+model={hydra_cfg_runtime_choices.model} "
-                f"+hardware={hardware_cfg} "
-                f"root={hydra_cfg.job.config_name} "
-            )
-            if fold is not None:
-                asparagus_cmd += f"data.fold={fold} "
-
-            run_cmd = get_run_cmd_for_scheduler(scheduler, resolve_hardware_config(hardware_cfg), asparagus_cmd, env_cmd)
-            logging.info(f"Running eval box for segmentation task {task} with runcommand: {' '.join(run_cmd)}")
-            subprocess.run(run_cmd, capture_output=True, text=True)
-
-    for task in cfg.get("classification_tasks", []):
-        if task is None:
-            continue
-
-        hardware_cfg = task.get("hardware", cfg.default_hardware)
-        for fold in resolve_folds(task, cfg):
-            asparagus_cmd = (
-                f"asp_finetune_cls "
-                f"--config-name={task.get('task')} "
-                f"checkpoint_run_id={cfg.checkpoint_run_id} "
-                f"load_checkpoint_name={cfg.load_checkpoint_name} "
-                f"test_checkpoint={test_checkpoint} "
-                f"+model={hydra_cfg_runtime_choices.model} "
-                f"+hardware={hardware_cfg} "
-                f"root={hydra_cfg.job.config_name} "
-            )
-            if fold is not None:
-                asparagus_cmd += f"data.fold={fold} "
-
-            run_cmd = get_run_cmd_for_scheduler(scheduler, resolve_hardware_config(hardware_cfg), asparagus_cmd, env_cmd)
-            logging.info(f"Running eval box for classification task {task} with runcommand: {' '.join(run_cmd)}")
-            subprocess.run(run_cmd, capture_output=True, text=True)
-
-    for task in cfg.get("regression_tasks", []):
-        if task is None:
-            continue
-
-        hardware_cfg = task.get("hardware", cfg.default_hardware)
-        for fold in resolve_folds(task, cfg):
-            asparagus_cmd = (
-                f"asp_finetune_reg "
-                f"--config-name={task.get('task')} "
-                f"checkpoint_run_id={cfg.checkpoint_run_id} "
-                f"load_checkpoint_name={cfg.load_checkpoint_name} "
-                f"test_checkpoint={test_checkpoint} "
-                f"+model={hydra_cfg_runtime_choices.model} "
-                f"+hardware={hardware_cfg} "
-                f"root={hydra_cfg.job.config_name} "
-            )
-            if fold is not None:
-                asparagus_cmd += f"data.fold={fold} "
-
-            run_cmd = get_run_cmd_for_scheduler(scheduler, resolve_hardware_config(hardware_cfg), asparagus_cmd, env_cmd)
-            logging.info(f"Running eval box for regression task {task} with runcommand: {' '.join(run_cmd)}")
-            subprocess.run(run_cmd, capture_output=True, text=True)
+                hardware = resolve_hardware_config(hardware_cfg)
+                run_cmd = get_run_cmd_for_scheduler(scheduler, hardware, asparagus_cmd, env_cmd)
+                logging.info(f"Running eval box for {task_type} task {task} with runcommand: {' '.join(run_cmd)}")
+                subprocess.run(run_cmd, capture_output=True, text=True)
 
 
 @hydra.main(
@@ -236,13 +185,20 @@ def collect_box_run_records(cfg, config_to_type, box_config_name, results_key):
     return results
 
 
+def box_tasks(cfg, group):
+    """The task entries of one task group in a box config, without the empty ones."""
+    tasks = []
+    for task in cfg.get(group, []):
+        if task is not None:
+            tasks.append(task)
+    return tasks
+
+
 def build_weight_map(cfg):
     """Map each box task's config name to its `weight` (default 1.0) for the final score."""
     weight_for_config = {}
     for group in ("segmentation_tasks", "classification_tasks", "regression_tasks"):
-        for task in cfg.get(group, []):
-            if task is None:
-                continue
+        for task in box_tasks(cfg, group):
             name = task.get("task")
             if name is None:
                 continue
@@ -399,16 +355,9 @@ def print_collected_results(aggregated, summary, final_scores, weight_for_config
 
 
 def resolve_subconfigs_for_config(config):
-    seg_tasks, cls_tasks, regr_tasks = [], [], []
-    for task in config.get("segmentation_tasks", []):
-        if task is not None:
-            seg_tasks.append(task.get("task"))
-    for task in config.get("classification_tasks", []):
-        if task is not None:
-            cls_tasks.append(task.get("task"))
-    for task in config.get("regression_tasks", []):
-        if task is not None:
-            regr_tasks.append(task.get("task"))
+    seg_tasks = [task.get("task") for task in box_tasks(config, "segmentation_tasks")]
+    cls_tasks = [task.get("task") for task in box_tasks(config, "classification_tasks")]
+    regr_tasks = [task.get("task") for task in box_tasks(config, "regression_tasks")]
     return seg_tasks, cls_tasks, regr_tasks
 
 
@@ -541,9 +490,3 @@ def resolve_hardware_config(hardware):
 
 if __name__ == "__main__":
     main()
-
-
-# %%
-
-
-# %%

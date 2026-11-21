@@ -20,13 +20,13 @@ Asparagus is a modular machine learning framework designed for medical imaging a
 - [Contributing](#contributing)
 
 # Resources
-- [Common Issues](./docs/common_issues.md)
-- [Configs](./docs/configs.md)
-- [Environment Variables](./docs/environment_variables.md)
-- [Evaluation Box](./docs/EvalBox.md)
-- [Hacking Asparagus](./docs/hacking_asparagus.md)
-- [Installation](./docs/installation.md)
-- [Training Time References](./docs/training_times.md)
+- [Common Issues](./docs/advanced/common_issues.md)
+- [Configs](./docs/training-workflows/configs.md)
+- [Environment Variables](./docs/getting-started/environment_variables.md)
+- [Evaluation Box](./docs/evaluation/evalbox.md)
+- [Hacking Asparagus](./docs/advanced/hacking_asparagus.md)
+- [Installation](./docs/getting-started/install.md)
+- [Training Time References](./docs/advanced/training_times.md)
 
 # Getting Started
 
@@ -39,10 +39,10 @@ cd asparagus
 pip install -e .
 ```
 
-To install Asparagus on Gefion, please refer to [Installing Asparagus environment on Gefion](./docs/environment_on_gefion.md).
+To install Asparagus on Gefion, please refer to [Installing Asparagus environment on Gefion](./docs/getting-started/environment_on_gefion.md).
 
 ### Environment variables
-To set up required and optional environment variables see: [Environment Variables](./docs/environment_variables.md)
+To set up required and optional environment variables see: [Environment Variables](./docs/getting-started/environment_variables.md)
 
 ## 1. Preprocessing 
 See the [asparagus_preprocessing](https://github.com/Sllambias/asparagus_preprocessing) repository.
@@ -53,7 +53,7 @@ Asparagus uses hydra configs (see [Hydra](https://hydra.cc/docs/intro/)) to conf
 - The model architecture to use
 - The data split to use
 
-These can be given either by creating a config that specifies them see [Example Config 1](./docs/configs.md#example-config-1-the-complete-config), or at runtime using the command line as illustrated below.
+These can be given either by creating a config that specifies them see [Example Config 1](./docs/training-workflows/configs.md#example-config-1-the-complete-config), or at runtime using the command line as illustrated below.
 
 When starting a new training run, Asparagus will assign the run a unique ´run_id´ which can be used to:
 1. restart a failed run

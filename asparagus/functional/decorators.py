@@ -2,28 +2,15 @@ from functools import wraps
 from importlib.util import find_spec
 
 
-def depends_on_mlflow():
+def depends_on(package):
+    """Raise an ImportError when the decorated function is called without the optional package installed."""
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            spec = find_spec("mlflow")
+            spec = find_spec(package)
             if spec is None:
-                raise ImportError(f"Optional dependency mlflow not found ({func.__name__}).")
-            else:
-                return func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
-
-
-def depends_on_timm():
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            spec = find_spec("timm")
-            if spec is None:
-                raise ImportError(f"Optional dependency timm not found ({func.__name__}).")
+                raise ImportError(f"Optional dependency {package} not found ({func.__name__}).")
             else:
                 return func(*args, **kwargs)
 

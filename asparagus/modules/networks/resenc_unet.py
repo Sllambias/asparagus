@@ -206,28 +206,6 @@ def resenc_unet_l(
     )
 
 
-def resenc_unet_l_clsreg(
-    input_channels: int = 1,
-    output_channels: int = 1,
-    dimensions: str = "3D",
-    deep_supervision=False,
-    dropout_op_kwargs: dict = None,
-):
-    # input_channels is the number of modalities (e.g. 2 for T1+T2).
-    # Each modality is a single-channel volume, so the encoder always uses input_channels=1.
-    return ResidualEncoderUNetCLSREG(
-        dimensions=dimensions,
-        input_channels=1,
-        num_modalities=input_channels,
-        output_channels=output_channels,
-        features_per_stage=(64, 128, 256, 512, 620, 620),
-        stride=2,
-        kernel_size=3,
-        n_blocks_per_stage=(1, 3, 4, 6, 6, 6),
-        dropout_op_kwargs=dropout_op_kwargs,
-    )
-
-
 # Encoder 602M parameters
 # Full model 662M parameters
 def resenc_unet_h(

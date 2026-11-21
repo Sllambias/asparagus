@@ -1,0 +1,237 @@
+{
+  "built": {
+    "CPU_clsreg_val_test_transforms_crop": [
+      {
+        "args": [],
+        "kwargs": {
+          "target_size": [
+            128,
+            128,
+            128
+          ]
+        }
+      }
+    ],
+    "LearningRateMonitor": [
+      {
+        "args": [],
+        "kwargs": {
+          "log_momentum": true,
+          "logging_interval": "epoch"
+        }
+      }
+    ],
+    "ModelCheckpoint[best]": [
+      {
+        "args": [],
+        "kwargs": {
+          "dirpath": "<tmp>/models/EntryPointTask/unet_clsreg_tiny__3D/script=finetune_reg/root=base__stem=None_last.ckpt/leaf=default_finetune_reg__clargs=training.seed=0/split_75_15_10__fold=0/run_id=1001/checkpoints",
+          "enable_version_counter": false,
+          "filename": "best",
+          "mode": "min",
+          "monitor": "val/loss",
+          "save_top_k": 1
+        }
+      }
+    ],
+    "ModelCheckpoint[last]": [
+      {
+        "args": [],
+        "kwargs": {
+          "dirpath": "<tmp>/models/EntryPointTask/unet_clsreg_tiny__3D/script=finetune_reg/root=base__stem=None_last.ckpt/leaf=default_finetune_reg__clargs=training.seed=0/split_75_15_10__fold=0/run_id=1001/checkpoints",
+          "enable_version_counter": false,
+          "every_n_epochs": 25,
+          "filename": "last",
+          "save_top_k": 1
+        }
+      }
+    ],
+    "TQDMProgressBar": [
+      {
+        "args": [],
+        "kwargs": {
+          "refresh_rate": 250
+        }
+      }
+    ],
+    "lightning._data_module": [
+      {
+        "args": [],
+        "kwargs": {
+          "test_samples": [
+            "test_0.pt"
+          ],
+          "test_transforms": "<CPU_clsreg_val_test_transforms_crop>",
+          "train_split": [
+            "train_0.pt"
+          ],
+          "train_transforms": "<transforms._cpu_tr_transforms>",
+          "val_split": [
+            "val_0.pt"
+          ],
+          "val_transforms": "<transforms._cpu_val_transforms>"
+        }
+      }
+    ],
+    "lightning._lightning_module": [
+      {
+        "args": [],
+        "kwargs": {
+          "learning_rate": 0.001,
+          "load_decoder": true,
+          "log_image_every_n_epochs": 5,
+          "model": "<model._cls_net>",
+          "optimizer": "SGD",
+          "test_output_path": "<tmp>/models/EntryPointTask/unet_clsreg_tiny__3D/script=finetune_reg/root=base__stem=None_last.ckpt/leaf=default_finetune_reg__clargs=training.seed=0/split_75_15_10__fold=0/run_id=1001/predictions/EntryPointTask__TEST_75_15_10__best.json",
+          "train_transforms": "<transforms._gpu_tr_transforms>",
+          "val_transforms": null,
+          "warmup_epochs": 0,
+          "weight_decay": 3e-05,
+          "weights": null
+        }
+      }
+    ],
+    "lightning._trainer": [
+      {
+        "args": [],
+        "kwargs": {
+          "accumulate_grad_batches": 1,
+          "callbacks": [
+            "<ModelCheckpoint[last]>",
+            "<ModelCheckpoint[best]>",
+            "<TQDMProgressBar>",
+            "<LearningRateMonitor>"
+          ],
+          "check_val_every_n_epoch": 1,
+          "default_root_dir": "<tmp>/models/EntryPointTask/unet_clsreg_tiny__3D/script=finetune_reg/root=base__stem=None_last.ckpt/leaf=default_finetune_reg__clargs=training.seed=0/split_75_15_10__fold=0/run_id=1001",
+          "limit_train_batches": 250,
+          "limit_val_batches": 50,
+          "log_every_n_steps": 250,
+          "logger": "<logging>",
+          "max_epochs": 50,
+          "profiler": null
+        }
+      }
+    ],
+    "logging": [
+      {
+        "args": [],
+        "kwargs": {
+          "ckpt_mlflow_id": null,
+          "ckpt_wandb_id": null,
+          "log_file_name": "finetune_reg",
+          "log_to_stdout": true,
+          "mlflow_logging": false,
+          "run_dir": "<tmp>/models/EntryPointTask/unet_clsreg_tiny__3D/script=finetune_reg/root=base__stem=None_last.ckpt/leaf=default_finetune_reg__clargs=training.seed=0/split_75_15_10__fold=0/run_id=1001",
+          "version": 1001,
+          "wandb_entity": "test-entity",
+          "wandb_experiment": "default_finetune_reg",
+          "wandb_logging": true,
+          "wandb_project": "Finetune"
+        }
+      }
+    ],
+    "model._cls_net": [
+      {
+        "args": [],
+        "kwargs": {
+          "input_channels": 4,
+          "output_channels": 3
+        }
+      }
+    ],
+    "transforms._cpu_tr_transforms": [
+      {
+        "args": [],
+        "kwargs": {
+          "target_size": [
+            128,
+            128,
+            128
+          ]
+        }
+      }
+    ],
+    "transforms._cpu_val_transforms": [
+      {
+        "args": [],
+        "kwargs": {
+          "target_size": [
+            128,
+            128,
+            128
+          ]
+        }
+      }
+    ],
+    "transforms._gpu_tr_transforms": [
+      {
+        "args": [],
+        "kwargs": {
+          "ndim": 3
+        }
+      }
+    ]
+  },
+  "calls": [
+    {
+      "args": [],
+      "call": "lightning._trainer.fit",
+      "kwargs": {
+        "datamodule": "<lightning._data_module>",
+        "model": "<lightning._lightning_module>"
+      }
+    },
+    {
+      "args": [
+        "gardening_tools.modules.networks.components.weight_init.set_params_to_zero"
+      ],
+      "call": "lightning._lightning_module.model.apply",
+      "kwargs": {}
+    },
+    {
+      "args": [],
+      "call": "lightning._trainer.test",
+      "kwargs": {
+        "ckpt_path": "<ModelCheckpoint[best].best_model_path>",
+        "datamodule": "<lightning._data_module>",
+        "model": "<lightning._lightning_module>"
+      }
+    }
+  ],
+  "configs": {
+    "lightning._data_module": {
+      "_target_": "asparagus.modules.data_modules.ClsRegDataModule",
+      "batch_size": 2,
+      "num_workers": 40
+    },
+    "lightning._lightning_module": {
+      "_target_": "asparagus.modules.lightning_modules.RegressionModule",
+      "compile_mode": "default",
+      "warmup_epochs": 0
+    },
+    "lightning._trainer": {
+      "_target_": "lightning.Trainer",
+      "accelerator": "auto",
+      "default_root_dir": "<tmp>/models/EntryPointTask/unet_clsreg_tiny__3D/script=finetune_reg/root=base__stem=None_last.ckpt/leaf=default_finetune_reg__clargs=training.seed=0/split_75_15_10__fold=0/run_id=1001",
+      "devices": 1,
+      "enable_progress_bar": true,
+      "num_nodes": 1,
+      "precision": "bf16-mixed",
+      "strategy": "auto"
+    },
+    "model._cls_net": {
+      "_target_": "asparagus.modules.networks.unet.unet_clsreg_tiny",
+      "dimensions": "3D"
+    },
+    "transforms._cpu_tr_transforms": {
+      "_target_": "asparagus.modules.transforms.presets.CPU_clsreg_train_transforms_crop"
+    },
+    "transforms._cpu_val_transforms": {
+      "_target_": "asparagus.modules.transforms.presets.CPU_clsreg_val_test_transforms_crop"
+    },
+    "transforms._gpu_tr_transforms": {
+      "_target_": "asparagus.modules.transforms.presets.GPU_all_train_transforms"
+    }
+  }
+}

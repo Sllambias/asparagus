@@ -1,11 +1,11 @@
 import math
-from asparagus.functional.decorators import depends_on_mlflow
+from asparagus.functional.decorators import depends_on
 from asparagus.modules.callbacks.loggers import BaseLogger
 from lightning.pytorch.loggers import MLFlowLogger, WandbLogger
 from typing import Optional, Union
 
 
-@depends_on_mlflow()
+@depends_on("mlflow")
 class SafeMLFlowLogger(MLFlowLogger):
     def log_metrics(self, metrics, step=None):
         safe_metrics = {

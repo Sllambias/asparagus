@@ -1,18 +1,16 @@
 import hydra
 import os
-import random
 from asparagus.functional.hydra import fast_instantiate
 from asparagus.modules.transforms.presets import CPU_clsreg_val_test_transforms_crop
 from asparagus.paths import get_config_path
 from asparagus.pipeline.auto_configuration.checkpoint import load_checkpoint_state_dict
 from asparagus.pipeline.auto_configuration.experiment_setup import prepare_inference
+from asparagus.pipeline.auto_configuration.run_setup import register_resolvers
 from dotenv import load_dotenv
 from omegaconf import DictConfig, OmegaConf
 
 load_dotenv()
-
-OmegaConf.register_new_resolver("random", lambda min, max: random.randint(min, max))
-OmegaConf.register_new_resolver("eval", eval)
+register_resolvers()
 
 
 @hydra.main(

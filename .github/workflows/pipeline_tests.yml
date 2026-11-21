@@ -48,3 +48,6 @@ jobs:
         run: |
           pytest tests/test_linear_probe.py -v --timeout=300
 
+      - name: Run entry point snapshot test
+        run: |
+          pytest tests/test_entry_points.py -v --timeout=300
