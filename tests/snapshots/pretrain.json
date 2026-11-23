@@ -17,6 +17,7 @@
           "enable_version_counter": false,
           "every_n_epochs": 5,
           "filename": "last",
+          "save_on_train_epoch_end": true,
           "save_top_k": 1
         }
       }

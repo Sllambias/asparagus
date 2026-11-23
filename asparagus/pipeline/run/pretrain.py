@@ -65,6 +65,8 @@ def main(cfg: DictConfig) -> None:
             save_top_k=1,
             filename="last",
             enable_version_counter=False,
+            # Otherwise Lightning saves only after validation when check_val_every_n_epoch != 1, so never without validation
+            save_on_train_epoch_end=True,
         ),
         ModelSummary(max_depth=3),
         LearningRateMonitor(logging_interval="epoch", log_momentum=True),
