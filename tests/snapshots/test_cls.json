@@ -1,17 +1,5 @@
 {
   "built": {
-    "CPU_clsreg_val_test_transforms_crop": [
-      {
-        "args": [],
-        "kwargs": {
-          "target_size": [
-            128,
-            128,
-            128
-          ]
-        }
-      }
-    ],
     "lightning._data_module": [
       {
         "args": [],
@@ -21,7 +9,7 @@
           "test_samples": [
             "test_0.pt"
           ],
-          "test_transforms": "<CPU_clsreg_val_test_transforms_crop>",
+          "test_transforms": "<transforms._cpu_val_transforms>",
           "train_split": null,
           "val_split": null
         }
@@ -66,6 +54,18 @@
           "output_channels": 2
         }
       }
+    ],
+    "transforms._cpu_val_transforms": [
+      {
+        "args": [],
+        "kwargs": {
+          "target_size": [
+            128,
+            128,
+            128
+          ]
+        }
+      }
     ]
   },
   "calls": [
@@ -103,6 +103,9 @@
     "model._cls_net": {
       "_target_": "asparagus.modules.networks.unet.unet_clsreg_tiny",
       "dimensions": "3D"
+    },
+    "transforms._cpu_val_transforms": {
+      "_target_": "asparagus.modules.transforms.presets.CPU_clsreg_val_test_transforms_crop"
     }
   }
 }

@@ -1,5 +1,6 @@
 import lightning as pl
 import logging
+import polars
 import torch
 import torch.distributed as dist
 from asparagus.functional.collate import collate_return
@@ -9,6 +10,8 @@ from asparagus.modules.datasets.TrainDataset import (
     SegDataset,
     SegTestDataset,
     SingleSubjectPredictDataset,
+    TableClsRegDataset,
+    TableClsRegTestDataset,
 )
 from lightning.fabric.utilities.distributed import DistributedSamplerWrapper
 from torch.utils.data import DataLoader, RandomSampler
@@ -209,4 +212,78 @@ class ClsRegDataModule(TrainingDataModule):
             pin_memory=torch.cuda.is_available(),
             persistent_workers=True,
             collate_fn=collate_return,
+        )
+
+
+class TableClsRegDataModule(ClsRegDataModule):
+    """ClsRegDataModule for image files, such as PNGs, whose labels are in a CSV table."""
+
+    dataset_class = TableClsRegDataset
+    test_dataset_class = TableClsRegTestDataset
+
+    def __init__(
+        self,
+        batch_size: int,
+        num_workers: int,
+        train_split: list,
+        val_split: list,
+        label_table: str,
+        label_column: str,
+        label_cutoff: float,
+        file_column: str = "file_path",
+        train_transforms: Optional[Compose] = None,
+        val_transforms: Optional[Compose] = None,
+        test_transforms: Optional[Compose] = None,
+        predict_transforms: Optional[Compose] = None,
+        test_samples: Optional[list] = [],
+        predict_samples: Optional[list] = [],
+        use_random_datasampler: Optional[bool] = True,
+    ):
+        """
+        Args:
+            label_table: CSV with a header and a row per file.
+            label_column: Column of label_table with the labels.
+            label_cutoff: Labels below it become 1 and the rest 0.
+            file_column: Column of label_table with the file paths, as in the splits.
+            The other arguments are those of ClsRegDataModule.
+        """
+        super().__init__(
+            batch_size=batch_size,
+            num_workers=num_workers,
+            train_split=train_split,
+            val_split=val_split,
+            train_transforms=train_transforms,
+            val_transforms=val_transforms,
+            test_transforms=test_transforms,
+            predict_transforms=predict_transforms,
+            test_samples=test_samples,
+            predict_samples=predict_samples,
+            use_random_datasampler=use_random_datasampler,
+        )
+        table = polars.read_csv(label_table, columns=[file_column, label_column])
+        table = table.select(file_path=polars.col(file_column), label=polars.col(label_column))
+        # Sorted so the datasets find a file's row by binary search
+        self.table = table.sort("file_path")
+        self.label_cutoff = label_cutoff
+
+    def setup_fit(self):
+        self.train_dataset = self.dataset_class(
+            self.train_split,
+            table=self.table,
+            label_cutoff=self.label_cutoff,
+            transforms=self.train_transforms,
+        )
+        self.val_dataset = self.dataset_class(
+            self.val_split,
+            table=self.table,
+            label_cutoff=self.label_cutoff,
+            transforms=self.val_transforms,
+        )
+
+    def setup_test(self):
+        self.test_dataset = self.test_dataset_class(
+            self.test_samples,
+            table=self.table,
+            label_cutoff=self.label_cutoff,
+            transforms=self.test_transforms,
         )

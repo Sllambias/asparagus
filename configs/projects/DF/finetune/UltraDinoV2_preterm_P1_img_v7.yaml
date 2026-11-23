@@ -1,0 +1,47 @@
+# @package _global_
+# Finetunes UltraDinoV2 (projects/DF/pretrain/UltraDinoV2_2D.yaml) to predict preterm birth from the cervix images of
+# EHR_extract's preterm_P1_img_v7 population, registered by asparagus_preprocessing's CLS400_Preterm_P1_img_v7.
+# Load the pretrained weights with checkpoint_run_id=<pretraining run id> or checkpoint_path=<checkpoint>.
+defaults:
+  - /default_finetune_cls@
+  - /hardware/1gpu40cpu@hardware
+  - /model/ultradino_vitb16@model
+  - _self_
+
+task: CLS400_Preterm_P1_img_v7
+
+data:
+  train_split: split_manual
+  test_split: TEST_manual
+  # Class 1 (preterm) is a GA at birth below the cutoff, in days: 224 is 32 weeks, 238 is 34 and 259 is 37
+  ga_cutoff: 238
+
+lightning:
+  data_module: TableClsRegDataModule
+  _data_module:
+    label_table: ${oc.env:ASPARAGUS_RAW_LABELS}/${task}/labels.csv
+    label_column: GA
+    label_cutoff: ${data.ga_cutoff}
+  _lightning_module:
+    weight_decay: 0.01
+
+model:
+  ckpt_every_n_epoch: 5
+  _cls_net:
+    drop_path_rate: 0.1
+    dropout_rate: 0.2
+
+training:
+  target_size: [224, 224]
+  batch_size: 128
+  epochs: 40
+  # The head trains alone for the first 10 epochs, then the backbone joins
+  decoder_warmup_epochs: 10
+  warmup_epochs: 2
+  check_val_every_n_epoch: 1
+
+transforms:
+  cpu_tr_transforms: ultradino_clsreg_train
+  cpu_val_transforms: ultradino_clsreg_val_test
+  gpu_tr_transforms: none
+  gpu_val_transforms: none

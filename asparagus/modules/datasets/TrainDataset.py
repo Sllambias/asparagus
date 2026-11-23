@@ -2,14 +2,16 @@ import logging
 import nibabel as nib
 import numpy as np
 import os
+import polars
 import torch
 import torchvision
+from asparagus.functional.loading import load_image_file
 from asparagus.paths import get_data_path, get_source_labels_path
 from gardening_tools.functional.nibabel_utils import reorient_nib_image
 from gardening_tools.functional.paths.read import load_pickle, read_file_to_nifti_or_np
 from gardening_tools.functional.type_conversions import nifti_or_np_to_np
 from torch.utils.data import Dataset
-from typing import Optional
+from typing import Any, Dict, Optional
 
 
 class FileDataset(Dataset):
@@ -76,6 +78,47 @@ class ClsRegDataset(FileDataset):
         }
 
         return self._transform(data_dict)
+
+
+class TableClsRegDataset(FileDataset):
+    """Image files whose label is in a table, found by file path. Labels below label_cutoff become 1 and the rest 0."""
+
+    def __init__(
+        self,
+        files: list,
+        table: polars.DataFrame,
+        label_cutoff: float,
+        transforms: Optional[torchvision.transforms.Compose] = None,
+    ):
+        """
+        Args:
+            files: Image files.
+            table: The columns file_path and label, sorted by file_path.
+            label_cutoff: Labels below it become 1 and the rest 0.
+            transforms: Transforms of the sample dict.
+        """
+        super().__init__(files, transforms=transforms)
+        self.table = table
+        self.label_cutoff = label_cutoff
+
+    def __getitem__(self, idx):
+        return self.load_sample(self.get_existing_file(idx))
+
+    def load_sample(self, file: str) -> Dict[str, Any]:
+        row = self.table["file_path"].search_sorted(file)
+        assert row < len(self.table) and self.table["file_path"][row] == file, f"{file} is not in the label table"
+        data_dict = {
+            "file_path": file,
+            "image": load_image_file(file),
+            "CLSREG_label": torch.tensor([float(self.table["label"][row] < self.label_cutoff)]),
+            "transforms_applied": {},
+        }
+        return self._transform(data_dict)
+
+
+class TableClsRegTestDataset(TableClsRegDataset):
+    def __getitem__(self, idx):
+        return self.load_sample(self.files[idx])
 
 
 class SegTestDataset(FileDataset):

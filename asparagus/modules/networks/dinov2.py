@@ -24,6 +24,41 @@ def freeze_eval_module(module: nn.Module) -> None:
     module.eval()
 
 
+def masked_vit(
+    input_channels: int,
+    img_size: tuple,
+    patch_size: tuple,
+    hidden_size: int,
+    num_layers: int,
+    num_heads: int,
+    mlp_dim: int,
+    qkv_bias: bool = False,
+    layer_scale_init: Optional[float] = None,
+    drop_path_rate: float = 0.0,
+    num_register_tokens: int = 0,
+) -> MaskedVisionTransformer:
+    """The DINOv2 backbone: a MONAI ViT in a MaskedVisionTransformer. The arguments are those of DINOv2."""
+    vit = ViT(
+        in_channels=input_channels,
+        img_size=img_size,
+        patch_size=patch_size,
+        hidden_size=hidden_size,
+        mlp_dim=mlp_dim,
+        num_layers=num_layers,
+        num_heads=num_heads,
+        proj_type="conv",
+        classification=True,
+        spatial_dims=len(img_size),
+        qkv_bias=qkv_bias,
+    )
+    return MaskedVisionTransformer(
+        vit=vit,
+        layer_scale_init=layer_scale_init,
+        drop_path_rate=drop_path_rate,
+        num_register_tokens=num_register_tokens,
+    )
+
+
 class DINOv2(nn.Module):
     """
     2D/3D DINOv2 model with teacher/student ViT backbones and DINO/iBOT heads.
@@ -56,34 +91,28 @@ class DINOv2(nn.Module):
         self.ibot_separate_head = ibot_separate_head
 
         self.hidden_size = hidden_size
-        vit = partial(
-            ViT,
-            in_channels=input_channels,
+        backbone = partial(
+            masked_vit,
+            input_channels=input_channels,
             img_size=img_size,
             patch_size=patch_size,
             hidden_size=hidden_size,
-            mlp_dim=mlp_dim,
             num_layers=num_layers,
             num_heads=num_heads,
-            proj_type="conv",
-            classification=True,
-            spatial_dims=len(img_size),
+            mlp_dim=mlp_dim,
             qkv_bias=qkv_bias,
-        )
-        backbone = partial(
-            MaskedVisionTransformer,
             layer_scale_init=layer_scale_init,
             num_register_tokens=num_register_tokens,
         )
 
-        self.student_backbone = backbone(vit=vit(), drop_path_rate=drop_path_rate)
+        self.student_backbone = backbone(drop_path_rate=drop_path_rate)
         self.student_dino_head = DINOv2ProjectionHead(input_dim=hidden_size, output_dim=projection_dim)
         if ibot_separate_head:
             self.student_ibot_head = DINOv2ProjectionHead(input_dim=hidden_size, output_dim=projection_dim)
         else:
             self.student_ibot_head = self.student_dino_head
 
-        self.teacher_backbone = backbone(vit=vit())
+        self.teacher_backbone = backbone()
         self.teacher_dino_head = DINOv2ProjectionHead(input_dim=hidden_size, output_dim=projection_dim)
         if ibot_separate_head:
             self.teacher_ibot_head = DINOv2ProjectionHead(input_dim=hidden_size, output_dim=projection_dim)
@@ -196,6 +225,56 @@ class DINOv2(nn.Module):
         """
         backbone_features = self.student_backbone(x, mask=None)
         return backbone_features[:, 0]  # Return CLS token only
+
+
+class DINOv2CLSREG(nn.Module):
+    """Classification/regression network: the DINOv2 ViT with a linear head on the CLS token.
+
+    Uses the attribute name of DINOv2's teacher (teacher_backbone) so a DINOv2 checkpoint loads the teacher's weights.
+    """
+
+    def __init__(
+        self,
+        input_channels: int = 1,
+        output_channels: int = 1,
+        img_size: tuple = (224, 224),
+        patch_size: tuple = (16, 16),
+        hidden_size: int = 768,
+        num_layers: int = 12,
+        num_heads: int = 12,
+        mlp_dim: int = 3072,
+        qkv_bias: bool = False,
+        layer_scale_init: Optional[float] = None,
+        drop_path_rate: float = 0.0,
+        num_register_tokens: int = 0,
+        dropout_rate: float = 0.0,
+    ):
+        """
+        Args: see DINOv2. img_size is the pretraining size; other input sizes interpolate the position embeddings.
+            dropout_rate is the dropout before the linear head.
+        """
+        super().__init__()
+        self.num_classes = output_channels
+        self.teacher_backbone = masked_vit(
+            input_channels=input_channels,
+            img_size=img_size,
+            patch_size=patch_size,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            num_heads=num_heads,
+            mlp_dim=mlp_dim,
+            qkv_bias=qkv_bias,
+            layer_scale_init=layer_scale_init,
+            drop_path_rate=drop_path_rate,
+            num_register_tokens=num_register_tokens,
+        )
+        # The mask token is only used in pretraining. Frozen, DDP does not wait for its gradient
+        self.teacher_backbone.mask_token.requires_grad = False
+        # Named decoder so decoder_warmup_epochs trains the head before the backbone
+        self.decoder = nn.Sequential(nn.Dropout(dropout_rate), nn.Linear(hidden_size, output_channels))
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.decoder(self.teacher_backbone(x)[:, 0])
 
 
 def vit_test(input_channels=1, img_size=(1, 1, 1), patch_size=(0, 0, 0), hidden_size=120):

@@ -1,0 +1,23 @@
+# The ViT-B/16 with 4 registers that projects/DF/pretrain/UltraDinoV2_2D.yaml pretrains, with a linear head on the CLS
+# token. Keep the backbone arguments in line with that config, or the pretrained weights will not load.
+dimensions: 2D
+
+cls_net: DINOv2CLSREG
+
+_cls_net:
+  _target_: asparagus.modules.networks.dinov2.${model.cls_net}
+  # The pretraining crop size. Other input sizes interpolate the position embeddings
+  img_size: [224, 224]
+  patch_size: [16, 16]
+  hidden_size: 768
+  num_layers: 12
+  num_heads: 12
+  mlp_dim: 3072
+  qkv_bias: True
+  layer_scale_init: 1e-5
+  num_register_tokens: 4
+  drop_path_rate: 0.0
+  dropout_rate: 0.0
+
+finetune_optim: AdamW
+finetune_lr: 1e-5
