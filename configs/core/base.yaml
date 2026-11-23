@@ -13,6 +13,7 @@ hydra:
           - hf_model_id
           - hf_weight_format
           - data.test_split
+          - data.train_split
           - hardware
           - hardware.accelerator
           - hardware.num_devices
@@ -21,6 +22,13 @@ hydra:
           - hardware.precision
           - hardware.strategy
           - load_checkpoint_name
+          - logger.wandb_logging
+          - logger.wandb_log_model
+          - logger.mlflow_logging
+          - logger.progress_bar
+          - logger.log_every_n_steps
+          - logger.log_images_every_n_epoch
+          - logger.profile
           - model
           - model.net
           - model.dimensions
@@ -29,7 +37,7 @@ hydra:
           - stem
           - task
           - data.fold
-          - test_checkpoint
+          - test_checkpoint          
 
   output_subdir: hydra
   run:
