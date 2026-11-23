@@ -1,5 +1,7 @@
+import logging
 import nibabel as nib
 import numpy as np
+import os
 import torch
 import torchvision
 from asparagus.paths import get_data_path, get_source_labels_path
@@ -26,6 +28,15 @@ class FileDataset(Dataset):
     def __len__(self):
         return len(self.files)
 
+    def get_existing_file(self, idx: int) -> str:
+        """Return the file at idx, or the next file that exists if it is missing."""
+        for offset in range(len(self.files)):
+            file = self.files[(idx + offset) % len(self.files)]
+            if os.path.isfile(file):
+                return file
+            logging.debug(f"Skipping missing file: {file}")
+        raise FileNotFoundError("None of the files in the dataset exist")
+
     def _transform(self, data_dict):
         if self.transforms is not None:
             data_dict = self.transforms(data_dict)
@@ -34,7 +45,7 @@ class FileDataset(Dataset):
 
 class SegDataset(FileDataset):
     def __getitem__(self, idx):
-        file = self.files[idx]
+        file = self.get_existing_file(idx)
         data = torch.load(file)
         foreground_locations = load_pickle(file.replace(".pt", ".pkl"))["foreground_locations"]
         data_dict = {
@@ -55,7 +66,7 @@ class SegDataset(FileDataset):
 
 class ClsRegDataset(FileDataset):
     def __getitem__(self, idx):
-        file = self.files[idx]
+        file = self.get_existing_file(idx)
         data = torch.load(file)
         data_dict = {
             "file_path": file,
