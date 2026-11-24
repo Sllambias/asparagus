@@ -10,6 +10,7 @@ from asparagus.modules.lightning_modules.dinov2 import DINOv2Module
 from asparagus.modules.networks.dinov2 import DINOv2, DINOv2CLSREG
 from asparagus.modules.transforms.presets import ultradino_clsreg_train, ultradino_clsreg_val_test
 from PIL import Image
+from torch.utils.data import DataLoader
 
 
 @pytest.fixture
@@ -31,7 +32,7 @@ def labelled_pngs(tmp_path):
     with open(label_table, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(["CPR_MOR", "file_path", "GA"])
-        # In reverse order, so the data module has to sort the table
+        # In reverse order, so the labels have to be matched to the files by path and not by row
         for i, (file, file_ga) in reversed(list(enumerate(zip(files, ga)))):
             writer.writerow([f"mother_{i}", file, file_ga])
     return {"train": files[:2], "val": files[2:4], "test": files[4:], "label_table": str(label_table), "ga": ga}
@@ -72,9 +73,17 @@ def test_files_missing_from_the_label_table_fail(labelled_pngs, tmp_path):
     unlabelled = str(tmp_path / "unlabelled.png")
     Image.fromarray(torch.zeros(32, 32, dtype=torch.uint8).numpy()).save(unlabelled)
     data_module = make_data_module(dict(labelled_pngs, train=[unlabelled]))
+    with pytest.raises(AssertionError, match="have no label in the table"):
+        data_module.setup("fit")
+
+
+def test_forked_workers_load_batches(labelled_pngs):
+    # polars hangs when it is called in a forked worker, so the datasets must not use it in __getitem__
+    data_module = make_data_module(labelled_pngs)
     data_module.setup("fit")
-    with pytest.raises(AssertionError, match="is not in the label table"):
-        data_module.train_dataset[0]
+    loader = DataLoader(data_module.train_dataset, batch_size=2, num_workers=2, multiprocessing_context="fork", timeout=30)
+    labels = [label for batch in loader for label in batch["CLSREG_label"].flatten().tolist()]
+    assert labels == [float(ga < 259) for ga in labelled_pngs["ga"][:2]]
 
 
 def test_dinov2_clsreg_loads_the_pretrained_teacher(tiny_vit):

@@ -261,9 +261,8 @@ class TableClsRegDataModule(ClsRegDataModule):
             use_random_datasampler=use_random_datasampler,
         )
         table = polars.read_csv(label_table, columns=[file_column, label_column])
-        table = table.select(file_path=polars.col(file_column), label=polars.col(label_column))
-        # Sorted so the datasets find a file's row by binary search
-        self.table = table.sort("file_path")
+        self.table = table.select(file_path=polars.col(file_column), label=polars.col(label_column))
+        assert self.table["file_path"].is_unique().all(), f"{label_table} has more than one row for some files"
         self.label_cutoff = label_cutoff
 
     def setup_fit(self):
