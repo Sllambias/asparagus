@@ -59,3 +59,13 @@ def ultradino_clsreg_train(target_size: Sequence[int]) -> transforms.Compose:
             Torch_AsImage(transforms.Normalize(mean=[0.1842924807], std=[0.2187705424])),
         ]
     )
+
+
+def ultradino_mae_train(patch_size: Sequence[int]) -> transforms.Compose:
+    """ultradino_clsreg_train at patch_size, for masked autoencoder pretraining with asp_pretrain."""
+    return ultradino_clsreg_train(target_size=patch_size)
+
+
+def ultradino_mae_val(patch_size: Sequence[int]) -> transforms.Compose:
+    """ultradino_clsreg_val_test at patch_size, for masked autoencoder pretraining with asp_pretrain."""
+    return ultradino_clsreg_val_test(target_size=patch_size)

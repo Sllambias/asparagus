@@ -1,4 +1,11 @@
-from .dinov2 import dinov2, ultradino, ultradino_clsreg_train, ultradino_clsreg_val_test
+from .dinov2 import (
+    dinov2,
+    ultradino,
+    ultradino_clsreg_train,
+    ultradino_clsreg_val_test,
+    ultradino_mae_train,
+    ultradino_mae_val,
+)
 from .pretrain import (
     CPU_train_transforms as pretrain_CPU_train_transforms,
     CPU_val_transforms as pretrain_CPU_val_transforms,
@@ -35,4 +42,6 @@ __all__ = [
     "ultradino",
     "ultradino_clsreg_train",
     "ultradino_clsreg_val_test",
+    "ultradino_mae_train",
+    "ultradino_mae_val",
 ]

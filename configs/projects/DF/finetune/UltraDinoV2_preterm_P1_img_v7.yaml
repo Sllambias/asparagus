@@ -15,6 +15,10 @@ data:
   test_split: TEST_manual
   # Class 1 (preterm) is a GA at birth below the cutoff, in days: 224 is 32 weeks, 238 is 34 and 259 is 37
   ga_cutoff: 238
+  # Training draws class c in proportion to class_factors[c] * (images of class c) ** (1 - class_balance).
+  # class_balance: 1 draws term and preterm equally often, and class_factors: [1, 3] draws preterm 3 times as often.
+  class_factors:
+  class_balance: 0
 
 lightning:
   data_module: TableClsRegDataModule
@@ -22,8 +26,12 @@ lightning:
     label_table: ${oc.env:ASPARAGUS_RAW_LABELS}/${task}/labels.csv
     label_column: GA
     label_cutoff: ${data.ga_cutoff}
+    class_factors: ${data.class_factors}
+    class_balance: ${data.class_balance}
   _lightning_module:
     weight_decay: 0.01
+    # Each ViT layer trains at 0.65 times the learning rate of the layer above. The embeddings get 0.65 ** 13 of it
+    layer_decay: 0.65
 
 model:
   ckpt_every_n_epoch: 5

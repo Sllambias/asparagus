@@ -11,6 +11,7 @@ from asparagus.functional.lr_scheduling import (
     sawtooth_warmup_cosine_decay_schedule,
     separate_encoder_decoder_weights,
     simple_warmup_cosine_decay_schedule,
+    vit_layer_decay_param_groups,
 )
 from asparagus.functional.metrics.utils import format_multilabel_metrics
 from asparagus.functional.pos_embed import resize_pos_embed_3d
@@ -40,6 +41,7 @@ class BaseModule(L.LightningModule):
         test_transforms: Optional[transforms.Compose] = None,
         val_transforms: Optional[transforms.Compose] = None,
         weight_decay: float = 3e-5,
+        layer_decay: Optional[float] = None,
         nesterov: bool = True,
         momentum: float = 0.99,
         repeat_stem_weights: bool = True,
@@ -63,6 +65,8 @@ class BaseModule(L.LightningModule):
         self.cosine_period_ratio = cosine_period_ratio
         self.optimizer = optimizer
         self.weight_decay = weight_decay
+        # None trains every layer at learning_rate. A factor needs a ViT encoder, see vit_layer_decay_param_groups
+        self.layer_decay = layer_decay
         self.nesterov = nesterov
         self.momentum = momentum
         self.repeat_stem_weights = repeat_stem_weights
@@ -85,8 +89,10 @@ class BaseModule(L.LightningModule):
         raise NotImplementedError
 
     def configure_optimizers(self):
-        # Separate encoder and decoder parameters for different warmup schedules
-        if self.decoder_warmup_epochs > 0:
+        # Separate encoder and decoder parameters for different warmup schedules, and the encoder by layer for layer decay
+        if self.layer_decay is not None:
+            param_groups = vit_layer_decay_param_groups(self.named_parameters(), self.learning_rate, self.layer_decay)
+        elif self.decoder_warmup_epochs > 0:
             param_groups = separate_encoder_decoder_weights(self.named_parameters())
         else:
             param_groups = self.parameters()

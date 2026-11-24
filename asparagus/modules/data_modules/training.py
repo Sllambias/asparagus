@@ -1,9 +1,11 @@
 import lightning as pl
 import logging
+import numpy as np
 import polars
 import torch
 import torch.distributed as dist
 from asparagus.functional.collate import collate_return
+from asparagus.functional.sampling import class_sampling_weights
 from asparagus.modules.datasets.TrainDataset import (
     ClsRegDataset,
     ClsRegTestDataset,
@@ -14,9 +16,9 @@ from asparagus.modules.datasets.TrainDataset import (
     TableClsRegTestDataset,
 )
 from lightning.fabric.utilities.distributed import DistributedSamplerWrapper
-from torch.utils.data import DataLoader, RandomSampler
+from torch.utils.data import DataLoader, RandomSampler, WeightedRandomSampler
 from torchvision.transforms import Compose
-from typing import Literal, Optional
+from typing import List, Literal, Optional
 
 
 class TrainingDataModule(pl.LightningDataModule):
@@ -231,6 +233,8 @@ class TableClsRegDataModule(ClsRegDataModule):
         label_column: str,
         label_cutoff: float,
         file_column: str = "file_path",
+        class_factors: Optional[List[float]] = None,
+        class_balance: float = 0.0,
         train_transforms: Optional[Compose] = None,
         val_transforms: Optional[Compose] = None,
         test_transforms: Optional[Compose] = None,
@@ -245,6 +249,8 @@ class TableClsRegDataModule(ClsRegDataModule):
             label_column: Column of label_table with the labels.
             label_cutoff: Labels below it become 1 and the rest 0.
             file_column: Column of label_table with the file paths, as in the splits.
+            class_factors: Training draws each class this many times as often, indexed by class. None weighs every class 1.
+            class_balance: 0 draws the training classes as often as they occur and 1 draws them equally often.
             The other arguments are those of ClsRegDataModule.
         """
         super().__init__(
@@ -263,7 +269,12 @@ class TableClsRegDataModule(ClsRegDataModule):
         table = polars.read_csv(label_table, columns=[file_column, label_column])
         self.table = table.select(file_path=polars.col(file_column), label=polars.col(label_column))
         assert self.table["file_path"].is_unique().all(), f"{label_table} has more than one row for some files"
+        assert use_random_datasampler or (class_factors is None and class_balance == 0), (
+            "class_factors and class_balance need use_random_datasampler"
+        )
         self.label_cutoff = label_cutoff
+        self.class_factors = class_factors
+        self.class_balance = class_balance
 
     def setup_fit(self):
         self.train_dataset = self.dataset_class(
@@ -285,4 +296,25 @@ class TableClsRegDataModule(ClsRegDataModule):
             table=self.table,
             label_cutoff=self.label_cutoff,
             transforms=self.test_transforms,
+        )
+
+    def train_dataloader(self):
+        sampler = None
+        if self.use_random_datasampler:
+            labels = self.train_dataset.labels
+            weights = class_sampling_weights(labels, self.class_factors, self.class_balance)
+            shares = np.bincount(labels.astype(np.int64), weights=weights) / weights.sum()
+            logging.info(f"Training draws the classes with shares {np.round(shares, 3).tolist()}")
+            sampler = WeightedRandomSampler(weights, num_samples=999999, replacement=True)
+            sampler = DistributedSamplerWrapper(sampler) if dist.is_initialized() else sampler
+
+        return DataLoader(
+            self.train_dataset,
+            num_workers=self.num_workers,
+            batch_size=self.batch_size,
+            pin_memory=torch.cuda.is_available(),
+            persistent_workers=True,
+            drop_last=True,
+            shuffle=sampler is None,
+            sampler=sampler,
         )

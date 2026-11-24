@@ -1,0 +1,53 @@
+# @package _global_
+# Finetunes the 2D ResEnc-UNet B of projects/DF/pretrain/ResEncUNetB_2D.yaml to predict preterm birth, with the data,
+# transforms and schedule of UltraDinoV2_preterm_P1_img_v7.yaml.
+# Load the pretrained weights with checkpoint_run_id=<pretraining run id> or checkpoint_path=<checkpoint>.
+defaults:
+  - /default_finetune_cls@
+  - /hardware/1gpu40cpu@hardware
+  - /model/resenc_unet_b_clsreg@model
+  - _self_
+
+task: CLS400_Preterm_P1_img_v7
+
+data:
+  train_split: split_manual
+  test_split: TEST_manual
+  # Class 1 (preterm) is a GA at birth below the cutoff, in days: 224 is 32 weeks, 238 is 34 and 259 is 37
+  ga_cutoff: 238
+  # Training draws class c in proportion to class_factors[c] * (images of class c) ** (1 - class_balance).
+  # class_balance: 1 draws term and preterm equally often, and class_factors: [1, 3] draws preterm 3 times as often.
+  class_factors:
+  class_balance: 0
+
+lightning:
+  data_module: TableClsRegDataModule
+  _data_module:
+    label_table: ${oc.env:ASPARAGUS_RAW_LABELS}/${task}/labels.csv
+    label_column: GA
+    label_cutoff: ${data.ga_cutoff}
+    class_factors: ${data.class_factors}
+    class_balance: ${data.class_balance}
+  _lightning_module:
+    weight_decay: 0.01
+
+model:
+  dimensions: 2D
+  ckpt_every_n_epoch: 5
+
+training:
+  target_size: [224, 224]
+  batch_size: 128
+  epochs: 40
+  # The head trains alone for the first 10 epochs, then the encoder joins
+  decoder_warmup_epochs: 10
+  warmup_epochs: 2
+  check_val_every_n_epoch: 1
+  # The pretrained decoder is a UNet decoder, not the classification head
+  load_decoder: False
+
+transforms:
+  cpu_tr_transforms: ultradino_clsreg_train
+  cpu_val_transforms: ultradino_clsreg_val_test
+  gpu_tr_transforms: none
+  gpu_val_transforms: none

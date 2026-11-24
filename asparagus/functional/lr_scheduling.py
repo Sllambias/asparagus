@@ -1,4 +1,5 @@
 import lightning as L
+import re
 from torch.optim.lr_scheduler import CosineAnnealingLR, LambdaLR, LinearLR, SequentialLR
 from typing import Any, Dict, List
 
@@ -37,6 +38,56 @@ def separate_encoder_decoder_weights(named_parameters) -> List[Dict[str, Any]]:
         {"params": encoder_params, "name": "encoder"},
         {"params": decoder_params, "name": "decoder"},
     ]
+
+
+def vit_layer_decay_param_groups(named_parameters, learning_rate: float, layer_decay: float) -> List[Dict[str, Any]]:
+    """Param groups of a ViT encoder and a decoder, where each layer trains at layer_decay times the rate of the layer above.
+
+    Layer 0 is the patch and position embeddings and the cls and register tokens, layer i + 1 is block i, and the final
+    norm and the decoder train at learning_rate. Frozen parameters are left out.
+
+    Args:
+        named_parameters: Named parameters of a module whose model has a ViT encoder (vit.blocks) and a decoder.
+        learning_rate: Learning rate of the final norm and the decoder.
+        layer_decay: Factor between the learning rates of a layer and the layer above it.
+    Returns:
+        A group per encoder layer, named encoder_layer_<layer>, then a group named decoder.
+    """
+    embedding_params = []
+    block_params = {}
+    norm_params = []
+    decoder_params = []
+    for name, param in named_parameters:
+        if not param.requires_grad:
+            continue
+        name = name.replace("_orig_mod.", "")
+        block = re.search(r"\.vit\.blocks\.(\d+)\.", name)
+        if "model.decoder" in name:
+            decoder_params.append(param)
+        elif block is not None:
+            block_params.setdefault(int(block.group(1)), []).append(param)
+        elif ".vit.norm." in name:
+            norm_params.append(param)
+        elif "patch_embedding" in name or "cls_token" in name or "register_tokens" in name:
+            embedding_params.append(param)
+        else:
+            raise ValueError(f"{name} is in neither a ViT layer nor the decoder")
+
+    num_blocks = len(block_params)
+    assert sorted(block_params) == list(range(num_blocks)), f"Found ViT blocks {sorted(block_params)}"
+    assert len(decoder_params) > 0, "Decoder parameters not found."
+    layers = [embedding_params] + [block_params[block] for block in range(num_blocks)] + [norm_params]
+    param_groups = []
+    for layer, params in enumerate(layers):
+        param_groups.append(
+            {
+                "params": params,
+                "name": f"encoder_layer_{layer}",
+                "lr": learning_rate * layer_decay ** (num_blocks + 1 - layer),
+            }
+        )
+    param_groups.append({"params": decoder_params, "name": "decoder", "lr": learning_rate})
+    return param_groups
 
 
 def merge_param_groups(param_groups: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -80,12 +131,18 @@ def sawtooth_warmup_cosine_decay_schedule(
     def decoder_phase1_lambda(step):
         return 0.999 * step / decoder_warmup_steps + 0.001
 
-    # LambdaLR depends on the order of the param groups
-    assert optimizer.param_groups[0]["name"] == "encoder" and optimizer.param_groups[1]["name"] == "decoder", (
-        "Param groups are not in the expected order."
-    )
+    # LambdaLR takes one lambda per param group, in the order of the groups
+    phase1_lambdas = []
+    for group in optimizer.param_groups:
+        assert group["name"] == "decoder" or group["name"].startswith("encoder"), (
+            f"Param group {group['name']} is neither an encoder nor the decoder group."
+        )
+        if group["name"] == "decoder":
+            phase1_lambdas.append(decoder_phase1_lambda)
+        else:
+            phase1_lambdas.append(encoder_phase1_lambda)
 
-    phase1_scheduler = LambdaLR(optimizer, lr_lambda=[encoder_phase1_lambda, decoder_phase1_lambda])
+    phase1_scheduler = LambdaLR(optimizer, lr_lambda=phase1_lambdas)
     phase2_scheduler = LinearLR(optimizer, start_factor=1.0 / 1000, total_iters=encoder_decoder_warmup_steps)
     phase3_scheduler = CosineAnnealingLR(optimizer, T_max=cosine_steps)
 

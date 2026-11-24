@@ -1,0 +1,35 @@
+# @package _global_
+# Masked autoencoder pretraining of a 2D ResEnc-UNet B on the ultrasound frames of PT400, as datapaper's resenc_6m_amaes
+# pretrains in 3D. Each frame is resized whole to patch_size and normalized as UltraDino's (ultradino_mae_*), so
+# projects/DF/finetune/ResEncUNetB_2D_preterm_P1_img_v7.yaml finetunes on the same input.
+defaults:
+  - /default_pretrain@
+  - /hardware/1gpu40cpu@hardware
+  - /model/resenc_unet_b@model
+  - _self_
+
+task: PT400_DeepFetalV1
+root: base
+stem: mae
+
+model:
+  dimensions: 2D
+  # Without skip connections the decoder cannot copy the unmasked input, as in resenc_6m_amaes
+  use_skip_connections: False
+
+data:
+  train_split: split_manual
+
+training:
+  patch_size: [224, 224]
+  batch_size: 128
+  # 50M images, as many as UltraDinoV2_2D draws
+  max_samples: 50_000_000
+  epochs: 100
+  warmup_epochs: 2
+  # Checkpoints are saved after validation, so validate every model.ckpt_every_n_epoch (5) epochs
+  check_val_every_n_epoch: 5
+
+transforms:
+  cpu_tr_transforms: ultradino_mae_train
+  cpu_val_transforms: ultradino_mae_val
