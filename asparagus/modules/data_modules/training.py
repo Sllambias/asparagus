@@ -1,19 +1,24 @@
 import lightning as pl
 import logging
+import numpy as np
+import polars
 import torch
 import torch.distributed as dist
 from asparagus.functional.collate import collate_return
+from asparagus.functional.sampling import class_sampling_weights
 from asparagus.modules.datasets.TrainDataset import (
     ClsRegDataset,
     ClsRegTestDataset,
     SegDataset,
     SegTestDataset,
     SingleSubjectPredictDataset,
+    TableClsRegDataset,
+    TableClsRegTestDataset,
 )
 from lightning.fabric.utilities.distributed import DistributedSamplerWrapper
-from torch.utils.data import DataLoader, RandomSampler
+from torch.utils.data import DataLoader, RandomSampler, WeightedRandomSampler
 from torchvision.transforms import Compose
-from typing import Literal, Optional
+from typing import List, Literal, Optional
 
 
 class TrainingDataModule(pl.LightningDataModule):
@@ -209,4 +214,107 @@ class ClsRegDataModule(TrainingDataModule):
             pin_memory=torch.cuda.is_available(),
             persistent_workers=True,
             collate_fn=collate_return,
+        )
+
+
+class TableClsRegDataModule(ClsRegDataModule):
+    """ClsRegDataModule for image files, such as PNGs, whose labels are in a CSV table."""
+
+    dataset_class = TableClsRegDataset
+    test_dataset_class = TableClsRegTestDataset
+
+    def __init__(
+        self,
+        batch_size: int,
+        num_workers: int,
+        train_split: list,
+        val_split: list,
+        label_table: str,
+        label_column: str,
+        label_cutoff: float,
+        file_column: str = "file_path",
+        class_factors: Optional[List[float]] = None,
+        class_balance: float = 0.0,
+        train_transforms: Optional[Compose] = None,
+        val_transforms: Optional[Compose] = None,
+        test_transforms: Optional[Compose] = None,
+        predict_transforms: Optional[Compose] = None,
+        test_samples: Optional[list] = [],
+        predict_samples: Optional[list] = [],
+        use_random_datasampler: Optional[bool] = True,
+    ):
+        """
+        Args:
+            label_table: CSV with a header and a row per file.
+            label_column: Column of label_table with the labels.
+            label_cutoff: Labels below it become 1 and the rest 0.
+            file_column: Column of label_table with the file paths, as in the splits.
+            class_factors: Training draws each class this many times as often, indexed by class. None weighs every class 1.
+            class_balance: 0 draws the training classes as often as they occur and 1 draws them equally often.
+            The other arguments are those of ClsRegDataModule.
+        """
+        super().__init__(
+            batch_size=batch_size,
+            num_workers=num_workers,
+            train_split=train_split,
+            val_split=val_split,
+            train_transforms=train_transforms,
+            val_transforms=val_transforms,
+            test_transforms=test_transforms,
+            predict_transforms=predict_transforms,
+            test_samples=test_samples,
+            predict_samples=predict_samples,
+            use_random_datasampler=use_random_datasampler,
+        )
+        table = polars.read_csv(label_table, columns=[file_column, label_column])
+        self.table = table.select(file_path=polars.col(file_column), label=polars.col(label_column))
+        assert self.table["file_path"].is_unique().all(), f"{label_table} has more than one row for some files"
+        assert use_random_datasampler or (class_factors is None and class_balance == 0), (
+            "class_factors and class_balance need use_random_datasampler"
+        )
+        self.label_cutoff = label_cutoff
+        self.class_factors = class_factors
+        self.class_balance = class_balance
+
+    def setup_fit(self):
+        self.train_dataset = self.dataset_class(
+            self.train_split,
+            table=self.table,
+            label_cutoff=self.label_cutoff,
+            transforms=self.train_transforms,
+        )
+        self.val_dataset = self.dataset_class(
+            self.val_split,
+            table=self.table,
+            label_cutoff=self.label_cutoff,
+            transforms=self.val_transforms,
+        )
+
+    def setup_test(self):
+        self.test_dataset = self.test_dataset_class(
+            self.test_samples,
+            table=self.table,
+            label_cutoff=self.label_cutoff,
+            transforms=self.test_transforms,
+        )
+
+    def train_dataloader(self):
+        sampler = None
+        if self.use_random_datasampler:
+            labels = self.train_dataset.labels
+            weights = class_sampling_weights(labels, self.class_factors, self.class_balance)
+            shares = np.bincount(labels.astype(np.int64), weights=weights) / weights.sum()
+            logging.info(f"Training draws the classes with shares {np.round(shares, 3).tolist()}")
+            sampler = WeightedRandomSampler(weights, num_samples=999999, replacement=True)
+            sampler = DistributedSamplerWrapper(sampler) if dist.is_initialized() else sampler
+
+        return DataLoader(
+            self.train_dataset,
+            num_workers=self.num_workers,
+            batch_size=self.batch_size,
+            pin_memory=torch.cuda.is_available(),
+            persistent_workers=True,
+            drop_last=True,
+            shuffle=sampler is None,
+            sampler=sampler,
         )

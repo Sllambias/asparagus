@@ -1,7 +1,6 @@
 import hydra
 import os
 from asparagus.functional.hydra import fast_instantiate
-from asparagus.modules.transforms.presets import CPU_clsreg_val_test_transforms_crop
 from asparagus.paths import get_config_path
 from asparagus.pipeline.auto_configuration.checkpoint import load_checkpoint_state_dict
 from asparagus.pipeline.auto_configuration.experiment_setup import prepare_inference
@@ -28,13 +27,17 @@ def main(cfg: DictConfig) -> None:
         cfg.test_task + "__" + cfg.test_split + "__" + cfg.load_checkpoint_name.replace(".ckpt", ".json"),
     )
 
+    test_transforms = fast_instantiate(
+        ckpt_cfg.transforms._cpu_val_transforms,
+        target_size=ckpt_cfg.training.target_size,
+    )
     data_module = fast_instantiate(
         ckpt_cfg.lightning._data_module,
         batch_size=1,
         train_split=None,
         val_split=None,
         test_samples=file_store.test,
-        test_transforms=CPU_clsreg_val_test_transforms_crop(target_size=ckpt_cfg.training.target_size),
+        test_transforms=test_transforms,
         num_workers=cfg.hardware.num_workers,
     )
 

@@ -2,14 +2,16 @@ import logging
 import nibabel as nib
 import numpy as np
 import os
+import polars
 import torch
 import torchvision
+from asparagus.functional.loading import load_image_file
 from asparagus.paths import get_data_path, get_source_labels_path
 from gardening_tools.functional.nibabel_utils import reorient_nib_image
 from gardening_tools.functional.paths.read import load_pickle, read_file_to_nifti_or_np
 from gardening_tools.functional.type_conversions import nifti_or_np_to_np
 from torch.utils.data import Dataset
-from typing import Optional
+from typing import Any, Dict, Optional
 
 
 class FileDataset(Dataset):
@@ -28,14 +30,18 @@ class FileDataset(Dataset):
     def __len__(self):
         return len(self.files)
 
+    def get_existing_index(self, idx: int) -> int:
+        """Return idx, or the index of the next file that exists if the file at idx is missing."""
+        for offset in range(len(self.files)):
+            index = (idx + offset) % len(self.files)
+            if os.path.isfile(self.files[index]):
+                return index
+            logging.debug(f"Skipping missing file: {self.files[index]}")
+        raise FileNotFoundError("None of the files in the dataset exist")
+
     def get_existing_file(self, idx: int) -> str:
         """Return the file at idx, or the next file that exists if it is missing."""
-        for offset in range(len(self.files)):
-            file = self.files[(idx + offset) % len(self.files)]
-            if os.path.isfile(file):
-                return file
-            logging.debug(f"Skipping missing file: {file}")
-        raise FileNotFoundError("None of the files in the dataset exist")
+        return self.files[self.get_existing_index(idx)]
 
     def _transform(self, data_dict):
         if self.transforms is not None:
@@ -76,6 +82,51 @@ class ClsRegDataset(FileDataset):
         }
 
         return self._transform(data_dict)
+
+
+class TableClsRegDataset(FileDataset):
+    """Image files whose label is in a table, found by file path. Labels below label_cutoff become 1 and the rest 0."""
+
+    def __init__(
+        self,
+        files: list,
+        table: polars.DataFrame,
+        label_cutoff: float,
+        transforms: Optional[torchvision.transforms.Compose] = None,
+    ):
+        """
+        Args:
+            files: Image files.
+            table: The columns file_path and label, with one row per file.
+            label_cutoff: Labels below it become 1 and the rest 0.
+            transforms: Transforms of the sample dict.
+        """
+        super().__init__(files, transforms=transforms)
+        # The labels are looked up here, in the main process, because polars hangs when it is called in a forked
+        # DataLoader worker. The workers only index the numpy array.
+        split = polars.DataFrame({"file_path": files}, schema={"file_path": polars.String}).with_row_index("order")
+        split = split.join(table, on="file_path", how="left").sort("order")
+        unlabelled = split.filter(polars.col("label").is_null())["file_path"]
+        assert len(unlabelled) == 0, f"{len(unlabelled)} files have no label in the table, such as {unlabelled[0]}"
+        self.labels = (split["label"] < label_cutoff).cast(polars.Float32).to_numpy()
+
+    def __getitem__(self, idx):
+        return self.load_sample(self.get_existing_index(idx))
+
+    def load_sample(self, index: int) -> Dict[str, Any]:
+        file = self.files[index]
+        data_dict = {
+            "file_path": file,
+            "image": load_image_file(file),
+            "CLSREG_label": torch.tensor([self.labels[index]]),
+            "transforms_applied": {},
+        }
+        return self._transform(data_dict)
+
+
+class TableClsRegTestDataset(TableClsRegDataset):
+    def __getitem__(self, idx):
+        return self.load_sample(idx)
 
 
 class SegTestDataset(FileDataset):

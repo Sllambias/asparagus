@@ -2,7 +2,6 @@ import hydra
 import lightning as pl
 from asparagus.functional.hydra import fast_instantiate
 from asparagus.modules.hydra.plugins.searchpath_plugins import FinetuneSearchpathPlugin
-from asparagus.modules.transforms.presets import CPU_clsreg_val_test_transforms_crop
 from asparagus.paths import get_config_path
 from asparagus.pipeline.auto_configuration.checkpoint import resolve_checkpoint
 from asparagus.pipeline.auto_configuration.experiment_setup import prepare_standard_experiment
@@ -65,7 +64,7 @@ def main(cfg: DictConfig) -> None:
         train_transforms=cpu_tr_transforms,
         val_transforms=cpu_val_transforms,
         test_samples=file_store.test,
-        test_transforms=CPU_clsreg_val_test_transforms_crop(target_size=cfg.training.target_size),
+        test_transforms=cpu_val_transforms,
     )
 
     model = fast_instantiate(
